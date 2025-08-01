@@ -1,5 +1,4 @@
-<!-- index.html -->
-
+<!-- README index.html -->
 <!doctype html>
 <html lang="en">
   <head>
@@ -144,58 +143,37 @@ graph TD
           <div class="feature-card">
             <h4>🚀 Performance & Architecture</h4>
             <ul>
-              <li>
-                <span
-                  class="popup-trigger"
-                  onclick="showPopup('two-stage-pipeline')"
-                  >Two-Stage Pipeline</span
-                >
-              </li>
-              <li>
-                <span class="popup-trigger" onclick="showPopup('direct-rag')"
-                  >Direct RAG Streaming</span
-                >
-              </li>
-              <li>Concurrent Tool Execution</li>
-              <li>Stateful Conversations</li>
+                <li><span class="popup-trigger" onclick="showPopup('two-stage-pipeline')">Two-Stage Pipeline</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('concurrent-tool-execution')">Concurrent Tool Execution</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('stateful-conversation')">Stateful Conversations</span></li>
             </ul>
           </div>
 
           <div class="feature-card">
-            <h4>🛡️ Resource Management</h4>
+            <h4>🛡️ Resilience & Resource Management</h4>
             <ul>
-              <li>
-                <span
-                  class="popup-trigger"
-                  onclick="showPopup('circuit-breakers')"
-                  >Anti-Fragile Circuit Breakers</span
-                >
-              </li>
-              <li>Single-Flight Request Coalescing</li>
-              <li>State-Aware Janitor</li>
-              <li>End-to-End Cancellation</li>
+                <li><span class="popup-trigger" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight Request Coalescing</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('state-aware-janitor')">State-Aware Janitor</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span></li>
             </ul>
           </div>
 
           <div class="feature-card">
             <h4>📊 Data Handling & Integrity</h4>
             <ul>
-              <li>Targeted Token Truncation</li>
-              <li>Context-Aware Caching</li>
-              <li>Retrieval-Augmented Generation</li>
+                <li><span class="popup-trigger" onclick="showPopup('token-truncation')">Targeted Token Truncation</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('context-aware-caching')">Context-Aware Caching</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('rag')">Retrieval-Augmented Generation</span></li>
             </ul>
           </div>
 
           <div class="feature-card">
             <h4>🔭 Total System Observability</h4>
             <ul>
-              <li>
-                <span class="popup-trigger" onclick="showPopup('observability')"
-                  >Complete Observability Stack</span
-                >
-              </li>
-              <li>Structured JSON Logging</li>
-              <li>Real-time Dashboards</li>
+                <li><span class="popup-trigger" onclick="showPopup('structured-logging')">Structured JSON Logging</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('real-time-dashboards')">Real-time Dashboards</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('observability')">Complete Observability Stack</span></li>
             </ul>
           </div>
         </div>
@@ -571,7 +549,7 @@ tuntun-go-chatbot/
     <!-- Modal for detailed explanations -->
     <div id="popup-modal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closePopup()">&times;</span>
+        <span class="close" onclick="closePopup()">×</span>
         <div id="popup-content"></div>
       </div>
     </div>
@@ -628,18 +606,17 @@ tuntun-go-chatbot/
                     `;
             break;
 
-          case "direct-rag":
+          case "rag":
             popupContent = `
-                        <h2>🚀 Direct RAG Streaming</h2>
-                        <p>For designated <code>NATURAL_ANSWER_TOOLS</code> like knowledge base queries, the system activates a bypass path that <strong>completely skips the second LLM synthesis call</strong>, streaming the response from the RAG tool directly to the user.</p>
-                        <p><strong>Standard Flow:</strong> LLM selects tools → Execute tools → LLM synthesizes answer</p>
-                        <p><strong>Direct RAG Flow:</strong> LLM selects tools → Execute RAG tool → Stream directly to user</p>
+                        <h2>🚀 Retrieval-Augmented Generation (RAG)</h2>
+                        <p>For designated <code>NATURAL_ANSWER_TOOLS</code> like knowledge base queries, the system activates a special RAG path. This bypasses the final LLM synthesis step, streaming the response from the knowledge tool directly to the user.</p>
+                        <p><strong>Standard Flow:</strong> User Query → LLM Selects Tools → Execute Tools → LLM Synthesizes Answer from Tool Output</p>
+                        <p><strong>RAG Flow:</strong> User Query → LLM Selects RAG Tool → Execute RAG Tool → Stream Tool Output Directly to User</p>
                         <p><strong>Benefits:</strong></p>
                         <ul>
-                            <li>Lower latency for knowledge queries</li>
-                            <li>Reduced API costs (one less LLM call)</li>
-                            <li>Fresher, unfiltered responses</li>
-                            <li>Better performance for FAQ-style queries</li>
+                            <li><strong>Lower Latency:</strong> Skips an entire LLM round-trip.</li>
+                            <li><strong>Reduced Cost:</strong> Saves on expensive LLM synthesis API calls.</li>
+                            <li><strong>Higher Fidelity:</strong> Delivers raw, unfiltered information directly from the source of truth.</li>
                         </ul>
                     `;
             break;
@@ -662,17 +639,13 @@ graph TD
         Dep2 -.->|"Timeout/Error"| Req2
         Req3[Request] -->|Failure 2| Dep2
         Dep2 -.->|"Timeout/Error"| Req3
-        Req4[Request] -->|Failure 3| Dep2
-        Dep2 -.->|"Timeout/Error"| Req4
     end
 
     subgraph CircuitOpen["Circuit Open"]
         direction LR
         CB_Open["Circuit Breaker<br/>(State: OPEN)"]
         Req5[Request] -.->|"Fail Fast"| CB_Open
-        Req6[Request] -.->|"Fail Fast"| CB_Open
         CB_Open -->|"ErrOpenState"| Req5
-        CB_Open -->|"ErrOpenState"| Req6
     end
 
     subgraph HalfOpen["Recovery Attempt (Half-Open)"]
@@ -681,54 +654,195 @@ graph TD
         Req7[Request] -->|Test Request| Dep3[Dependency]
     end
 
-    subgraph RecoverySuccess["Recovery Success"]
-        direction LR
-        CB_Closed["Circuit Breaker<br/>(State: CLOSED)"]
-        Dep3 -->|Success| Req7
-        Req7 -->|Resets Failures| CB_Closed
-    end
-
-    subgraph RecoveryFailure["Recovery Failure"]
-        direction LR
-        CB_Open2["Circuit Breaker<br/>(State: OPEN)"]
-        Dep3 -.->|Error| Req7
-        Req7 -->|Resets Timer| CB_Open2
-    end
-
     Normal ==>|"Consecutive Failures"| FailureDetection
     FailureDetection ==>|"Threshold Met"| CircuitOpen
     CircuitOpen ==>|"Cooldown Expires"| HalfOpen
-    HalfOpen ==>|"Success"| RecoverySuccess
-    HalfOpen ==>|"Failure"| RecoveryFailure
-    RecoverySuccess ==>|"Back to Normal"| Normal
-    RecoveryFailure ==>|"Back to Open"| CircuitOpen
+    HalfOpen ==>|"Success (Reset)"| Normal
+    HalfOpen ==>|"Failure (Re-Open)"| CircuitOpen
 
     classDef normal fill:#d4edda,stroke:#155724
     classDef failing fill:#f8d7da,stroke:#721c24
     classDef open fill:#f5c6cb,stroke:#721c24,color:#000
     classDef halfopen fill:#fff3cd,stroke:#856404
-    classDef recovery fill:#d1ecf1,stroke:#0c5460
-
-    class Normal,CB_Closed,RecoverySuccess normal
-    class FailureDetection,CB_Open2,RecoveryFailure failing
-    class CircuitOpen,CB_Open open
-    class HalfOpen,CB_Half halfopen
+    class Normal,Dep1,Req1 normal; class FailureDetection,Dep2,Req2,Req3 failing; class CircuitOpen,CB_Open,Req5 open; class HalfOpen,CB_Half,Dep3,Req7 halfopen;
                         </div>
-                        <p><strong>How it works:</strong></p>
-                        <ul>
-                            <li><strong>Closed:</strong> Normal operation, requests pass through</li>
-                            <li><strong>Open:</strong> After threshold failures, circuit opens and fails fast</li>
-                            <li><strong>Half-Open:</strong> After cooldown, allows one test request</li>
-                            <li><strong>Recovery:</strong> Success closes circuit, failure reopens it</li>
-                        </ul>
+                        <p>When a dependency fails repeatedly, the circuit "opens," causing subsequent calls to fail instantly without tying up resources. After a cooldown, it enters a "half-open" state to test for recovery.</p>
                         <p><strong>Benefits:</strong></p>
                         <ul>
-                            <li>Prevents worker pool exhaustion</li>
-                            <li>Protects against cascading failures</li>
-                            <li>Intelligent recovery mechanism</li>
-                            <li>System remains responsive during outages</li>
+                            <li>Prevents worker pool exhaustion during outages.</li>
+                            <li>Protects against cascading system failures.</li>
+                            <li>Allows the system to remain responsive for other requests.</li>
+                            <li>Enables intelligent, automatic recovery.</li>
                         </ul>
                     `;
+            break;
+            
+          case "concurrent-tool-execution":
+            popupContent = `
+                <h2>⚡ Concurrent Tool Execution</h2>
+                <p>The system leverages Go's powerful concurrency model (goroutines) to execute multiple tool calls in parallel. Instead of waiting for each tool to finish sequentially, it launches all tool calls at once and waits for them all to complete.</p>
+                <div class="mermaid">
+                    graph TD
+                        subgraph Serial [Traditional Serial Execution]
+                            direction LR
+                            A[Start] --> T1[Tool 1 (3s)] --> T2[Tool 2 (1s)] --> T3[Tool 3 (2s)] --> E[End]
+                            subgraph TotalTimeS [Total Time: 6s]
+                                direction LR
+                                DummyS[ ]
+                            end
+                        end
+                        subgraph Parallel [Concurrent Execution]
+                            direction LR
+                            B[Start] --> P1(Tool 1 - 3s)
+                            B --> P2(Tool 2 - 1s)
+                            B --> P3(Tool 3 - 2s)
+                            P1 --> F[End]
+                            P2 --> F
+                            P3 --> F
+                            subgraph TotalTimeP [Total Time: 3s]
+                                direction LR
+                                DummyP[ ]
+                            end
+                        end
+                </div>
+                <p>This is implemented in <code>toolutils.ExecuteToolsInParallel</code> using a <code>sync.WaitGroup</code> to manage the goroutines.</p>
+                <p><strong>Benefit:</strong> Drastically reduces data-gathering latency. The total wait time is determined by the <strong>slowest single tool</strong>, not the sum of all tool execution times.</p>
+            `;
+            break;
+
+        case "stateful-conversation":
+            popupContent = `
+                <h2>🧠 Stateful Conversations</h2>
+                <p>To provide contextually relevant answers, the chatbot maintains conversation history. Before processing a new query, it fetches the last <code>N</code> turns of the conversation (configurable via <code>HISTORY_ITEMS</code>) from ArangoDB.</p>
+                <p>This history is formatted and injected into the LLM prompt, giving the model the necessary context to understand follow-up questions and references to previous messages.</p>
+                <p><strong>Code Logic:</strong> The <code>preparer.fetchAndFormatHistory</code> function retrieves data using <code>arangoStore.GetChatHistory</code> and builds a string like:</p>
+                <pre><code>Human: What is the market cap of AAPL?
+Assistant: The market cap for AAPL is $2.8T.
+Human: What about for GOOGL?
+Assistant: The market cap for GOOGL is $1.7T.</code></pre>
+                <p><strong>Benefit:</strong> Enables natural, multi-turn dialogues and a more intelligent, human-like user experience.</p>
+            `;
+            break;
+
+        case "single-flight":
+            popupContent = `
+                <h2>🛡️ Single-Flight Request Coalescing</h2>
+                <p>This feature protects against the "thundering herd" problem where multiple, identical, un-cached requests arrive simultaneously. Using Go's standard <code>singleflight</code> library, only the <strong>first</strong> request triggers the expensive work (tool execution, LLM calls).</p>
+                <div class="mermaid">
+                graph TD
+                    subgraph Before ["Without Single-Flight"]
+                        R1[Req 1: "Price of AAPL?"] --> W1[Worker 1]
+                        R2[Req 1: "Price of AAPL?"] --> W2[Worker 2]
+                        R3[Req 1: "Price of AAPL?"] --> W3[Worker 3]
+                        W1 & W2 & W3 --> API[3x Calls to API]
+                    end
+                    subgraph After ["With Single-Flight"]
+                        R4[Req 1] --> SF{"singleflight.Group"}
+                        R5[Req 2] --> SF
+                        R6[Req 3] --> SF
+                        SF --> W4[Worker 1] --> API2[1x Call to API]
+                        API2 --> SF
+                        SF --> R4 & R5 & R6
+                    end
+                </div>
+                <p>All other identical requests simply wait and share the result from the first one. This is visible in the logs via the message: <code>"Shared result from in-flight request"</code>.</p>
+                <p><strong>Benefits:</strong></p>
+                <ul>
+                    <li>Prevents self-inflicted DDoS attacks.</li>
+                    <li>Saves significant LLM API costs and reduces load on downstream services.</li>
+                    <li>Improves overall system efficiency under high load.</li>
+                </ul>
+            `;
+            break;
+
+        case "state-aware-janitor":
+            popupContent = `
+                <h2>🧹 State-Aware Janitor</h2>
+                <p>A background goroutine that acts as a robust "cleaner" for the system, inspired by The Wolf from Pulp Fiction. It periodically scans for requests that are stuck or have been abandoned, preventing resource leaks.</p>
+                <p>It's "state-aware" because it applies different logic based on the request's current state:</p>
+                <ul>
+                    <li><strong><code>StateQueued</code>:</strong> A long timeout (<code>QUEUE_TIMEOUT</code>, e.g., 1h) allows requests to wait patiently in a busy queue.</li>
+                    <li><strong><code>StateProcessing</code>:</strong> A shorter timeout (<code>PROCESSING_TIMEOUT</code>, e.g., 10m) kills jobs that are genuinely stuck in execution, likely due to an unhandled error or a deadlocked dependency.</li>
+                </ul>
+                <p>This is implemented in the <code>janitor</code> function in <code>chatbot/manager.go</code>.</p>
+                <p><strong>Benefit:</strong> Guarantees system stability and prevents resource leaks from orphaned requests without prematurely killing valid, waiting jobs.</p>
+            `;
+            break;
+
+        case "e2e-cancellation":
+            popupContent = `
+                <h2>🛑 End-to-End Cancellation</h2>
+                <p>When a user cancels a request via the <code>POST /chat/cancel/:request_id</code> endpoint, a cancellation signal is propagated through the entire system using Go's <code>context.Context</code>.</p>
+                <div class="mermaid">
+                graph TD
+                    A[Client clicks "Stop"] --> B(POST /cancel/:id)
+                    B --> C{Chatbot Manager}
+                    C -->|"ctx.Cancel()"| D{Worker Goroutine}
+                    D -->|"Context cancelled"| E[Stops LLM Stream]
+                    D -->|"Context cancelled"| F[Aborts Tool Calls]
+                </div>
+                <p>This signal travels from the API handler down to the specific worker goroutine, terminating database queries, tool calls, and LLM streams immediately. The worker regularly checks <code>ctx.Done()</code> to see if it should abort its work.</p>
+                <p><strong>Benefits:</strong></p>
+                <ul>
+                    <li>Frees up system resources (worker slots, memory) instantly.</li>
+                    <li>Provides a highly responsive user experience.</li>
+                    <li>Prevents wasted computation and API costs on unwanted requests.</li>
+                </ul>
+            `;
+            break;
+
+        case "token-truncation":
+            popupContent = `
+                <h2>✂️ Targeted Token Truncation</h2>
+                <p>When the combined output from all tools exceeds the LLM's context window (<code>MAX_TOTAL_TOOL_OUTPUT_TOKENS</code>), a naive system might truncate everything, losing valuable data. This system intelligently truncates only the output from tools designated as verbose in the <code>.env</code> file (via <code>LONG_TEXT_TOOLS</code>).</p>
+                <p><strong>Example:</strong> A request needs a stock price (short, critical) and a news summary (long, less critical). If the total output is too long, the system will shorten the news summary while leaving the stock price intact.</p>
+                <p>This logic resides in <code>toolutils.TruncateToolOutputs</code>.</p>
+                <p><strong>Benefit:</strong> Preserves the full, precise output of critical data tools while summarizing less critical, long-form text. This leads to higher-quality inputs and more accurate final answers from the LLM.</p>
+            `;
+            break;
+
+        case "context-aware-caching":
+            popupContent = `
+                <h2>🧠 Context-Aware Caching</h2>
+                <p>The system uses Redis to cache the final results of expensive operations. However, caching everything can lead to stale data (e.g., serving yesterday's stock price).</p>
+                <p>The caching is "context-aware" because it is automatically bypassed if the request involves any tool designated as time-sensitive in the <code>.env</code> file (<code>TIMEBOUND_TOOLS=realtime_market,...</code>).</p>
+                <p>The <code>RequestPreparer</code> checks if any selected tool is in this list. If so, it prevents the final result from being cached in Redis, ensuring the user always gets live data for that query.</p>
+                <p><strong>Benefit:</strong> Achieves the perfect balance between performance (for static queries) and data freshness (for dynamic, time-sensitive queries).</p>
+            `;
+            break;
+
+        case "structured-logging":
+            popupContent = `
+                <h2>📝 Structured JSON Logging</h2>
+                <p>Every log entry in the system is a structured, machine-readable JSON object, powered by the <code>zerolog</code> library. Instead of ambiguous text lines, each log contains queryable key-value pairs.</p>
+                <p><strong>Example Log Entry:</strong></p>
+                <pre><code>{
+  "level": "info",
+  "request_id": "req_a1b2c3d4e5",
+  "user_id": "user123",
+  "tool_name": "realtime_market",
+  "duration_sec": 0.52,
+  "message": "Tool executed successfully"
+}</code></pre>
+                <p>This is the foundation of the entire observability stack. It allows logs to be treated like a database, enabling precise filtering, searching, and alerting.</p>
+                <p><strong>Benefit:</strong> Transforms debugging from an archaeological dig into a surgical strike. You can instantly trace a single request's entire lifecycle or find all errors related to a specific tool.</p>
+            `;
+            break;
+
+        case "real-time-dashboards":
+            popupContent = `
+                <h2>📈 Real-time Dashboards</h2>
+                <p>The structured JSON logs are collected by Vector, aggregated by Loki, and visualized in Grafana. This provides a real-time command deck for monitoring system health and performance.</p>
+                <p>Dashboards are pre-configured to track key performance indicators (KPIs) like:</p>
+                <ul>
+                    <li>Request latency (p95, p99) and Time-To-First-Token.</li>
+                    <li>Error rates per endpoint or per tool.</li>
+                    <li>LLM token consumption and cost estimation.</li>
+                    <li>Worker pool utilization and queue lengths.</li>
+                    <li>Circuit breaker state changes (open/closed).</li>
+                </ul>
+                <p><strong>Benefit:</strong> Turns passive logging into actionable intelligence. It allows for proactive problem detection, performance tuning, and a deep, quantitative understanding of how the system behaves under load.</p>
+            `;
             break;
 
           case "observability":
@@ -752,20 +866,12 @@ graph TD
                         </div>
                         <p><strong>Stack Components:</strong></p>
                         <ul>
-                            <li><strong>Foundation (zerolog):</strong> Structured, machine-readable JSON logs</li>
-                            <li><strong>Collection (Vector):</strong> High-performance log collector and router</li>
-                            <li><strong>Aggregation (Loki):</strong> Central log database with intelligent indexing</li>
-                            <li><strong>Visualization (Grafana):</strong> Real-time dashboards and alerting</li>
+                            <li><strong>Foundation (zerolog):</strong> Structured, machine-readable JSON logs.</li>
+                            <li><strong>Collection (Vector):</strong> High-performance log collector and router.</li>
+                            <li><strong>Aggregation (Loki):</strong> Central log database with intelligent indexing.</li>
+                            <li><strong>Visualization (Grafana):</strong> Real-time dashboards and alerting.</li>
                         </ul>
-                        <p><strong>Key Features:</strong></p>
-                        <ul>
-                            <li>Trace requests by <code>request_id</code></li>
-                            <li>Filter by user, service, or error level</li>
-                            <li>Real-time error rates and latency metrics</li>
-                            <li>LLM token usage tracking</li>
-                            <li>System health monitoring</li>
-                        </ul>
-                        <p><em>"This transforms debugging from an archaeological dig into a surgical strike."</em></p>
+                        <p>This stack provides end-to-end visibility, allowing operators to trace a single request by its <code>request_id</code> across all services, filter by error level, and monitor real-time metrics.</p>
                     `;
             break;
 
@@ -778,7 +884,7 @@ graph TD
         modal.style.display = "block";
 
         // Re-initialize Mermaid for new content
-        if (type === "circuit-breakers" || type === "observability") {
+        if (content.querySelector(".mermaid")) {
           setTimeout(() => {
             mermaid.init();
           }, 100);
