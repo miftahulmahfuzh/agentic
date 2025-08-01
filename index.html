@@ -292,52 +292,68 @@ graph TD
                 <div class="section-content">
                     <div class="section-inner">
                         <p>This file is critical for tuning system performance and behavior.</p>
-                        <pre><code># LLM Configuration
+                        <pre><code>
+# LLM Configuration
 LLM_TYPE=DEEPSEEK # Options: OPENAI, DEEPSEEK, OLLAMA
 DEEPSEEK_API_KEY=sk-your-deepseek-key
 OPENAI_API_KEY=sk-your-openai-key
 PROMPT_VERSION=v1
 
-# Token & Output Management
-MAX_LLM_INPUT_TOKENS=40000
-MAX_TOTAL_TOOL_OUTPUT_TOKENS=33000
-LONG_TEXT_TOOLS=analyze_stock
+# --- Token & Output Management ---
+MAX_LLM_INPUT_TOKENS=40000          # Max tokens the LLM accepts as input.
+MAX_TOTAL_TOOL_OUTPUT_TOKENS=33000  # Max combined tokens from all tools before truncation.
+LONG_TEXT_TOOLS=analyze_stock       # Comma-separated list of tools to truncate first.
 
-# Pipeline, Concurrency & Lifecycle Tuning
-MAX_CONCURRENT_REQUESTS=10
-MAX_CONCURRENT_LLM_STREAMS=5
-HISTORY_ITEMS=3
-QUEUE_SIZE=100
-STREAM_TOKEN_BUFFER=100
+# --- Pipeline, Concurrency & Lifecycle Tuning ---
+# These settings dictate the performance and resilience of the system. Handle them with care.
+MAX_CONCURRENT_REQUESTS=10          # Number of workers in the fast data-prep pool. Higher = more concurrent request processing.
+MAX_CONCURRENT_LLM_STREAMS=5        # Number of workers in the slow LLM-interaction pool. Keep this low to avoid hitting API rate limits.
+HISTORY_ITEMS=3                     # Number of past conversation turns to include in the context.
+QUEUE_SIZE=100                      # Buffer size for requests between pipeline stages.
+STREAM_TOKEN_BUFFER=100             # Buffer for the final SSE stream to the client.
 
-# State-Aware Janitor & Timeouts
-JANITOR_INTERVAL=2m
-PROCESSING_TIMEOUT=10m
-QUEUE_TIMEOUT=1h
-TOOL_TIMEOUT=30s
-CLIENT_PICKUP_TIMEOUT=1s
-SUBMIT_TIMEOUT=2s
+# --- State-Aware Janitor & Timeouts ---
+JANITOR_INTERVAL=2m                 # How often The Wolf from Pulp Fiction shows up to clean the mess.
+PROCESSING_TIMEOUT=10m              # The bomb timer in Mission: Impossible. Max time a dequeued request can run before being killed. Kills stuck jobs.
+QUEUE_TIMEOUT=1h                    # Max time a request can wait in the queue before being discarded. A safety net for extreme load.
+TOOL_TIMEOUT=30s                    # Max execution time for a single tool call. Prevents a slow dependency from stalling everything.
+CLIENT_PICKUP_TIMEOUT=1s            # Grace period for the client to connect to the stream. Solves a race condition for fast/cached responses. MUST be short.
+SUBMIT_TIMEOUT=2s                   # The bouncer's patience. Max time to wait for a spot in the main request queue before rejecting the request. Prevents callers from hanging on a full system.
 
-# Caching & Direct Streaming
+# --- Caching & Direct Streaming ---
 REDIS_URL=redis://localhost:6379
-TIMEBOUND_TOOLS=realtime_market,get_current_time
-NATURAL_ANSWER_TOOLS=frequently_asked
+TIMEBOUND_TOOLS=realtime_market,get_current_time # Comma-separated list of tools whose results are never cached.
+NATURAL_ANSWER_TOOLS=frequently_asked            # Comma-separated list of tools that activate the Direct Stream Path, bypassing the second LLM call. This is a critical performance setting.
 
 # ArangoDB Configuration
 LOG_DB_URL=http://localhost:8529
 LOG_DB_USERNAME=root
 LOG_DB_PASSWORD=your_arangodb_password
 LOG_DB_NAME=tuntun_chatbot_v2
+LOG_DB_TEST_NAME=tuntun_chatbot_test
+LOG_DB_COLLECTION_NAME=chat_logs
+RESEARCH_DB_COLLECTION_NAME=research_report
 
-# API Server & Backend Services
+# --- API Server & Backend Services ---
 API_HOST=0.0.0.0
 API_PORT=8080
 API_KEY=your-secret-api-key
 
-# Backend Service Endpoints
+# Backend Service Endpoints (direct http://... or service discovery consul://...)
 CONSUL_ADDR=127.0.0.1:8500
 BE_FAIR_VALUE_URL=http://...
-# ... (additional backend URLs)</code></pre>
+BE_TRADING_SIGNAL_URL=http://...
+BE_COMPANY_QUALITY_URL=http://...
+BE_ORDERBOOK_HEADER_URL=http://...
+BE_PRICE_SUMMARY_URL=http://...
+BE_FINANCIAL_DATA_URL=http://...
+BE_FINANCIAL_DATA_ALL_QUARTER_URL=http://...
+BE_HISTORICAL_MARKET_DATA_URL=http://...
+BE_NEWS_LATEST_URL=http://...
+# This endpoint is now called directly from the `frequently_asked` streaming tool.
+TENCENT_RAG_URL=https://...
+TENCENT_RAG_BOT_APP_KEY=...
+</code></pre>
                     </div>
                 </div>
             </div>
