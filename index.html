@@ -1,3 +1,5 @@
+<!-- index.html -->
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -54,82 +56,46 @@
           <div class="section-content">
             <div class="section-inner">
               <div class="mermaid">
-graph TD
-  subgraph Client ["Client Interface"]
-      UI["🌐 Web Frontend / API Client"]
-  end
-  subgraph AppServer ["⚡ Application Server (Go Gin)"]
-      A["POST /chat/submit"]
-      C["GET /chat/stream/:id"]
-      Cancel["POST /chat/cancel/:id"]
-  end
-  subgraph AgenticCore ["🤖 Agentic Core Engine"]
-      B["🧠 Chatbot Manager<br/>(Central State & Single-Flight)"]
-      D["Request Queue"]
-      D2["Prepared Queue"]
-      subgraph Stage1 ["🔄 Stage 1: Preparation Pool"]
-          E1["Prep Worker"]
-      end
-      subgraph ToolEngine ["⚡ Tool Engine"]
-          T_Standard["Blocking Tools<br/>(e.g., APIs, DBs)"]
-          T_Stream["Streaming Tools<br/>(e.g., RAG SSE)"]
-      end
-      subgraph Stage2 ["📊 Stage 2: Streaming Pool"]
-          E2["Stream Worker"]
-      end
-      Janitor["🧹 State-Aware Janitor<br/>(Resource Cleanup)"]
-  end
-  subgraph ExtDeps ["🌍 External Dependencies"]
-      L["BE Microservices"]
-      M["ArangoDB"]
-      N["Redis Cache"]
-      P["LLM Provider"]
-  end
-  subgraph Observability ["🔭 Observability Stack"]
-      Vec["Vector"]
-      Lok["Loki"]
-      Graf["Grafana"]
-  end
-
-  %% Flow Definitions
-  UI --> A; UI --> C; UI --> Cancel
-  A -->|"1. Submit"| B -->|"2. Enqueue"| D
-  D -->|"3. Prepare"| E1
-  E1 -->|"4a. Tool Selection"| P
-  E1 -->|"4b. Standard Exec"| T_Standard
-  T_Standard --> L; T_Standard --> M; T_Standard --> N
-  E1 -->|"5. Handoff"| D2
-  D2 -->|"6. Acquire"| E2
-  E2 -->|"7a. LLM Synth Path"| P
-  E2 -->|"<strong>7b. Direct Stream Path</strong>"| T_Stream
-  E2 -->|"8. Stream Response"| B
-  C -->|"9a. Get Stream"| B -->|"9b. Deliver"| C
-  Cancel -->|"Signal"| B
-  Janitor -->|"Monitor & Clean"| B
-  AppServer -->|"JSON Logs"| Vec -->|"Forward"| Lok -->|"Query"| Graf
-
-  %% Styling
-  classDef clientStyle fill:#cce5ff,stroke:#004085
-  classDef serverStyle fill:#d4edda,stroke:#155724
-  classDef coreStyle fill:#fff3cd,stroke:#856404
-  classDef stage1Style fill:#f8d7da,stroke:#721c24
-  classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
-  classDef stage2Style fill:#d1ecf1,stroke:#0c5460
-  classDef extStyle fill:#e2f3e4,stroke:#28a745
-  classDef janitorStyle fill:#f5c6cb,stroke:#721c24
-  classDef queueStyle fill:#d6d8db,stroke:#383d41
-  classDef obsStyle fill:#e0e0e0,stroke:#6c757d
-  class UI clientStyle
-  class A,C,Cancel serverStyle
-  class B coreStyle
-  class D,D2 queueStyle
-  class E1 stage1Style
-  class T_Standard,T_Stream toolStyle
-  class E2 stage2Style
-  class L,M,N,P extStyle
-  class Janitor janitorStyle
-  class Vec,Lok,Graf obsStyle
-
+                graph TD subgraph Client ["Client Interface"] UI["🌐 Web
+                Frontend / API Client"] end subgraph AppServer ["⚡ Application
+                Server (Go Gin)"] A["POST /chat/submit"] C["GET
+                /chat/stream/:id"] Cancel["POST /chat/cancel/:id"] end subgraph
+                AgenticCore ["🤖 Agentic Core Engine"] B["🧠 Chatbot Manager<br />(Central
+                State & Single-Flight)"] D["Request Queue"] D2["Prepared Queue"]
+                subgraph Stage1 ["🔄 Stage 1: Preparation Pool"] E1["Prep
+                Worker"] end subgraph ToolEngine ["⚡ Tool Engine"]
+                T_Standard["Blocking Tools<br />(e.g., APIs, DBs)"]
+                T_Stream["Streaming Tools<br />(e.g., RAG SSE)"] end subgraph
+                Stage2 ["📊 Stage 2: Streaming Pool"] E2["Stream Worker"] end
+                Janitor["🧹 State-Aware Janitor<br />(Resource Cleanup)"] end
+                subgraph ExtDeps ["🌍 External Dependencies"] L["BE
+                Microservices"] M["ArangoDB"] N["Redis Cache"] P["LLM Provider"]
+                end subgraph Observability ["🔭 Observability Stack"]
+                Vec["Vector"] Lok["Loki"] Graf["Grafana"] end %% Flow
+                Definitions UI --> A; UI --> C; UI --> Cancel A -->|"1. Submit"|
+                B -->|"2. Enqueue"| D D -->|"3. Prepare"| E1 E1 -->|"4a. Tool
+                Selection"| P E1 -->|"4b. Standard Exec"| T_Standard T_Standard
+                --> L; T_Standard --> M; T_Standard --> N E1 -->|"5. Handoff"|
+                D2 D2 -->|"6. Acquire"| E2 E2 -->|"7a. LLM Synth Path"| P E2
+                -->|"<strong>7b. Direct Stream Path</strong>"| T_Stream E2
+                -->|"8. Stream Response"| B C -->|"9a. Get Stream"| B -->|"9b.
+                Deliver"| C Cancel -->|"Signal"| B Janitor -->|"Monitor &
+                Clean"| B AppServer -->|"JSON Logs"| Vec -->|"Forward"| Lok
+                -->|"Query"| Graf %% Styling classDef clientStyle
+                fill:#cce5ff,stroke:#004085 classDef serverStyle
+                fill:#d4edda,stroke:#155724 classDef coreStyle
+                fill:#fff3cd,stroke:#856404 classDef stage1Style
+                fill:#f8d7da,stroke:#721c24 classDef toolStyle
+                fill:#e1d5e7,stroke:#6f42c1 classDef stage2Style
+                fill:#d1ecf1,stroke:#0c5460 classDef extStyle
+                fill:#e2f3e4,stroke:#28a745 classDef janitorStyle
+                fill:#f5c6cb,stroke:#721c24 classDef queueStyle
+                fill:#d6d8db,stroke:#383d41 classDef obsStyle
+                fill:#e0e0e0,stroke:#6c757d class UI clientStyle class
+                A,C,Cancel serverStyle class B coreStyle class D,D2 queueStyle
+                class E1 stage1Style class T_Standard,T_Stream toolStyle class
+                E2 stage2Style class L,M,N,P extStyle class Janitor janitorStyle
+                class Vec,Lok,Graf obsStyle
               </div>
             </div>
           </div>
