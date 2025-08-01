@@ -172,7 +172,6 @@ graph TD
             <h4>🔭 Total System Observability</h4>
             <ul>
                 <li><span class="popup-trigger" onclick="showPopup('structured-logging')">Structured JSON Logging</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('real-time-dashboards')">Real-time Dashboards</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('observability')">Complete Observability Stack</span></li>
             </ul>
           </div>
@@ -808,12 +807,48 @@ graph TD
                 <h2>🛑 End-to-End Cancellation</h2>
                 <p>When a user cancels a request via the <code>POST /chat/cancel/:request_id</code> endpoint, a cancellation signal is propagated through the entire system using Go's <code>context.Context</code>.</p>
                 <div class="mermaid">
-                graph TD
-                    A[Client clicks "Stop"] --> B(POST /cancel/:id)
-                    B --> C{Chatbot Manager}
-                    C -->|"ctx.Cancel()"| D{Worker Goroutine}
-                    D -->|"Context cancelled"| E[Stops LLM Stream]
-                    D -->|"Context cancelled"| F[Aborts Tool Calls]
+graph TD
+    subgraph Client ["Client Interface"]
+        UI["🖱️ Client clicks 'Stop'"]
+    end
+    subgraph AppServer ["⚡ Application Server (Go Gin)"]
+        Cancel["POST /chat/cancel/:id"]
+    end
+    subgraph AgenticCore ["🤖 Agentic Core Engine"]
+        B["🧠 Chatbot Manager"]
+        ActiveWorker["🏃 Active Worker<br/>(Goroutine with context)"]
+        subgraph ToolEngine ["⚡ Tool Engine"]
+            T["Active Tool Calls"]
+        end
+    end
+    subgraph ExtDeps ["🌍 External Dependencies"]
+        P["LLM Provider Stream"]
+    end
+
+    %% Flow Definitions
+    UI -->|"1. User Action"| Cancel
+    Cancel -->|"2. API Request"| B
+    B -->|"3. Propagate<br/>context.Cancel()"| ActiveWorker
+    ActiveWorker -->|"4a. Stop LLM Request"| P
+    ActiveWorker -->|"4b. Abort Tool Execution"| T
+
+    %% Styling
+    classDef clientStyle fill:#cce5ff,stroke:#004085
+    classDef serverStyle fill:#d4edda,stroke:#155724
+    classDef coreStyle fill:#fff3cd,stroke:#856404
+    classDef stage1Style fill:#f8d7da,stroke:#721c24
+    classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
+    classDef stage2Style fill:#d1ecf1,stroke:#0c5460
+    classDef extStyle fill:#e2f3e4,stroke:#28a745
+    classDef janitorStyle fill:#f5c6cb,stroke:#721c24
+    classDef queueStyle fill:#d6d8db,stroke:#383d41
+    classDef obsStyle fill:#e0e0e0,stroke:#6c757d
+    class UI clientStyle
+    class Cancel serverStyle
+    class B coreStyle
+    class ActiveWorker stage1Style
+    class T toolStyle
+    class P extStyle
                 </div>
                 <p>This signal travels from the API handler down to the specific worker goroutine, terminating database queries, tool calls, and LLM streams immediately. The worker regularly checks <code>ctx.Done()</code> to see if it should abort its work.</p>
                 <p><strong>Benefits:</strong></p>
@@ -860,22 +895,6 @@ graph TD
 }</code></pre>
                 <p>This is the foundation of the entire observability stack. It allows logs to be treated like a database, enabling precise filtering, searching, and alerting.</p>
                 <p><strong>Benefit:</strong> Transforms debugging from an archaeological dig into a surgical strike. You can instantly trace a single request's entire lifecycle or find all errors related to a specific tool.</p>
-            `;
-            break;
-
-        case "real-time-dashboards":
-            popupContent = `
-                <h2>📈 Real-time Dashboards</h2>
-                <p>The structured JSON logs are collected by Vector, aggregated by Loki, and visualized in Grafana. This provides a real-time command deck for monitoring system health and performance.</p>
-                <p>Dashboards are pre-configured to track key performance indicators (KPIs) like:</p>
-                <ul>
-                    <li>Request latency (p95, p99) and Time-To-First-Token.</li>
-                    <li>Error rates per endpoint or per tool.</li>
-                    <li>LLM token consumption and cost estimation.</li>
-                    <li>Worker pool utilization and queue lengths.</li>
-                    <li>Circuit breaker state changes (open/closed).</li>
-                </ul>
-                <p><strong>Benefit:</strong> Turns passive logging into actionable intelligence. It allows for proactive problem detection, performance tuning, and a deep, quantitative understanding of how the system behaves under load.</p>
             `;
             break;
 
