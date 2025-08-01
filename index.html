@@ -1,298 +1,377 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tuntun Go Agentic Chatbot</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🤖 Tuntun Go Agentic Chatbot</h1>
+      <h1>🤖 Tuntun Go Agentic Chatbot</h1>
 
-        <div class="intro">
-            <p><strong>An enterprise-grade, high-concurrency agentic chatbot system built in Go.</strong> It uses the Gin web framework and LangChainGo to provide a robust, intelligent assistant for the financial sector, integrating LLM capabilities with real-time financial data, market analysis, and news.</p>
+      <div class="intro">
+        <p>
+          <strong
+            >An enterprise-grade, high-concurrency agentic chatbot system built
+            in Go.</strong
+          >
+          It uses the Gin web framework and LangChainGo to provide a robust,
+          intelligent assistant for the financial sector, integrating LLM
+          capabilities with real-time financial data, market analysis, and news.
+        </p>
+      </div>
+
+      <div class="toc">
+        <h3>📋 Quick Navigation</h3>
+        <ul>
+          <li><a href="#architecture">System Architecture</a></li>
+          <li><a href="#features">Core Engineering & Features</a></li>
+          <li><a href="#tools">Available Tools</a></li>
+          <li><a href="#api">API Endpoints</a></li>
+          <li><a href="#installation">Installation & Setup</a></li>
+          <li><a href="#configuration">Configuration</a></li>
+          <li><a href="#usage">Usage & Testing</a></li>
+          <li><a href="#development">Development</a></li>
+        </ul>
+      </div>
+
+      <section id="architecture">
+        <h2>🏗️ System Architecture</h2>
+        <p>
+          The system is a decoupled, two-stage worker pipeline designed for high
+          throughput. It separates fast data preparation from slow LLM
+          interactions and executes blocking tool calls concurrently to minimize
+          latency.
+        </p>
+
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>View Complete Architecture Diagram</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <div class="mermaid">
+                graph TD subgraph Client ["Client Interface"] UI["🌐 Web
+                Frontend / API Client"] end subgraph AppServer ["⚡ Application
+                Server (Go Gin)"] A["POST /chat/submit"] C["GET
+                /chat/stream/:id"] Cancel["POST /chat/cancel/:id"] end subgraph
+                AgenticCore ["🤖 Agentic Core Engine"] B["🧠 Chatbot Manager<br />(Central
+                State & Single-Flight)"] D["Request Queue"] D2["Prepared Queue"]
+                subgraph Stage1 ["🔄 Stage 1: Preparation Pool"] E1["Prep
+                Worker"] end subgraph ToolEngine ["⚡ Tool Engine"]
+                T_Standard["Blocking Tools<br />(e.g., APIs, DBs)"]
+                T_Stream["Streaming Tools<br />(e.g., RAG SSE)"] end subgraph
+                Stage2 ["📊 Stage 2: Streaming Pool"] E2["Stream Worker"] end
+                Janitor["🧹 State-Aware Janitor<br />(Resource Cleanup)"] end
+                subgraph ExtDeps ["🌍 External Dependencies"] L["BE
+                Microservices"] M["ArangoDB"] N["Redis Cache"] P["LLM Provider"]
+                end subgraph Observability ["🔭 Observability Stack"]
+                Vec["Vector"] Lok["Loki"] Graf["Grafana"] end UI --> A; UI -->
+                C; UI --> Cancel A -->|"1. Submit"| B -->|"2. Enqueue"| D D
+                -->|"3. Prepare"| E1 E1 -->|"4a. Tool Selection"| P E1 -->|"4b.
+                Standard Exec"| T_Standard T_Standard --> L; T_Standard --> M;
+                T_Standard --> N E1 -->|"5. Handoff"| D2 D2 -->|"6. Acquire"| E2
+                E2 -->|"7a. LLM Synth Path"| P E2 -->|"7b. Direct Stream Path"|
+                T_Stream E2 -->|"8. Stream Response"| B C -->|"9a. Get Stream"|
+                B -->|"9b. Deliver"| C Cancel -->|"Signal"| B Janitor
+                -->|"Monitor & Clean"| B AppServer -->|"JSON Logs"| Vec
+                -->|"Forward"| Lok -->|"Query"| Graf classDef clientStyle
+                fill:#cce5ff,stroke:#004085 classDef serverStyle
+                fill:#d4edda,stroke:#155724 classDef coreStyle
+                fill:#fff3cd,stroke:#856404 classDef stage1Style
+                fill:#f8d7da,stroke:#721c24 classDef toolStyle
+                fill:#e1d5e7,stroke:#6f42c1 classDef stage2Style
+                fill:#d1ecf1,stroke:#0c5460 classDef extStyle
+                fill:#e2f3e4,stroke:#28a745 classDef janitorStyle
+                fill:#f5c6cb,stroke:#721c24 classDef queueStyle
+                fill:#d6d8db,stroke:#383d41 classDef obsStyle
+                fill:#e0e0e0,stroke:#6c757d class UI clientStyle class
+                A,C,Cancel serverStyle class B coreStyle class D,D2 queueStyle
+                class E1 stage1Style class T_Standard,T_Stream toolStyle class
+                E2 stage2Style class L,M,N,P extStyle class Janitor janitorStyle
+                class Vec,Lok,Graf obsStyle
+              </div>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div class="toc">
-            <h3>📋 Quick Navigation</h3>
+      <section id="features">
+        <h2>⚡ Core Engineering & Features</h2>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h4>🚀 Performance & Architecture</h4>
             <ul>
-                <li><a href="#architecture">System Architecture</a></li>
-                <li><a href="#features">Core Engineering & Features</a></li>
-                <li><a href="#tools">Available Tools</a></li>
-                <li><a href="#api">API Endpoints</a></li>
-                <li><a href="#installation">Installation & Setup</a></li>
-                <li><a href="#configuration">Configuration</a></li>
-                <li><a href="#usage">Usage & Testing</a></li>
-                <li><a href="#development">Development</a></li>
+              <li>
+                <span
+                  class="popup-trigger"
+                  onclick="showPopup('two-stage-pipeline')"
+                  >Two-Stage Pipeline</span
+                >
+              </li>
+              <li>
+                <span class="popup-trigger" onclick="showPopup('direct-rag')"
+                  >Direct RAG Streaming</span
+                >
+              </li>
+              <li>Concurrent Tool Execution</li>
+              <li>Stateful Conversations</li>
             </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🛡️ Resilience & Resource Management</h4>
+            <ul>
+              <li>
+                <span
+                  class="popup-trigger"
+                  onclick="showPopup('circuit-breakers')"
+                  >Anti-Fragile Circuit Breakers</span
+                >
+              </li>
+              <li>Single-Flight Request Coalescing</li>
+              <li>State-Aware Janitor</li>
+              <li>End-to-End Cancellation</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>📊 Data Handling & Integrity</h4>
+            <ul>
+              <li>Targeted Token Truncation</li>
+              <li>Context-Aware Caching</li>
+              <li>Retrieval-Augmented Generation</li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🔭 Total System Observability</h4>
+            <ul>
+              <li>
+                <span class="popup-trigger" onclick="showPopup('observability')"
+                  >Complete Observability Stack</span
+                >
+              </li>
+              <li>Structured JSON Logging</li>
+              <li>Real-time Dashboards</li>
+            </ul>
+          </div>
         </div>
+      </section>
 
-        <section id="architecture">
-            <h2>🏗️ System Architecture</h2>
-            <p>The system is a decoupled, two-stage worker pipeline designed for high throughput. It separates fast data preparation from slow LLM interactions and executes blocking tool calls concurrently to minimize latency.</p>
+      <section id="tools">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🛠️ Available Tools</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Market & News Tools</h4>
+              <ul>
+                <li>
+                  <code>realtime_market</code>: Fetches a live snapshot of
+                  market data for one or more stocks
+                </li>
+                <li>
+                  <code>historical_marketdata</code>: Retrieves historical price
+                  and volume data
+                </li>
+                <li>
+                  <code>news_summary</code>: Fetches the 5 most recent news
+                  article summaries
+                </li>
+                <li>
+                  <code>get_current_time</code>: Returns the current date and
+                  time
+                </li>
+              </ul>
 
-            <div class="expandable-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>View Complete Architecture Diagram</h3>
-                    <span class="expand-icon">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-inner">
-                        <div class="mermaid">
-graph TD
-    subgraph Client ["Client Interface"]
-        UI["🌐 Web Frontend / API Client"]
-    end
-    subgraph AppServer ["⚡ Application Server (Go Gin)"]
-        A["POST /chat/submit"]
-        C["GET /chat/stream/:id"]
-        Cancel["POST /chat/cancel/:id"]
-    end
-    subgraph AgenticCore ["🤖 Agentic Core Engine"]
-        B["🧠 Chatbot Manager<br/>(Central State & Single-Flight)"]
-        D["Request Queue"]
-        D2["Prepared Queue"]
-        subgraph Stage1 ["🔄 Stage 1: Preparation Pool"]
-            E1["Prep Worker"]
-        end
-        subgraph ToolEngine ["⚡ Tool Engine"]
-            T_Standard["Blocking Tools<br/>(e.g., APIs, DBs)"]
-            T_Stream["Streaming Tools<br/>(e.g., RAG SSE)"]
-        end
-        subgraph Stage2 ["📊 Stage 2: Streaming Pool"]
-            E2["Stream Worker"]
-        end
-        Janitor["🧹 State-Aware Janitor<br/>(Resource Cleanup)"]
-    end
-    subgraph ExtDeps ["🌍 External Dependencies"]
-        L["BE Microservices"]
-        M["ArangoDB"]
-        N["Redis Cache"]
-        P["LLM Provider"]
-    end
-    subgraph Observability ["🔭 Observability Stack"]
-        Vec["Vector"]
-        Lok["Loki"]
-        Graf["Grafana"]
-    end
+              <h4>Valuation & Research Tools</h4>
+              <ul>
+                <li>
+                  <code>stock_valuation</code>: Multi-faceted valuation with
+                  quality, fair value, and trading signals
+                </li>
+                <li>
+                  <code>analyze_stock</code>: Qualitative research data
+                  (business line, competitive advantage)
+                </li>
+              </ul>
 
-    UI --> A; UI --> C; UI --> Cancel
-    A -->|"1. Submit"| B -->|"2. Enqueue"| D
-    D -->|"3. Prepare"| E1
-    E1 -->|"4a. Tool Selection"| P
-    E1 -->|"4b. Standard Exec"| T_Standard
-    T_Standard --> L; T_Standard --> M; T_Standard --> N
-    E1 -->|"5. Handoff"| D2
-    D2 -->|"6. Acquire"| E2
-    E2 -->|"7a. LLM Synth Path"| P
-    E2 -->|"7b. Direct Stream Path"| T_Stream
-    E2 -->|"8. Stream Response"| B
-    C -->|"9a. Get Stream"| B -->|"9b. Deliver"| C
-    Cancel -->|"Signal"| B
-    Janitor -->|"Monitor & Clean"| B
-    AppServer -->|"JSON Logs"| Vec -->|"Forward"| Lok -->|"Query"| Graf
+              <h4>Financial Report Tools</h4>
+              <ul>
+                <li>
+                  <code>financial_annualreport</code>: Annual financial reports
+                  over a range of years
+                </li>
+                <li>
+                  <code>financial_quarterreport</code>: Quarterly financial
+                  reports
+                </li>
+                <li>
+                  <code>financial_ttmreport</code>: Trailing Twelve Month (TTM)
+                  values
+                </li>
+                <li>
+                  <code>financial_ytdreport</code>: Year-to-Date (YTD)
+                  cumulative values
+                </li>
+              </ul>
 
-    classDef clientStyle fill:#cce5ff,stroke:#004085
-    classDef serverStyle fill:#d4edda,stroke:#155724
-    classDef coreStyle fill:#fff3cd,stroke:#856404
-    classDef stage1Style fill:#f8d7da,stroke:#721c24
-    classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
-    classDef stage2Style fill:#d1ecf1,stroke:#0c5460
-    classDef extStyle fill:#e2f3e4,stroke:#28a745
-    classDef janitorStyle fill:#f5c6cb,stroke:#721c24
-    classDef queueStyle fill:#d6d8db,stroke:#383d41
-    classDef obsStyle fill:#e0e0e0,stroke:#6c757d
-    class UI clientStyle
-    class A,C,Cancel serverStyle
-    class B coreStyle
-    class D,D2 queueStyle
-    class E1 stage1Style
-    class T_Standard,T_Stream toolStyle
-    class E2 stage2Style
-    class L,M,N,P extStyle
-    class Janitor janitorStyle
-    class Vec,Lok,Graf obsStyle
-                        </div>
-                    </div>
-                </div>
+              <h4>Financial Ratio Tools</h4>
+              <ul>
+                <li>
+                  <code>financial_profitability_ratio</code>: ROA TTM, ROE TTM,
+                  etc.
+                </li>
+                <li>
+                  <code>financial_solvency_ratio</code>: Current Ratio, Debt
+                  equity ratio, etc.
+                </li>
+                <li>
+                  <code>financial_valuation_ratio</code>: PER (TTM), PBV (YTD),
+                  etc.
+                </li>
+                <li>
+                  <code>financial_dividend_ratio</code>: Dividend (TTM), Payout
+                  Ratio, etc.
+                </li>
+              </ul>
+
+              <h4>Knowledge & Support Tools</h4>
+              <ul>
+                <li>
+                  <code>frequently_asked</code>:
+                  <strong>(Direct Stream Path)</strong> Answers general
+                  questions by streaming directly from RAG pipeline
+                </li>
+              </ul>
             </div>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        <section id="features">
-            <h2>⚡ Core Engineering & Features</h2>
+      <section id="api">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🔌 API Endpoints</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <p>
+                <strong
+                  >📚
+                  <a
+                    href="https://www.postman.com/mahfuzh74/tuntun/documentation/ur1u6pg/go-llm-chatbot"
+                    target="_blank"
+                    >View Complete Postman Documentation</a
+                  ></strong
+                >
+              </p>
 
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h4>🚀 Performance & Architecture</h4>
-                    <ul>
-                        <li><span class="popup-trigger" onclick="showPopup('two-stage-pipeline')">Two-Stage Pipeline</span></li>
-                        <li><span class="popup-trigger" onclick="showPopup('direct-rag')">Direct RAG Streaming</span></li>
-                        <li>Concurrent Tool Execution</li>
-                        <li>Stateful Conversations</li>
-                    </ul>
-                </div>
+              <h4>Authentication</h4>
+              <p>
+                Protected endpoints under the <code>/chat</code> group require
+                an <code>X-API-Key</code> header matching the configured
+                environment variable.
+              </p>
 
-                <div class="feature-card">
-                    <h4>🛡️ Resilience & Resource Management</h4>
-                    <ul>
-                        <li><span class="popup-trigger" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</span></li>
-                        <li>Single-Flight Request Coalescing</li>
-                        <li>State-Aware Janitor</li>
-                        <li>End-to-End Cancellation</li>
-                    </ul>
-                </div>
-
-                <div class="feature-card">
-                    <h4>📊 Data Handling & Integrity</h4>
-                    <ul>
-                        <li>Targeted Token Truncation</li>
-                        <li>Context-Aware Caching</li>
-                        <li>Retrieval-Augmented Generation</li>
-                    </ul>
-                </div>
-
-                <div class="feature-card">
-                    <h4>🔭 Total System Observability</h4>
-                    <ul>
-                        <li><span class="popup-trigger" onclick="showPopup('observability')">Complete Observability Stack</span></li>
-                        <li>Structured JSON Logging</li>
-                        <li>Real-time Dashboards</li>
-                    </ul>
-                </div>
+              <h4>Endpoints Summary</h4>
+              <ul>
+                <li>
+                  <code>POST /chat/submit</code>: (Auth) Submits a query,
+                  returns a <code>request_id</code>
+                </li>
+                <li>
+                  <code>GET /chat/stream/:request_id</code>: (Public)
+                  Establishes SSE connection to stream response
+                </li>
+                <li>
+                  <code>POST /chat/cancel/:request_id</code>: (Public) Cancels
+                  an in-progress request
+                </li>
+                <li>
+                  <code>POST /chat/update_reaction</code>: (Auth) Updates user
+                  feedback for a response
+                </li>
+                <li>
+                  <code>GET /chat/get_chat_history</code>: (Auth) Retrieves
+                  conversation history
+                </li>
+              </ul>
             </div>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        <section id="tools">
-            <div class="expandable-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>🛠️ Available Tools</h3>
-                    <span class="expand-icon">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-inner">
-                        <h4>Market & News Tools</h4>
-                        <ul>
-                            <li><code>realtime_market</code>: Fetches a live snapshot of market data for one or more stocks</li>
-                            <li><code>historical_marketdata</code>: Retrieves historical price and volume data</li>
-                            <li><code>news_summary</code>: Fetches the 5 most recent news article summaries</li>
-                            <li><code>get_current_time</code>: Returns the current date and time</li>
-                        </ul>
+      <section id="installation">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🚀 Installation & Setup</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Prerequisites</h4>
+              <ul>
+                <li>Go 1.24.0</li>
+                <li>Redis Server</li>
+                <li>ArangoDB</li>
+                <li>Docker & Docker Compose</li>
+                <li>A configured <code>.env</code> file</li>
+              </ul>
 
-                        <h4>Valuation & Research Tools</h4>
-                        <ul>
-                            <li><code>stock_valuation</code>: Multi-faceted valuation with quality, fair value, and trading signals</li>
-                            <li><code>analyze_stock</code>: Qualitative research data (business line, competitive advantage)</li>
-                        </ul>
+              <h4>Running with Docker Compose (Recommended)</h4>
+              <p>This is the canonical way to run the entire system:</p>
+              <ol>
+                <li>Clone the repository</li>
+                <li>Create your <code>.env</code> file from the template</li>
+                <li>Launch everything:</li>
+              </ol>
+              <pre><code>docker-compose up --build</code></pre>
+              <p>This single command will:</p>
+              <ul>
+                <li>Build the Go application container</li>
+                <li>Start ArangoDB, Redis, Loki, Grafana, and Vector</li>
+                <li>Chatbot available at <code>http://localhost:8081</code></li>
+                <li>Grafana available at <code>http://localhost:3000</code></li>
+              </ul>
 
-                        <h4>Financial Report Tools</h4>
-                        <ul>
-                            <li><code>financial_annualreport</code>: Annual financial reports over a range of years</li>
-                            <li><code>financial_quarterreport</code>: Quarterly financial reports</li>
-                            <li><code>financial_ttmreport</code>: Trailing Twelve Month (TTM) values</li>
-                            <li><code>financial_ytdreport</code>: Year-to-Date (YTD) cumulative values</li>
-                        </ul>
-
-                        <h4>Financial Ratio Tools</h4>
-                        <ul>
-                            <li><code>financial_profitability_ratio</code>: ROA TTM, ROE TTM, etc.</li>
-                            <li><code>financial_solvency_ratio</code>: Current Ratio, Debt equity ratio, etc.</li>
-                            <li><code>financial_valuation_ratio</code>: PER (TTM), PBV (YTD), etc.</li>
-                            <li><code>financial_dividend_ratio</code>: Dividend (TTM), Payout Ratio, etc.</li>
-                        </ul>
-
-                        <h4>Knowledge & Support Tools</h4>
-                        <ul>
-                            <li><code>frequently_asked</code>: <strong>(Direct Stream Path)</strong> Answers general questions by streaming directly from RAG pipeline</li>
-                        </ul>
-                    </div>
-                </div>
+              <h4>Manual Local Setup</h4>
+              <ol>
+                <li>Clone repo and <code>cd</code> into it</li>
+                <li>Install dependencies: <code>go mod tidy</code></li>
+                <li>Configure <code>.env</code></li>
+                <li>
+                  Run services: Ensure Redis, ArangoDB, and dependent
+                  microservices are running
+                </li>
+                <li>Run app: <code>go run main.go</code></li>
+              </ol>
             </div>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        <section id="api">
-            <div class="expandable-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>🔌 API Endpoints</h3>
-                    <span class="expand-icon">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-inner">
-                        <p><strong>📚 <a href="https://www.postman.com/mahfuzh74/tuntun/documentation/ur1u6pg/go-llm-chatbot" target="_blank">View Complete Postman Documentation</a></strong></p>
-
-                        <h4>Authentication</h4>
-                        <p>Protected endpoints under the <code>/chat</code> group require an <code>X-API-Key</code> header matching the configured environment variable.</p>
-
-                        <h4>Endpoints Summary</h4>
-                        <ul>
-                            <li><code>POST /chat/submit</code>: (Auth) Submits a query, returns a <code>request_id</code></li>
-                            <li><code>GET /chat/stream/:request_id</code>: (Public) Establishes SSE connection to stream response</li>
-                            <li><code>POST /chat/cancel/:request_id</code>: (Public) Cancels an in-progress request</li>
-                            <li><code>POST /chat/update_reaction</code>: (Auth) Updates user feedback for a response</li>
-                            <li><code>GET /chat/get_chat_history</code>: (Auth) Retrieves conversation history</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="installation">
-            <div class="expandable-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>🚀 Installation & Setup</h3>
-                    <span class="expand-icon">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-inner">
-                        <h4>Prerequisites</h4>
-                        <ul>
-                            <li>Go 1.24.0</li>
-                            <li>Redis Server</li>
-                            <li>ArangoDB</li>
-                            <li>Docker & Docker Compose</li>
-                            <li>A configured <code>.env</code> file</li>
-                        </ul>
-
-                        <h4>Running with Docker Compose (Recommended)</h4>
-                        <p>This is the canonical way to run the entire system:</p>
-                        <ol>
-                            <li>Clone the repository</li>
-                            <li>Create your <code>.env</code> file from the template</li>
-                            <li>Launch everything:</li>
-                        </ol>
-                        <pre><code>docker-compose up --build</code></pre>
-                        <p>This single command will:</p>
-                        <ul>
-                            <li>Build the Go application container</li>
-                            <li>Start ArangoDB, Redis, Loki, Grafana, and Vector</li>
-                            <li>Chatbot available at <code>http://localhost:8081</code></li>
-                            <li>Grafana available at <code>http://localhost:3000</code></li>
-                        </ul>
-
-                        <h4>Manual Local Setup</h4>
-                        <ol>
-                            <li>Clone repo and <code>cd</code> into it</li>
-                            <li>Install dependencies: <code>go mod tidy</code></li>
-                            <li>Configure <code>.env</code></li>
-                            <li>Run services: Ensure Redis, ArangoDB, and dependent microservices are running</li>
-                            <li>Run app: <code>go run main.go</code></li>
-                        </ol>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="configuration">
-            <div class="expandable-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>⚙️ Configuration (.env file)</h3>
-                    <span class="expand-icon">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-inner">
-                        <p>This file is critical for tuning system performance and behavior.</p>
-                        <pre><code>
+      <section id="configuration">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>⚙️ Configuration (.env file)</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <p>
+                This file is critical for tuning system performance and
+                behavior.
+              </p>
+              <pre><code>
 # LLM Configuration
 LLM_TYPE=DEEPSEEK # Options: OPENAI, DEEPSEEK, OLLAMA
 DEEPSEEK_API_KEY=sk-your-deepseek-key
@@ -354,51 +433,54 @@ BE_NEWS_LATEST_URL=http://...
 TENCENT_RAG_URL=https://...
 TENCENT_RAG_BOT_APP_KEY=...
 </code></pre>
-                    </div>
-                </div>
             </div>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        <section id="usage">
-            <div class="expandable-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>🎯 Usage & Testing</h3>
-                    <span class="expand-icon">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-inner">
-                        <h4>Running the Application</h4>
-                        <pre><code>go run main.go</code></pre>
-                        <p>The server starts on the configured host and port (default <code>http://localhost:8080</code>).</p>
+      <section id="usage">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🎯 Usage & Testing</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Running the Application</h4>
+              <pre><code>go run main.go</code></pre>
+              <p>
+                The server starts on the configured host and port (default
+                <code>http://localhost:8080</code>).
+              </p>
 
-                        <h4>Advanced Concurrency Testing</h4>
-                        <p><strong>1. Testing General Throughput:</strong></p>
-                        <pre><code>go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
+              <h4>Advanced Concurrency Testing</h4>
+              <p><strong>1. Testing General Throughput:</strong></p>
+              <pre><code>go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
 
-                        <p><strong>2. Testing Single-Flight Protection:</strong></p>
-                        <pre><code>go run ./cmd/test_single_flight -n 10</code></pre>
+              <p><strong>2. Testing Single-Flight Protection:</strong></p>
+              <pre><code>go run ./cmd/test_single_flight -n 10</code></pre>
 
-                        <h4>Running Standard Tests</h4>
-                        <pre><code>go test -v ./...</code></pre>
+              <h4>Running Standard Tests</h4>
+              <pre><code>go test -v ./...</code></pre>
 
-                        <h4>Running Endpoint Health Checks</h4>
-                        <pre><code>chmod +x run_health_checks.sh
+              <h4>Running Endpoint Health Checks</h4>
+              <pre><code>chmod +x run_health_checks.sh
 ./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
-                    </div>
-                </div>
             </div>
-        </section>
+          </div>
+        </div>
+      </section>
 
-        <section id="development">
-            <div class="expandable-section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <h3>👨‍💻 Development</h3>
-                    <span class="expand-icon">▼</span>
-                </div>
-                <div class="section-content">
-                    <div class="section-inner">
-                        <h4>Project Structure</h4>
-                        <pre><code>tuntun-go-chatbot/
+      <section id="development">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>👨‍💻 Development</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Project Structure</h4>
+              <pre><code>tuntun-go-chatbot/
 ├── chatbot/                # Core agentic logic
 ├── cmd/                    # Standalone utility commands
 ├── config/                 # Environment variable loading
@@ -415,66 +497,77 @@ TENCENT_RAG_BOT_APP_KEY=...
 ├── types/                  # Core application-wide data structures
 └── main.go                 # Application entry point</code></pre>
 
-                        <h4>Adding a New Tool</h4>
-                        <ol>
-                            <li><strong>(Optional) Implement Logic:</strong> Create the core function in <code>toolbe/</code> or <code>toolnonbe/</code></li>
-                            <li><strong>Define the Tool:</strong> Modify <code>tools/toolcore/definitions.go</code> and add to <code>allTools</code> slice</li>
-                            <li><strong>Add Tests:</strong> Create test in <code>tools/tooltest/</code> and healthcheck in <code>tools/tooltest/extapi/</code></li>
-                        </ol>
-                    </div>
-                </div>
+              <h4>Adding a New Tool</h4>
+              <ol>
+                <li>
+                  <strong>(Optional) Implement Logic:</strong> Create the core
+                  function in <code>toolbe/</code> or <code>toolnonbe/</code>
+                </li>
+                <li>
+                  <strong>Define the Tool:</strong> Modify
+                  <code>tools/toolcore/definitions.go</code> and add to
+                  <code>allTools</code> slice
+                </li>
+                <li>
+                  <strong>Add Tests:</strong> Create test in
+                  <code>tools/tooltest/</code> and healthcheck in
+                  <code>tools/tooltest/extapi/</code>
+                </li>
+              </ol>
             </div>
-        </section>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- Modal for detailed explanations -->
     <div id="popup-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closePopup()">&times;</span>
-            <div id="popup-content"></div>
-        </div>
+      <div class="modal-content">
+        <span class="close" onclick="closePopup()">&times;</span>
+        <div id="popup-content"></div>
+      </div>
     </div>
 
     <script>
-        // Initialize Mermaid
-        mermaid.initialize({
-            startOnLoad: true,
-            theme: 'base',
-            themeVariables: {
-                primaryColor: '#667eea',
-                primaryTextColor: '#333',
-                primaryBorderColor: '#764ba2',
-                lineColor: '#666',
-                secondaryColor: '#a8edea',
-                tertiaryColor: '#fed6e3'
-            }
-        });
+      // Initialize Mermaid
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#667eea",
+          primaryTextColor: "#333",
+          primaryBorderColor: "#764ba2",
+          lineColor: "#666",
+          secondaryColor: "#a8edea",
+          tertiaryColor: "#fed6e3",
+        },
+      });
 
-        function toggleSection(header) {
-            const section = header.parentElement;
-            const content = section.querySelector('.section-content');
-            const icon = header.querySelector('.expand-icon');
+      function toggleSection(header) {
+        const section = header.parentElement;
+        const content = section.querySelector(".section-content");
+        const icon = header.querySelector(".expand-icon");
 
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                section.classList.remove('expanded');
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                content.classList.add('expanded');
-                section.classList.add('expanded');
-                icon.style.transform = 'rotate(180deg)';
-            }
+        if (content.classList.contains("expanded")) {
+          content.classList.remove("expanded");
+          section.classList.remove("expanded");
+          icon.style.transform = "rotate(0deg)";
+        } else {
+          content.classList.add("expanded");
+          section.classList.add("expanded");
+          icon.style.transform = "rotate(180deg)";
         }
+      }
 
-        function showPopup(type) {
-            const modal = document.getElementById('popup-modal');
-            const content = document.getElementById('popup-content');
+      function showPopup(type) {
+        const modal = document.getElementById("popup-modal");
+        const content = document.getElementById("popup-content");
 
-            let popupContent = '';
+        let popupContent = "";
 
-            switch(type) {
-                case 'two-stage-pipeline':
-                    popupContent = `
+        switch (type) {
+          case "two-stage-pipeline":
+            popupContent = `
                         <h2>🔄 Two-Stage Pipeline</h2>
                         <p>Decouples fast data-prep workers from slow LLM-streaming workers using two independent, semaphore-limited worker pools (<code>prepare</code> -> <code>stream</code>). This prevents slow LLM API calls from blocking new incoming requests, maximizing throughput.</p>
                         <p><strong>Benefits:</strong></p>
@@ -485,10 +578,10 @@ TENCENT_RAG_BOT_APP_KEY=...
                             <li>Prevents cascading delays</li>
                         </ul>
                     `;
-                    break;
+            break;
 
-                case 'direct-rag':
-                    popupContent = `
+          case "direct-rag":
+            popupContent = `
                         <h2>🚀 Direct RAG Streaming</h2>
                         <p>For designated <code>NATURAL_ANSWER_TOOLS</code> like knowledge base queries, the system activates a bypass path that <strong>completely skips the second LLM synthesis call</strong>, streaming the response from the RAG tool directly to the user.</p>
                         <p><strong>Standard Flow:</strong> LLM selects tools → Execute tools → LLM synthesizes answer</p>
@@ -501,10 +594,10 @@ TENCENT_RAG_BOT_APP_KEY=...
                             <li>Better performance for FAQ-style queries</li>
                         </ul>
                     `;
-                    break;
+            break;
 
-                case 'circuit-breakers':
-                    popupContent = `
+          case "circuit-breakers":
+            popupContent = `
                         <h2>🛡️ Anti-Fragile Circuit Breakers</h2>
                         <p>Every critical external dependency (LLM, Redis, ArangoDB) is wrapped in its own circuit breaker to prevent cascading failures.</p>
                         <div class="mermaid">
@@ -588,10 +681,10 @@ graph TD
                             <li>System remains responsive during outages</li>
                         </ul>
                     `;
-                    break;
+            break;
 
-                case 'observability':
-                    popupContent = `
+          case "observability":
+            popupContent = `
                         <h2>🔭 Complete Observability Stack</h2>
                         <p>Total system visibility through structured logging and modern observability tools.</p>
                         <div class="mermaid">
@@ -626,77 +719,81 @@ graph TD
                         </ul>
                         <p><em>"This transforms debugging from an archaeological dig into a surgical strike."</em></p>
                     `;
-                    break;
+            break;
 
-                default:
-                    popupContent = '<h2>Feature Details</h2><p>Feature details not available.</p>';
-            }
-
-            content.innerHTML = popupContent;
-            modal.style.display = 'block';
-
-            // Re-initialize Mermaid for new content
-            if (type === 'circuit-breakers' || type === 'observability') {
-                setTimeout(() => {
-                    mermaid.init();
-                }, 100);
-            }
+          default:
+            popupContent =
+              "<h2>Feature Details</h2><p>Feature details not available.</p>";
         }
 
-        function closePopup() {
-            document.getElementById('popup-modal').style.display = 'none';
+        content.innerHTML = popupContent;
+        modal.style.display = "block";
+
+        // Re-initialize Mermaid for new content
+        if (type === "circuit-breakers" || type === "observability") {
+          setTimeout(() => {
+            mermaid.init();
+          }, 100);
         }
+      }
 
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            const modal = document.getElementById('popup-modal');
-            if (event.target === modal) {
-                closePopup();
-            }
+      function closePopup() {
+        document.getElementById("popup-modal").style.display = "none";
+      }
+
+      // Close modal when clicking outside of it
+      window.onclick = function (event) {
+        const modal = document.getElementById("popup-modal");
+        if (event.target === modal) {
+          closePopup();
         }
+      };
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closePopup();
-            }
-        });
+      // Close modal with Escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closePopup();
+        }
+      });
 
-        // Smooth scrolling for TOC links
-        document.querySelectorAll('.toc a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
+      // Smooth scrolling for TOC links
+      document.querySelectorAll('.toc a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
             });
+          }
         });
+      });
 
-        // Auto-expand sections when navigating via TOC
-        document.querySelectorAll('.toc a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const targetId = this.getAttribute('href').substring(1);
-                const targetSection = document.getElementById(targetId);
-                if (targetSection) {
-                    const expandableSection = targetSection.querySelector('.expandable-section');
-                    if (expandableSection) {
-                        const content = expandableSection.querySelector('.section-content');
-                        const header = expandableSection.querySelector('.section-header');
-                        const icon = header.querySelector('.expand-icon');
+      // Auto-expand sections when navigating via TOC
+      document.querySelectorAll('.toc a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          const targetId = this.getAttribute("href").substring(1);
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+            const expandableSection = targetSection.querySelector(
+              ".expandable-section",
+            );
+            if (expandableSection) {
+              const content =
+                expandableSection.querySelector(".section-content");
+              const header = expandableSection.querySelector(".section-header");
+              const icon = header.querySelector(".expand-icon");
 
-                        if (!content.classList.contains('expanded')) {
-                            content.classList.add('expanded');
-                            expandableSection.classList.add('expanded');
-                            icon.style.transform = 'rotate(180deg)';
-                        }
-                    }
-                }
-            });
+              if (!content.classList.contains("expanded")) {
+                content.classList.add("expanded");
+                expandableSection.classList.add("expanded");
+                icon.style.transform = "rotate(180deg)";
+              }
+            }
+          }
         });
+      });
     </script>
-</body>
+  </body>
 </html>
