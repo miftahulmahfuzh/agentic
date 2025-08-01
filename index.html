@@ -684,21 +684,21 @@ graph TD
                 <div class="mermaid">
 graph TD
     subgraph "Traditional Serial Execution"
-      A[Start] --> T1[Tool 1 (3s)];
-      T1 --> T2[Tool 2 (1s)];
-      T2 --> T3[Tool 3 (2s)];
-      T3 --> E[End];
-      E --> TotalS[Total Time: 6s];
+      A[Start] --> T1[Tool 1 (3s)]
+      T1 --> T2[Tool 2 (1s)]
+      T2 --> T3[Tool 3 (2s)]
+      T3 --> E[End]
+      E --> TotalS[Total Time: 6s]
     end
 
     subgraph "Concurrent Execution"
-      B[Start] --> P1[Tool 1 (3s)];
-      B --> P2[Tool 2 (1s)];
-      B --> P3[Tool 3 (2s)];
-      P1 --> F[End];
-      P2 --> F;
-      P3 --> F;
-      F --> TotalP[Total Time: 3s];
+      B[Start] --> P1[Tool 1 (3s)]
+      B --> P2[Tool 2 (1s)]
+      B --> P3[Tool 3 (2s)]
+      P1 --> F[End]
+      P2 --> F
+      P3 --> F
+      F --> TotalP[Total Time: 3s]
     end
                 </div>
                 <p>This is implemented in <code>toolutils.ExecuteToolsInParallel</code> using a <code>sync.WaitGroup</code> to manage the goroutines.</p>
