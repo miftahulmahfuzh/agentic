@@ -682,23 +682,23 @@ graph TD
                 <h2>⚡ Concurrent Tool Execution</h2>
                 <p>The system leverages Go's powerful concurrency model (goroutines) to execute multiple tool calls in parallel. Instead of waiting for each tool to finish sequentially, it launches all tool calls at once and waits for them all to complete.</p>
                 <div class="mermaid">
-graph TD
-    subgraph Serial [Traditional Serial Execution]
-        A[Start] --> T1[Tool 1 (3s)]
-        T1 --> T2[Tool 2 (1s)]
-        T2 --> T3[Tool 3 (2s)]
-        T3 --> E[End]
-        E --> TotalS[Total Time: 6s]
-    end
-    subgraph Parallel [Concurrent Execution]
-        B[Start] --> P1[Tool 1 (3s)]
-        B --> P2[Tool 2 (1s)]
-        B --> P3[Tool 3 (2s)]
-        P1 --> F[End]
-        P2 --> F
-        P3 --> F
-        F --> TotalP[Total Time: 3s]
-    end
+graph TD;
+        subgraph Serial[Traditional Serial Execution]
+          A[Start] --> T1[Tool 1 (3s)];
+          T1 --> T2[Tool 2 (1s)];
+          T2 --> T3[Tool 3 (2s)];
+          T3 --> E[End];
+          E --> TotalS[Total Time: 6s];
+        end
+        subgraph Parallel[Concurrent Execution]
+          B[Start] --> P1[Tool 1 (3s)];
+          B --> P2[Tool 2 (1s)];
+          B --> P3[Tool 3 (2s)];
+          P1 --> F[End];
+          P2 --> F;
+          P3 --> F;
+          F --> TotalP[Total Time: 3s];
+        end
                 </div>
                 <p>This is implemented in <code>toolutils.ExecuteToolsInParallel</code> using a <code>sync.WaitGroup</code> to manage the goroutines.</p>
                 <p><strong>Benefit:</strong> Drastically reduces data-gathering latency. The total wait time is determined by the <strong>slowest single tool</strong>, not the sum of all tool execution times.</p>
