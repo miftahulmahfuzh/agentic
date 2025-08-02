@@ -1,0 +1,1046 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <link rel="stylesheet" href="{{ "style.css" | absURL }}">
+    <link rel="icon" type="image/png" href="{{ "favicon.png" | absURL }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+  </head>
+  <body>
+        <div class="container">
+      <h1>🤖 Tuntun Go Agentic Chatbot</h1>
+
+      <div class="intro">
+        <p>
+          <strong>An enterprise-grade, high-concurrency agentic chatbot system built
+            in Go.</strong>
+          It uses the Gin web framework and LangChainGo to provide a robust,
+          intelligent assistant for the financial sector, integrating LLM
+          capabilities with real-time financial data, market analysis, and news.
+        </p>
+      </div>
+
+      <div class="toc">
+        <h3>📋 Quick Navigation</h3>
+        <ul>
+          <li><a href="#architecture">System Architecture</a></li>
+          <li><a href="#features">Core Engineering & Features</a></li>
+          <li><a href="#tools">Available Tools</a></li>
+          <li><a href="#api">API Endpoints</a></li>
+          <li><a href="#installation">Installation & Setup</a></li>
+          <li><a href="#configuration">Configuration</a></li>
+          <li><a href="#usage">Usage & Testing</a></li>
+          <li><a href="#development">Development</a></li>
+          <li><a href="#documentation">Documentation</a></li>
+        </ul>
+      </div>
+
+      <section id="architecture">
+        <h2>🏗️ System Architecture</h2>
+        <p>
+          The system is a decoupled, two-stage worker pipeline designed for high
+          throughput. It separates fast data preparation from slow LLM
+          interactions and executes blocking tool calls concurrently to minimize
+          latency.
+        </p>
+
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>View Complete Architecture Diagram</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <div class="mermaid">
+graph TD
+    subgraph Client ["Client Interface"]
+        UI["🌐 Web Frontend / API Client"]
+    end
+    subgraph AppServer ["⚡ Application Server (Go Gin)"]
+        A["POST /chat/submit"]
+        C["GET /chat/stream/:id"]
+        Cancel["POST /chat/cancel/:id"]
+    end
+    subgraph AgenticCore ["🤖 Agentic Core Engine"]
+        B["🧠 Chatbot Manager<br/>(Central State & Single-Flight)"]
+        D["Request Queue"]
+        D2["Prepared Queue"]
+        subgraph Stage1 ["🔄 Stage 1: Preparation Pool"]
+            E1["Prep Worker"]
+        end
+        subgraph ToolEngine ["⚡ Tool Engine"]
+            T_Standard["Blocking Tools<br/>(e.g., APIs, DBs)"]
+            T_Stream["Streaming Tools<br/>(e.g., RAG SSE)"]
+        end
+        subgraph Stage2 ["📊 Stage 2: Streaming Pool"]
+            E2["Stream Worker"]
+        end
+        Janitor["🧹 State-Aware Janitor<br/>(Resource Cleanup)"]
+    end
+    subgraph ExtDeps ["🌍 External Dependencies"]
+        L["BE Microservices"]
+        M["ArangoDB"]
+        N["Redis Cache"]
+        P["LLM Provider"]
+    end
+    subgraph Observability ["🔭 Observability Stack"]
+        Vec["Vector"]
+        Lok["Loki"]
+        Graf["Grafana"]
+    end
+
+    %% Flow Definitions
+    UI --> A; UI --> C; UI --> Cancel
+    A -->|"1. Submit"| B -->|"2. Enqueue"| D
+    D -->|"3. Prepare"| E1
+    E1 -->|"4a. Tool Selection"| P
+    E1 -->|"4b. Standard Exec"| T_Standard
+    T_Standard --> L; T_Standard --> M; T_Standard --> N
+    E1 -->|"5. Handoff"| D2
+    D2 -->|"6. Acquire"| E2
+    E2 -->|"7a. LLM Synth Path"| P
+    E2 -->|"<strong>7b. Direct Stream Path</strong>"| T_Stream
+    E2 -->|"8. Stream Response"| B
+    C -->|"9a. Get Stream"| B -->|"9b. Deliver"| C
+    Cancel -->|"Signal"| B
+    Janitor -->|"Monitor & Clean"| B
+    AppServer -->|"JSON Logs"| Vec -->|"Forward"| Lok -->|"Query"| Graf
+
+    %% Styling
+    classDef clientStyle fill:#cce5ff,stroke:#004085
+    classDef serverStyle fill:#d4edda,stroke:#155724
+    classDef coreStyle fill:#fff3cd,stroke:#856404
+    classDef stage1Style fill:#f8d7da,stroke:#721c24
+    classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
+    classDef stage2Style fill:#d1ecf1,stroke:#0c5460
+    classDef extStyle fill:#e2f3e4,stroke:#28a745
+    classDef janitorStyle fill:#f5c6cb,stroke:#721c24
+    classDef queueStyle fill:#d6d8db,stroke:#383d41
+    classDef obsStyle fill:#e0e0e0,stroke:#6c757d
+    class UI clientStyle
+    class A,C,Cancel serverStyle
+    class B coreStyle
+    class D,D2 queueStyle
+    class E1 stage1Style
+    class T_Standard,T_Stream toolStyle
+    class E2 stage2Style
+    class L,M,N,P extStyle
+    class Janitor janitorStyle
+    class Vec,Lok,Graf obsStyle
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features">
+        <h2>⚡ Core Engineering & Features</h2>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h4>🚀 Performance & Architecture</h4>
+            <ul>
+                <li><span class="popup-trigger" onclick="showPopup('two-stage-pipeline')">Two-Stage Pipeline</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('concurrent-tool-execution')">Concurrent Tool Execution</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('stateful-conversation')">Stateful Conversations</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('data-driven-tools')">Data-Driven Tooling</span></li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🛡️ Resource Management</h4>
+            <ul>
+                <li><span class="popup-trigger" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight Request Coalescing</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('state-aware-janitor')">State-Aware Janitor</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span></li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>📊 Data Handling & Integrity</h4>
+            <ul>
+                <li><span class="popup-trigger" onclick="showPopup('token-truncation')">Targeted Token Truncation</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('context-aware-caching')">Context-Aware Caching</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('rag')">Direct Stream RAG</span></li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4>🔭 Total System Observability</h4>
+            <ul>
+                <li><span class="popup-trigger" onclick="showPopup('structured-logging')">Structured JSON Logging</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('observability')">Complete Observability Stack</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="tools">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🛠️ Available Tools</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Market & News Tools</h4>
+              <ul>
+                <li>
+                  <code>realtime_market</code>: Fetches a live snapshot of
+                  market data for one or more stocks
+                </li>
+                <li>
+                  <code>historical_marketdata</code>: Retrieves historical price
+                  and volume data
+                </li>
+                <li>
+                  <code>news_summary</code>: Fetches the 5 most recent news
+                  article summaries
+                </li>
+                <li>
+                  <code>get_current_time</code>: Returns the current date and
+                  time
+                </li>
+              </ul>
+
+              <h4>Valuation & Research Tools</h4>
+              <ul>
+                <li>
+                  <code>stock_valuation</code>: Multi-faceted valuation with
+                  quality, fair value, and trading signals
+                </li>
+                <li>
+                  <code>analyze_stock</code>: Qualitative research data
+                  (business line, competitive advantage)
+                </li>
+              </ul>
+
+              <h4>Financial Report Tools</h4>
+              <ul>
+                <li>
+                  <code>financial_annualreport</code>: Annual financial reports
+                  over a range of years
+                </li>
+                <li>
+                  <code>financial_quarterreport</code>: Quarterly financial
+                  reports
+                </li>
+                <li>
+                  <code>financial_ttmreport</code>: Trailing Twelve Month (TTM)
+                  values
+                </li>
+                <li>
+                  <code>financial_ytdreport</code>: Year-to-Date (YTD)
+                  cumulative values
+                </li>
+              </ul>
+
+              <h4>Financial Ratio Tools</h4>
+              <ul>
+                <li>
+                  <code>financial_profitability_ratio</code>: ROA TTM, ROE TTM,
+                  etc.
+                </li>
+                <li>
+                  <code>financial_solvency_ratio</code>: Current Ratio, Debt
+                  equity ratio, etc.
+                </li>
+                <li>
+                  <code>financial_valuation_ratio</code>: PER (TTM), PBV (YTD),
+                  etc.
+                </li>
+                <li>
+                  <code>financial_dividend_ratio</code>: Dividend (TTM), Payout
+                  Ratio, etc.
+                </li>
+              </ul>
+
+              <h4>Knowledge & Support Tools</h4>
+              <ul>
+                <li>
+                  <code>frequently_asked</code>:
+                  <strong>(Direct Stream Path)</strong> Answers general
+                  questions by streaming directly from RAG pipeline
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="api">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🔌 API Endpoints</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+
+              <h4>Authentication</h4>
+              <p>
+                Protected endpoints under the <code>/chat</code> group require
+                an <code>X-API-Key</code> header matching the configured
+                environment variable.
+              </p>
+
+              <h4>Endpoints Summary</h4>
+              <ul>
+                <li>
+                  <code>POST /chat/submit</code>: (Auth) Submits a query,
+                  returns a <code>request_id</code>
+                </li>
+                <li>
+                  <code>GET /chat/stream/:request_id</code>: (Public)
+                  Establishes SSE connection to stream response
+                </li>
+                <li>
+                  <code>POST /chat/cancel/:request_id</code>: (Public) Cancels
+                  an in-progress request
+                </li>
+                <li>
+                  <code>POST /chat/update_reaction</code>: (Auth) Updates user
+                  feedback for a response
+                </li>
+                <li>
+                  <code>GET /chat/get_chat_history</code>: (Auth) Retrieves
+                  conversation history
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="installation">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🚀 Installation & Setup</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Prerequisites</h4>
+              <ul>
+                <li>Go 1.24.0</li>
+                <li>Redis Server</li>
+                <li>ArangoDB</li>
+                <li>Docker & Docker Compose</li>
+                <li>A configured <code>.env</code> file</li>
+              </ul>
+
+              <h4>Running with Docker Compose (Recommended)</h4>
+              <p>This is the canonical way to run the entire system:</p>
+              <ol>
+                <li>Clone the repository</li>
+                <li>Create your <code>.env</code> file from the template</li>
+                <li>Launch everything:</li>
+              </ol>
+              <pre><code>docker-compose up --build</code></pre>
+              <p>This single command will:</p>
+              <ul>
+                <li>Build the Go application container</li>
+                <li>Start ArangoDB, Redis, Loki, Grafana, and Vector</li>
+                <li>Chatbot available at <code>http://localhost:8081</code></li>
+                <li>Grafana available at <code>http://localhost:3000</code></li>
+              </ul>
+
+              <h4>Manual Local Setup</h4>
+              <ol>
+                <li>Clone repo and <code>cd</code> into it</li>
+                <li>Install dependencies: <code>go mod tidy</code></li>
+                <li>Configure <code>.env</code></li>
+                <li>
+                  Run services: Ensure Redis, ArangoDB, and dependent
+                  microservices are running
+                </li>
+                <li>Run app: <code>go run main.go</code></li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="configuration">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>⚙️ Configuration (.env file)</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <p>
+                This file is critical for tuning system performance and
+                behavior.
+              </p>
+              <pre><code>
+# LLM Configuration
+LLM_TYPE=DEEPSEEK # Options: OPENAI, DEEPSEEK, OLLAMA
+DEEPSEEK_API_KEY=sk-your-deepseek-key
+OPENAI_API_KEY=sk-your-openai-key
+PROMPT_VERSION=v1
+
+# --- Token & Output Management ---
+MAX_LLM_INPUT_TOKENS=40000          # Max tokens the LLM accepts as input.
+MAX_TOTAL_TOOL_OUTPUT_TOKENS=33000  # Max combined tokens from all tools before truncation.
+LONG_TEXT_TOOLS=analyze_stock       # Comma-separated list of tools to truncate first.
+
+# --- Pipeline, Concurrency & Lifecycle Tuning ---
+# These settings dictate the performance and resilience of the system. Handle them with care.
+MAX_CONCURRENT_REQUESTS=10          # Number of workers in the fast data-prep pool. Higher = more concurrent request processing.
+MAX_CONCURRENT_LLM_STREAMS=5        # Number of workers in the slow LLM-interaction pool. Keep this low to avoid hitting API rate limits.
+HISTORY_ITEMS=3                     # Number of past conversation turns to include in the context.
+QUEUE_SIZE=100                      # Buffer size for requests between pipeline stages.
+STREAM_TOKEN_BUFFER=100             # Buffer for the final SSE stream to the client.
+
+# --- State-Aware Janitor & Timeouts ---
+JANITOR_INTERVAL=2m                 # How often The Wolf from Pulp Fiction shows up to clean the mess.
+PROCESSING_TIMEOUT=10m              # The bomb timer in Mission: Impossible. Max time a dequeued request can run before being killed. Kills stuck jobs.
+QUEUE_TIMEOUT=1h                    # Max time a request can wait in the queue before being discarded. A safety net for extreme load.
+TOOL_TIMEOUT=30s                    # Max execution time for a single tool call. Prevents a slow dependency from stalling everything.
+CLIENT_PICKUP_TIMEOUT=1s            # Grace period for the client to connect to the stream. Solves a race condition for fast/cached responses. MUST be short.
+SUBMIT_TIMEOUT=2s                   # The bouncer's patience. Max time to wait for a spot in the main request queue before rejecting the request. Prevents callers from hanging on a full system.
+
+# --- Caching & Direct Streaming ---
+REDIS_URL=redis://localhost:6379
+TIMEBOUND_TOOLS=realtime_market,get_current_time # Comma-separated list of tools whose results are never cached.
+NATURAL_ANSWER_TOOLS=frequently_asked            # Comma-separated list of tools that activate the Direct Stream Path, bypassing the second LLM call. This is a critical performance setting.
+
+# ArangoDB Configuration
+LOG_DB_URL=http://localhost:8529
+LOG_DB_USERNAME=root
+LOG_DB_PASSWORD=your_arangodb_password
+LOG_DB_NAME=tuntun_chatbot_v2
+LOG_DB_TEST_NAME=tuntun_chatbot_test
+LOG_DB_COLLECTION_NAME=chat_logs
+RESEARCH_DB_COLLECTION_NAME=research_report
+
+# --- API Server & Backend Services ---
+API_HOST=0.0.0.0
+API_PORT=8080
+API_KEY=your-secret-api-key
+
+# Backend Service Endpoints (direct http://... or service discovery consul://...)
+CONSUL_ADDR=127.0.0.1:8500
+BE_FAIR_VALUE_URL=http://...
+BE_TRADING_SIGNAL_URL=http://...
+BE_COMPANY_QUALITY_URL=http://...
+BE_ORDERBOOK_HEADER_URL=http://...
+BE_PRICE_SUMMARY_URL=http://...
+BE_FINANCIAL_DATA_URL=http://...
+BE_FINANCIAL_DATA_ALL_QUARTER_URL=http://...
+BE_HISTORICAL_MARKET_DATA_URL=http://...
+BE_NEWS_LATEST_URL=http://...
+# This endpoint is now called directly from the `frequently_asked` streaming tool.
+TENCENT_RAG_URL=https://...
+TENCENT_RAG_BOT_APP_KEY=...
+</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="usage">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>🎯 Usage & Testing</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Running the Application</h4>
+              <pre><code>go run main.go</code></pre>
+              <p>
+                The server starts on the configured host and port (default
+                <code>http://localhost:8080</code>).
+              </p>
+
+              <h4>Advanced Concurrency Testing</h4>
+              <p><strong>1. Testing General Throughput:</strong></p>
+              <pre><code>go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
+
+              <p><strong>2. Testing Single-Flight Protection:</strong></p>
+              <pre><code>go run ./cmd/test_single_flight -n 10</code></pre>
+
+              <h4>Running Standard Tests</h4>
+              <pre><code>go test -v ./...</code></pre>
+
+              <h4>Running Endpoint Health Checks</h4>
+              <pre><code>chmod +x run_health_checks.sh
+./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="development">
+        <div class="expandable-section">
+          <div class="section-header" onclick="toggleSection(this)">
+            <h3>👨‍💻 Development</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="section-content">
+            <div class="section-inner">
+              <h4>Project Structure</h4>
+              <pre><code>
+tuntun-go-chatbot/
+├── chatbot/                # Core agentic logic (manager, worker pool, janitor, prompts)
+├── cmd/                    # Standalone utility commands
+├── config/                 # Environment variable loading & validation
+├── core/                   # LLM model & core services initialization
+├── db/                     # Database clients (ArangoDB, Redis)
+├── frontend/               # Demo UI
+├── tools/                  # All tool definitions and implementations
+│   ├── toolbe/             # Backend-dependent tool implementations
+│   ├── toolnonbe/          # Self-contained tool implementations (e.g., RAG streamer)
+│   ├── toolcore/           # Core logic for tool registration and invocation
+│   │   ├── caller.go       # Orchestrates concurrent tool execution & direct stream path
+│   │   ├── definitions.go  # Single source of truth for all tool definitions
+│   │   ├── dynamic.go      # Implementation of DynamicTool used in definitions
+│   │   └── schemas.go      # Declaration of reusable input tools schemas
+│   ├── tooltest/           # Unit and integration tests for all tools
+│   │   └── extapi/         # Standalone health checks for external APIs
+│   ├── tooltypes/          # Shared Go structs for tool arguments and responses
+│   └── toolutils/          # Reusable helper functions for tools
+├── types/                  # Core application-wide data structures
+├── .env                    # Local environment variables (uncommitted)
+├── go.mod                  # Go module definitions
+├── main.go                 # Application entry point and Gin server setup
+├── docker-compose.yml      # Orchestrates all services for production & dev
+└── README.md
+              </code></pre>
+              <h4>Adding a New Tool</h4>
+              <ol>
+                <li>
+                  <strong>(Optional) Implement Logic:</strong> Create the core
+                  function in <code>toolbe/</code> or <code>toolnonbe/</code>
+                </li>
+                <li>
+                  <strong>Define the Tool:</strong> Modify
+                  <code>tools/toolcore/definitions.go</code> and add to
+                  <code>allTools</code> slice
+                </li>
+                <li>
+                  <strong>Add Tests:</strong> Create test in
+                  <code>tools/tooltest/</code> and healthcheck in
+                  <code>tools/tooltest/extapi/</code>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEW DOCUMENTATION SECTION -->
+      <section id="documentation">
+        <h2>📚 Documentation & Deep Dives</h2>
+        <div class="intro">
+          <p>
+            This page provides a high-level overview. For detailed architectural breakdowns, technical narratives, and implementation guides, explore the full documentation site.
+          </p>
+          <p style="text-align:center; margin-top: 20px;">
+            <a href="docs/" class="cta-button">Explore Full Documentation</a>
+          </p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Modal for detailed explanations -->
+    <div id="popup-modal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closePopup()">×</span>
+        <div id="popup-content"></div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize Mermaid
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "base",
+        themeVariables: {
+          primaryColor: "#667eea",
+          primaryTextColor: "#333",
+          primaryBorderColor: "#764ba2",
+          lineColor: "#666",
+          secondaryColor: "#a8edea",
+          tertiaryColor: "#fed6e3",
+        },
+      });
+
+      function toggleSection(header) {
+        const section = header.parentElement;
+        const content = section.querySelector(".section-content");
+        const icon = header.querySelector(".expand-icon");
+
+        if (content.classList.contains("expanded")) {
+          content.classList.remove("expanded");
+          section.classList.remove("expanded");
+          icon.style.transform = "rotate(0deg)";
+        } else {
+          content.classList.add("expanded");
+          section.classList.add("expanded");
+          icon.style.transform = "rotate(180deg)";
+        }
+      }
+
+      function showPopup(type) {
+        const modal = document.getElementById("popup-modal");
+        const content = document.getElementById("popup-content");
+
+        let popupContent = "";
+
+        switch (type) {
+          case "two-stage-pipeline":
+            popupContent = `
+                        <h2>🔄 Two-Stage Pipeline</h2>
+                        <p>Decouples fast data-prep workers from slow LLM-streaming workers using two independent, semaphore-limited worker pools (<code>prepare</code> -> <code>stream</code>). This prevents slow LLM API calls from blocking new incoming requests, maximizing throughput.</p>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li>New requests don't wait for slow LLM calls</li>
+                            <li>Higher system throughput under load</li>
+                            <li>Better resource utilization</li>
+                            <li>Prevents cascading delays</li>
+                        </ul>
+                    `;
+            break;
+
+          case "rag":
+            popupContent = `
+                        <h2>🚀 Direct Stream RAG</h2>
+                        <p>For designated <code>NATURAL_ANSWER_TOOLS</code> like knowledge base queries, the system activates a special RAG path. This bypasses the final LLM synthesis step, streaming the response from the knowledge tool directly to the user.</p>
+                        <p><strong>Standard Flow:</strong> User Query → LLM Selects Tools → Execute Tools → LLM Synthesizes Answer from Tool Output</p>
+                        <p><strong>Direct Stream Flow:</strong> User Query → LLM Selects RAG Tool → Execute RAG Tool → Stream Tool Output Directly to User</p>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li><strong>Lower Latency:</strong> Skips an entire LLM round-trip.</li>
+                            <li><strong>Reduced Cost:</strong> Saves on expensive LLM synthesis API calls.</li>
+                            <li><strong>Higher Fidelity:</strong> Delivers raw, unfiltered information directly from the source of truth.</li>
+                        </ul>
+                    `;
+            break;
+
+          case "circuit-breakers":
+            popupContent = `
+                        <h2>🛡️ Anti-Fragile Circuit Breakers</h2>
+                        <p>Every critical external dependency (LLM, Redis, ArangoDB) is wrapped in its own circuit breaker to prevent cascading failures.</p>
+                        <div class="mermaid">
+graph TD
+    subgraph Normal["Normal Operation (Closed)"]
+        direction LR
+        Req1[Request] -->|Success| Dep1[Dependency]
+        Dep1 -->|OK| Req1
+    end
+
+    subgraph FailureDetection["Failure Detection (Closed)"]
+        direction LR
+        Req2[Request] -->|Failure 1| Dep2[Dependency]
+        Dep2 -.->|"Timeout/Error"| Req2
+        Req3[Request] -->|Failure 2| Dep2
+        Dep2 -.->|"Timeout/Error"| Req3
+    end
+
+    subgraph CircuitOpen["Circuit Open"]
+        direction LR
+        CB_Open["Circuit Breaker<br/>(State: OPEN)"]
+        Req5[Request] -.->|"Fail Fast"| CB_Open
+        CB_Open -->|"ErrOpenState"| Req5
+    end
+
+    subgraph HalfOpen["Recovery Attempt (Half-Open)"]
+        direction LR
+        CB_Half["Circuit Breaker<br/>(State: HALF-OPEN)"]
+        Req7[Request] -->|Test Request| Dep3[Dependency]
+    end
+
+    Normal ==>|"Consecutive Failures"| FailureDetection
+    FailureDetection ==>|"Threshold Met"| CircuitOpen
+    CircuitOpen ==>|"Cooldown Expires"| HalfOpen
+    HalfOpen ==>|"Success (Reset)"| Normal
+    HalfOpen ==>|"Failure (Re-Open)"| CircuitOpen
+
+    classDef normal fill:#d4edda,stroke:#155724
+    classDef failing fill:#f8d7da,stroke:#721c24
+    classDef open fill:#f5c6cb,stroke:#721c24,color:#000
+    classDef halfopen fill:#fff3cd,stroke:#856404
+    class Normal,Dep1,Req1 normal; class FailureDetection,Dep2,Req2,Req3 failing; class CircuitOpen,CB_Open,Req5 open; class HalfOpen,CB_Half,Dep3,Req7 halfopen;
+                        </div>
+                        <p>When a dependency fails repeatedly, the circuit "opens," causing subsequent calls to fail instantly without tying up resources. After a cooldown, it enters a "half-open" state to test for recovery.</p>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li>Prevents worker pool exhaustion during outages.</li>
+                            <li>Protects against cascading system failures.</li>
+                            <li>Allows the system to remain responsive for other requests.</li>
+                            <li>Enables intelligent, automatic recovery.</li>
+                        </ul>
+                    `;
+            break;
+
+          case "concurrent-tool-execution":
+            popupContent = `
+                <h2>⚡ Concurrent Tool Execution</h2>
+                <p>The system leverages Go's powerful concurrency model (goroutines) to execute multiple tool calls in parallel. Instead of waiting for each tool to finish sequentially, it launches all tool calls at once and waits for them all to complete.</p>
+                <div class="mermaid">
+graph TD
+    subgraph Old ["Traditional Serial Execution"]
+        A[Start]
+        T1["Tool 1 (3s)"]
+        T2["Tool 2 (1s)"]
+        T3["Tool 3 (2s)"]
+        E[End]
+        TotalS["Total Time: 6s"]
+    end
+
+    subgraph New ["Concurrent Execution"]
+        B[Start]
+        P1["Tool 1 (3s)"]
+        P2["Tool 2 (1s)"]
+        P3["Tool 3 (2s)"]
+        F[End]
+        TotalP["Total Time: 3s"]
+    end
+
+    %% Flow Definitions
+    A --> T1 --> T2 --> T3 --> E --> TotalS
+    B --> P1; B --> P2; B --> P3
+    P1 --> F; P2 --> F; P3 --> F
+    F --> TotalP
+
+    %% Styling
+    classDef startEndStyle fill:#d4edda,stroke:#155724
+    classDef toolStyle fill:#cce5ff,stroke:#004085
+    classDef totalStyle fill:#f8d7da,stroke:#721c24
+
+    class A,E,B,F startEndStyle
+    class T1,T2,T3,P1,P2,P3 toolStyle
+    class TotalS,TotalP totalStyle
+                </div>
+                <p>This is implemented in <code>toolutils.ExecuteToolsInParallel</code> using a <code>sync.WaitGroup</code> to manage the goroutines.</p>
+                <p><strong>Benefit:</strong> Drastically reduces data-gathering latency. The total wait time is determined by the <strong>slowest single tool</strong>, not the sum of all tool execution times.</p>
+            `;
+            break;
+
+        case "stateful-conversation":
+            popupContent = `
+                <h2>🧠 Stateful Conversations</h2>
+                <p>To provide contextually relevant answers, the chatbot maintains conversation history. Before processing a new query, it fetches the last <code>N</code> turns of the conversation (configurable via <code>HISTORY_ITEMS</code>) from ArangoDB.</p>
+                <p>This history is formatted and injected into the LLM prompt, giving the model the necessary context to understand follow-up questions and references to previous messages.</p>
+                <p><strong>Code Logic:</strong> The <code>preparer.fetchAndFormatHistory</code> function retrieves data using <code>arangoStore.GetChatHistory</code> and builds a string like:</p>
+                <pre><code>Human: What is the market cap of AAPL?
+Assistant: The market cap for AAPL is $2.8T.
+Human: What about for GOOGL?
+Assistant: The market cap for GOOGL is $1.7T.</code></pre>
+                <p><strong>Benefit:</strong> Enables natural, multi-turn dialogues and a more intelligent, human-like user experience.</p>
+            `;
+            break;
+
+        case "single-flight":
+            popupContent = `
+                <h2>🛡️ Single-Flight Request Coalescing</h2>
+                <p>This feature protects against the "thundering herd" problem where multiple, identical, un-cached requests arrive simultaneously. Using Go's standard <code>singleflight</code> library, only the <strong>first</strong> request triggers the expensive work (tool execution, LLM calls).</p>
+                <div class="mermaid">
+graph TD
+    subgraph Before ["Without Single-Flight"]
+        R1["Req: 'Price of AAPL?'"]
+        R2["Req: 'Price of AAPL?'"]
+        R3["Req: 'Price of AAPL?'"]
+        W1["Worker 1"]
+        W2["Worker 2"]
+        W3["Worker 3"]
+        API["💥 3x Redundant API Calls"]
+    end
+    subgraph After ["With Single-Flight"]
+        R4["Identical Req A"]
+        R5["Identical Req B"]
+        R6["Identical Req C"]
+        SF{"🛡️ singleflight.Group"}
+        W4["Worker (single)"]
+        API2["✅ 1x Deduplicated API Call"]
+    end
+
+    %% Flow Definitions
+    R1 --> W1; R2 --> W2; R3 --> W3
+    W1 --> API; W2 --> API; W3 --> API
+    R4 --> SF; R5 --> SF; R6 --> SF
+    SF -->|"1. Initiate single call"| W4
+    W4 --> API2
+    API2 -->|"2. Return result"| SF
+    SF -->|"3. Fan-out to waiters"| R4 & R5 & R6
+
+    %% Styling
+    classDef reqStyle fill:#cce5ff,stroke:#004085
+    classDef workerStyle fill:#d4edda,stroke:#155724
+    classDef sfStyle fill:#fff3cd,stroke:#856404
+    classDef apiStyle fill:#e1d5e7,stroke:#6f42c1
+
+    class R1,R2,R3,R4,R5,R6 reqStyle
+    class W1,W2,W3,W4 workerStyle
+    class SF sfStyle
+    class API,API2 apiStyle
+                </div>
+                <p>All other identical requests simply wait and share the result from the first one. This is visible in the logs via the message: <code>"Shared result from in-flight request"</code>.</p>
+                <p><strong>Benefits:</strong></p>
+                <ul>
+                    <li>Prevents self-inflicted DDoS attacks.</li>
+                    <li>Saves significant LLM API costs and reduces load on downstream services.</li>
+                    <li>Improves overall system efficiency under high load.</li>
+                </ul>
+            `;
+            break;
+
+        case "state-aware-janitor":
+            popupContent = `
+                <h2>🧹 State-Aware Janitor</h2>
+                <p>A background goroutine that acts as a robust "cleaner" for the system, inspired by The Wolf from Pulp Fiction. It periodically scans for requests that are stuck or have been abandoned, preventing resource leaks.</p>
+                <p>It's "state-aware" because it applies different logic based on the request's current state:</p>
+                <ul>
+                    <li><strong><code>StateQueued</code>:</strong> A long timeout (<code>QUEUE_TIMEOUT</code>, e.g., 1h) allows requests to wait patiently in a busy queue.</li>
+                    <li><strong><code>StateProcessing</code>:</strong> A shorter timeout (<code>PROCESSING_TIMEOUT</code>, e.g., 10m) kills jobs that are genuinely stuck in execution, likely due to an unhandled error or a deadlocked dependency.</li>
+                </ul>
+                <p>This is implemented in the <code>janitor</code> function in <code>chatbot/manager.go</code>.</p>
+                <p><strong>Benefit:</strong> Guarantees system stability and prevents resource leaks from orphaned requests without prematurely killing valid, waiting jobs.</p>
+            `;
+            break;
+
+        case "e2e-cancellation":
+            popupContent = `
+                <h2>🛑 End-to-End Cancellation</h2>
+                <p>When a user cancels a request via the <code>POST /chat/cancel/:request_id</code> endpoint, a cancellation signal is propagated through the entire system using Go's <code>context.Context</code>.</p>
+                <div class="mermaid">
+graph TD
+    subgraph Client ["Client Interface"]
+        UI["🖱️ Client clicks 'Stop'"]
+    end
+    subgraph AppServer ["⚡ Application Server (Go Gin)"]
+        Cancel["POST /chat/cancel/:id"]
+    end
+    subgraph AgenticCore ["🤖 Agentic Core Engine"]
+        B["🧠 Chatbot Manager"]
+        ActiveWorker["🏃 Active Worker<br/>(Goroutine with context)"]
+        subgraph ToolEngine ["⚡ Tool Engine"]
+            T["Active Tool Calls"]
+        end
+    end
+    subgraph ExtDeps ["🌍 External Dependencies"]
+        P["LLM Provider Stream"]
+    end
+
+    %% Flow Definitions
+    UI -->|"1. User Action"| Cancel
+    Cancel -->|"2. API Request"| B
+    B -->|"3. Propagate<br/>context.Cancel()"| ActiveWorker
+    ActiveWorker -->|"4a. Stop LLM Request"| P
+    ActiveWorker -->|"4b. Abort Tool Execution"| T
+
+    %% Styling
+    classDef clientStyle fill:#cce5ff,stroke:#004085
+    classDef serverStyle fill:#d4edda,stroke:#155724
+    classDef coreStyle fill:#fff3cd,stroke:#856404
+    classDef stage1Style fill:#f8d7da,stroke:#721c24
+    classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
+    classDef stage2Style fill:#d1ecf1,stroke:#0c5460
+    classDef extStyle fill:#e2f3e4,stroke:#28a745
+    classDef janitorStyle fill:#f5c6cb,stroke:#721c24
+    classDef queueStyle fill:#d6d8db,stroke:#383d41
+    classDef obsStyle fill:#e0e0e0,stroke:#6c757d
+    class UI clientStyle
+    class Cancel serverStyle
+    class B coreStyle
+    class ActiveWorker stage1Style
+    class T toolStyle
+    class P extStyle
+                </div>
+                <p>This signal travels from the API handler down to the specific worker goroutine, terminating database queries, tool calls, and LLM streams immediately. The worker regularly checks <code>ctx.Done()</code> to see if it should abort its work.</p>
+                <p><strong>Benefits:</strong></p>
+                <ul>
+                    <li>Frees up system resources (worker slots, memory) instantly.</li>
+                    <li>Provides a highly responsive user experience.</li>
+                    <li>Prevents wasted computation and API costs on unwanted requests.</li>
+                </ul>
+            `;
+            break;
+
+        case "token-truncation":
+            popupContent = `
+                <h2>✂️ Targeted Token Truncation</h2>
+                <p>When the combined output from all tools exceeds the LLM's context window (<code>MAX_TOTAL_TOOL_OUTPUT_TOKENS</code>), a naive system might truncate everything, losing valuable data. This system intelligently truncates only the output from tools designated as verbose in the <code>.env</code> file (via <code>LONG_TEXT_TOOLS</code>).</p>
+                <p><strong>Example:</strong> A request needs a stock price (short, critical) and a news summary (long, less critical). If the total output is too long, the system will shorten the news summary while leaving the stock price intact.</p>
+                <p>This logic resides in <code>toolutils.TruncateToolOutputs</code>.</p>
+                <p><strong>Benefit:</strong> Preserves the full, precise output of critical data tools while summarizing less critical, long-form text. This leads to higher-quality inputs and more accurate final answers from the LLM.</p>
+            `;
+            break;
+
+        case "context-aware-caching":
+            popupContent = `
+                <h2>🧠 Context-Aware Caching</h2>
+                <p>The system uses Redis to cache the final results of expensive operations. However, caching everything can lead to stale data (e.g., serving yesterday's stock price).</p>
+                <p>The caching is "context-aware" because it is automatically bypassed if the request involves any tool designated as time-sensitive in the <code>.env</code> file (<code>TIMEBOUND_TOOLS=realtime_market,...</code>).</p>
+                <p>The <code>RequestPreparer</code> checks if any selected tool is in this list. If so, it prevents the final result from being cached in Redis, ensuring the user always gets live data for that query.</p>
+                <p><strong>Benefit:</strong> Achieves the perfect balance between performance (for static queries) and data freshness (for dynamic, time-sensitive queries).</p>
+            `;
+            break;
+
+        case "structured-logging":
+            popupContent = `
+                <h2>📝 Structured JSON Logging</h2>
+                <p>Every log entry in the system is a structured, machine-readable JSON object, powered by the <code>zerolog</code> library. Instead of ambiguous text lines, each log contains queryable key-value pairs.</p>
+                <p><strong>Example Log Entry:</strong></p>
+                <pre><code>{
+  "level": "info",
+  "request_id": "req_a1b2c3d4e5",
+  "user_id": "user123",
+  "tool_name": "realtime_market",
+  "duration_sec": 0.52,
+  "message": "Tool executed successfully"
+}</code></pre>
+                <p>This is the foundation of the entire observability stack. It allows logs to be treated like a database, enabling precise filtering, searching, and alerting.</p>
+                <p><strong>Benefit:</strong> Transforms debugging from an archaeological dig into a surgical strike. You can instantly trace a single request's entire lifecycle or find all errors related to a specific tool.</p>
+            `;
+            break;
+
+          case "observability":
+            popupContent = `
+                        <h2>🔭 Complete Observability Stack</h2>
+                        <p>Total system visibility through structured logging and modern observability tools.</p>
+                        <div class="mermaid">
+graph TD
+    AppServer["⚡ Go Gin Application"] -- "Writes structured JSON logs to stdout" --> Docker
+    subgraph DockerHost["Docker Host"]
+        Docker["Docker Log Driver"] -- "Captures all container stdout" --> Vector
+    end
+    subgraph ObservabilityStack ["🔭 Observability Stack (in Docker Compose)"]
+        Vector["VECTOR<br/>(Log Collector/Router)"] -- "Parses, cleans & forwards logs" --> Loki
+        Loki["LOKI<br/>(Log Aggregation & Indexing)"] -- "Stores & indexes logs by labels<br/>(e.g., level, request_id)" --> Grafana
+        Grafana["GRAFANA<br/>(Dashboard & Query UI)"]
+    end
+
+    style AppServer fill:#d4edda,stroke:#155724
+    style ObservabilityStack fill:#d1ecf1,stroke:#0c5460
+                        </div>
+                        <p><strong>Stack Components:</strong></p>
+                        <ul>
+                            <li><strong>Foundation (zerolog):</strong> Structured, machine-readable JSON logs.</li>
+                            <li><strong>Collection (Vector):</strong> High-performance log collector and router.</li>
+                            <li><strong>Aggregation (Loki):</strong> Central log database with intelligent indexing.</li>
+                            <li><strong>Visualization (Grafana):</strong> Real-time dashboards and alerting.</li>
+                        </ul>
+                        <p>This stack provides end-to-end visibility, allowing operators to trace a single request by its <code>request_id</code> across all services, filter by error level, and monitor real-time metrics.</p>
+                    `;
+            break;
+
+          case "data-driven-tools":
+            popupContent = `
+                        <h2>🛠️ Data-Driven Tooling (Open/Closed Principle)</h2>
+                        <p>The system's tool architecture is not hard-coded. Instead, all available tools are defined as a list of data structures in a single file (<code>toolcore/definitions.go</code>). The core engine is generic and simply processes this list.</p>
+                        <p>This design adheres to the <strong>Open/Closed Principle</strong>: the system is <strong>open for extension</strong> (you can add new tools easily) but <strong>closed for modification</strong> (you don't need to change the core engine to add them).</p>
+                        <div class="mermaid">
+graph TD
+    subgraph BadWay ["❌ Brittle: Hard-coded Logic"]
+        CoreEngine["Core Engine<br/>(Big switch statement)"]
+        Tool1["case 'tool1': ..."]
+        Tool2["case 'tool2': ..."]
+        NewTool["// MUST EDIT THIS FILE!"]
+        CoreEngine --> Tool1; CoreEngine --> Tool2; CoreEngine --> NewTool
+    end
+
+    subgraph GoodWay ["✅ Robust: Data-Driven"]
+        GenericEngine["Generic Core Engine"]
+        ToolManifest["Tool Manifest<br/>(List of Tool Structs)"]
+        NewToolData["Add new Tool struct here.<br/>No engine change needed."]
+        GenericEngine -- "Reads from" --> ToolManifest
+        ToolManifest -.-> NewToolData
+    end
+
+    style BadWay fill:#f8d7da,stroke:#721c24
+    style GoodWay fill:#d4edda,stroke:#155724
+                        </div>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li><strong>Extreme Maintainability:</strong> Adding/modifying tools is low-risk and doesn't touch core logic.</li>
+                            <li><strong>Effortless Scalability:</strong> Adding the 100th tool is as simple as adding the first.</li>
+                            <li><strong>Single Source of Truth:</strong> All system capabilities are defined in one place.</li>
+                        </ul>
+                    `;
+            break;
+
+          default:
+            popupContent =
+              "<h2>Feature Details</h2><p>Feature details not available.</p>";
+        }
+
+        content.innerHTML = popupContent;
+        modal.style.display = "block";
+
+        // Re-initialize Mermaid for new content
+        if (content.querySelector(".mermaid")) {
+          setTimeout(() => {
+            mermaid.init();
+          }, 100);
+        }
+      }
+
+      function closePopup() {
+        document.getElementById("popup-modal").style.display = "none";
+      }
+
+      // Close modal when clicking outside of it
+      window.onclick = function (event) {
+        const modal = document.getElementById("popup-modal");
+        if (event.target === modal) {
+          closePopup();
+        }
+      };
+
+      // Close modal with Escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closePopup();
+        }
+      });
+
+      // Smooth scrolling for TOC links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Auto-expand sections when navigating via TOC
+      document.querySelectorAll('.toc a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          const targetId = this.getAttribute("href").substring(1);
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+            const expandableSection = targetSection.querySelector(
+              ".expandable-section",
+            );
+            if (expandableSection) {
+              const content =
+                expandableSection.querySelector(".section-content");
+              const header = expandableSection.querySelector(".section-header");
+              const icon = header.querySelector(".expand-icon");
+
+              if (!content.classList.contains("expanded")) {
+                content.classList.add("expanded");
+                expandableSection.classList.add("expanded");
+                icon.style.transform = "rotate(180deg)";
+              }
+            }
+          }
+        });
+      });
+    </script>
+
+  </body>
+</html>
