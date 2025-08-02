@@ -18,6 +18,10 @@ theme = "hugo-theme-stack"
     [params.sidebar]
         emoji = "🤖"
         subtitle = "Deep Dives & Architecture"
+        [params.sidebar.avatar]
+            enabled = true
+            local = true
+            src = "/img/penguin.png"
 
     [params.article]
         math = false
