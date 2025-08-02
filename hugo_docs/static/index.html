@@ -1,16 +1,16 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
   <head>
-	<meta name="generator" content="Hugo 0.123.7"><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuntun Go Agentic Chatbot</title>
-    <link rel="stylesheet" href="http://localhost:1313/agentic/style.css">
-    <link rel="icon" type="image/png" href="http://localhost:1313/agentic/favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
   </head>
   <body>
-        <div class="container">
+    <div class="container">
       <h1>🤖 Tuntun Go Agentic Chatbot</h1>
 
       <div class="intro">
@@ -535,7 +535,7 @@ tuntun-go-chatbot/
         </div>
       </section>
 
-      
+      <!-- NEW DOCUMENTATION SECTION -->
       <section id="documentation">
         <h2>📚 Documentation & Deep Dives</h2>
         <div class="intro">
@@ -550,7 +550,7 @@ tuntun-go-chatbot/
 
     </div>
 
-    
+    <!-- Modal for detailed explanations -->
     <div id="popup-modal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="closePopup()">×</span>
@@ -559,7 +559,7 @@ tuntun-go-chatbot/
     </div>
 
     <script>
-      
+      // Initialize Mermaid
       mermaid.initialize({
         startOnLoad: true,
         theme: "base",
@@ -976,7 +976,7 @@ graph TD
         content.innerHTML = popupContent;
         modal.style.display = "block";
 
-        
+        // Re-initialize Mermaid for new content
         if (content.querySelector(".mermaid")) {
           setTimeout(() => {
             mermaid.init();
@@ -988,7 +988,7 @@ graph TD
         document.getElementById("popup-modal").style.display = "none";
       }
 
-      
+      // Close modal when clicking outside of it
       window.onclick = function (event) {
         const modal = document.getElementById("popup-modal");
         if (event.target === modal) {
@@ -996,14 +996,14 @@ graph TD
         }
       };
 
-      
+      // Close modal with Escape key
       document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
           closePopup();
         }
       });
 
-      
+      // Smooth scrolling for TOC links
       document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
         anchor.addEventListener("click", function (e) {
           e.preventDefault();
@@ -1017,7 +1017,7 @@ graph TD
         });
       });
 
-      
+      // Auto-expand sections when navigating via TOC
       document.querySelectorAll('.toc a[href^="#"]').forEach((anchor) => {
         anchor.addEventListener("click", function (e) {
           const targetId = this.getAttribute("href").substring(1);
@@ -1042,6 +1042,5 @@ graph TD
         });
       });
     </script>
-
   </body>
 </html>

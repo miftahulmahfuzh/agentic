@@ -1,5 +1,5 @@
 ---
-title: "Documentation Home"
+title: "Tuntun Go Agentic Chatbot"
+layout: "custom-home"
+type: "page"
 ---
-
-Welcome to the Agentic Chatbot Documentation.

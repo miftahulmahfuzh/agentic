@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>Documentation Home on Agentic Chatbot Documentation</title>
-        <link>http://localhost:1313/agentic/docs/</link>
-        <description>Recent content in Documentation Home on Agentic Chatbot Documentation</description>
+        <title>Tuntun Go Agentic Chatbot on Agentic Chatbot Documentation</title>
+        <link>http://localhost:1313/agentic/</link>
+        <description>Recent content in Tuntun Go Agentic Chatbot on Agentic Chatbot Documentation</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Baba Yaga</title>
-        <link>http://localhost:1313/agentic/docs/docs/narratives/baba_yaga/</link>
+        <link>http://localhost:1313/agentic/docs/narratives/baba_yaga/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/narratives/baba_yaga/</guid>
+        <guid>http://localhost:1313/agentic/docs/narratives/baba_yaga/</guid>
         <description>&lt;h2 id=&#34;baba-yagas-hunt&#34;&gt;Baba Yaga&amp;rsquo;s Hunt
 &lt;/h2&gt;&lt;p&gt;They call me the Janitor. They whisper it, like they&amp;rsquo;re talking about the Boogeyman. They think I don&amp;rsquo;t hear them. They&amp;rsquo;re wrong. My hunt begins not with a bell, but with a &lt;code&gt;ticker&lt;/code&gt;, a rhythmic pulse of dread that echoes through my forest of running processes. This isn&amp;rsquo;t about mopping floors, you fucking idiot. It&amp;rsquo;s about culling the weak.&lt;/p&gt;
 &lt;p&gt;I grab my &lt;code&gt;requestsLock&lt;/code&gt;, the iron key to my cellar, and begin my rounds. My domain is littered with lost souls—these pathetic &lt;code&gt;RequestStream&lt;/code&gt; objects, each one a potential meal.&lt;/p&gt;
@@ -29,10 +29,10 @@
         </item>
         <item>
         <title>Busy Wait Loops</title>
-        <link>http://localhost:1313/agentic/docs/docs/general_go/busy_wait_loops/</link>
+        <link>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/general_go/busy_wait_loops/</guid>
+        <guid>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</guid>
         <description>&lt;h1 id=&#34;what-are-busy-wait-loops-and-why-are-they-terrible&#34;&gt;What Are Busy-Wait Loops and Why Are They Terrible?
 &lt;/h1&gt;&lt;p&gt;Yes, the polling system from your old &lt;code&gt;manager.go&lt;/code&gt; is a classic example of a busy-wait loop, or more accurately, a &amp;ldquo;busy-wait with naps.&amp;rdquo; The statement in the README is entirely correct.&lt;/p&gt;
 &lt;h3 id=&#34;what-is-a-busy-wait-loop&#34;&gt;What is a Busy-Wait Loop?
@@ -87,10 +87,10 @@
         </item>
         <item>
         <title>Concurrent &amp; Parallel</title>
-        <link>http://localhost:1313/agentic/docs/docs/manager_insights/concurrent_and_parallel/</link>
+        <link>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/manager_insights/concurrent_and_parallel/</guid>
+        <guid>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</guid>
         <description>&lt;h1 id=&#34;concurrency--parallelism-the-ops-center-of-managergo&#34;&gt;Concurrency &amp;amp; Parallelism: The Ops Center of &lt;code&gt;manager.go&lt;/code&gt;
 &lt;/h1&gt;&lt;p&gt;Welcome to the mission briefing. Our &lt;code&gt;manager.go&lt;/code&gt; file is the central nervous system of our chatbot operation, much like The Continental from &lt;em&gt;John Wick&lt;/em&gt; or the IMF headquarters from &lt;em&gt;Mission: Impossible&lt;/em&gt;. It needs to handle a flood of incoming requests from agents (users) all over the world. To do this without melting down, it masterfully employs the arts of &lt;strong&gt;concurrency&lt;/strong&gt; and &lt;strong&gt;parallelism&lt;/strong&gt;.&lt;/p&gt;
 &lt;h2 id=&#34;concurrency-managing-multiple-missions-like-ethan-hunt&#34;&gt;Concurrency: Managing Multiple Missions (like Ethan Hunt)
@@ -175,10 +175,10 @@
         </item>
         <item>
         <title>Concurrent Caller</title>
-        <link>http://localhost:1313/agentic/docs/docs/caller_insights/concurrent_caller/</link>
+        <link>http://localhost:1313/agentic/docs/caller_insights/concurrent_caller/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/caller_insights/concurrent_caller/</guid>
+        <guid>http://localhost:1313/agentic/docs/caller_insights/concurrent_caller/</guid>
         <description>&lt;h1 id=&#34;analysis-of-callergo-why-concurrency-is-a-mission-critical-upgrade&#34;&gt;Analysis of caller.go: Why Concurrency is a Mission-Critical Upgrade
 &lt;/h1&gt;&lt;p&gt;The old &lt;code&gt;caller.go&lt;/code&gt; implementation was fundamentally flawed for any production system due to its sequential nature. It processed each tool call one by one, creating an unacceptable bottleneck. The new, concurrent implementation isn&amp;rsquo;t just an improvement; it&amp;rsquo;s a necessary evolution from a simple script to a robust, high-performance system.&lt;/p&gt;
 &lt;p&gt;Here&amp;rsquo;s why the new version is vastly superior:&lt;/p&gt;
@@ -223,10 +223,10 @@
         </item>
         <item>
         <title>Data Driven Tool</title>
-        <link>http://localhost:1313/agentic/docs/docs/architectures/data_driven_tool/</link>
+        <link>http://localhost:1313/agentic/docs/architectures/data_driven_tool/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/architectures/data_driven_tool/</guid>
+        <guid>http://localhost:1313/agentic/docs/architectures/data_driven_tool/</guid>
         <description>&lt;h1 id=&#34;the-data-driven-tool-architecture&#34;&gt;The Data-Driven Tool Architecture
 &lt;/h1&gt;&lt;h2 id=&#34;1-overview-the-armory-philosophy&#34;&gt;1. Overview: The Armory Philosophy
 &lt;/h2&gt;&lt;p&gt;The term &amp;ldquo;data-driven&amp;rdquo; here doesn&amp;rsquo;t mean it uses analytics to make decisions. It means the system&amp;rsquo;s fundamental capabilities—the tools themselves—are defined as declarative &lt;strong&gt;data&lt;/strong&gt; structures, not as hard-coded imperative logic.&lt;/p&gt;
@@ -341,10 +341,10 @@
         </item>
         <item>
         <title>Frequently Asked Questions 1</title>
-        <link>http://localhost:1313/agentic/docs/docs/frequently_asked/qa_pt1/</link>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/frequently_asked/qa_pt1/</guid>
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;ol&gt;
 &lt;li&gt;Why do you think we need to create a new goroutine here? it&amp;rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?)&lt;/li&gt;
@@ -420,10 +420,10 @@
         </item>
         <item>
         <title>Go Arrow</title>
-        <link>http://localhost:1313/agentic/docs/docs/general_go/go_arrow/</link>
+        <link>http://localhost:1313/agentic/docs/general_go/go_arrow/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/general_go/go_arrow/</guid>
+        <guid>http://localhost:1313/agentic/docs/general_go/go_arrow/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;p&gt;I don&amp;rsquo;t understand the declaration of one way arrow in streamHolder:&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;type&lt;/span&gt; RequestStream &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt; {
@@ -638,10 +638,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Goroutines</title>
-        <link>http://localhost:1313/agentic/docs/docs/general_go/goroutines/</link>
+        <link>http://localhost:1313/agentic/docs/general_go/goroutines/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/general_go/goroutines/</guid>
+        <guid>http://localhost:1313/agentic/docs/general_go/goroutines/</guid>
         <description>&lt;p&gt;Goroutines get to the very heart of what makes Go so powerful for concurrent programming. As a Python programmer, you&amp;rsquo;re used to concepts like threads, &lt;code&gt;asyncio&lt;/code&gt;, and &lt;code&gt;multiprocessing&lt;/code&gt;, and understanding how goroutines relate to them is key.&lt;/p&gt;
 &lt;h3 id=&#34;what-are-goroutines-an-analogy-for-python-programmers&#34;&gt;What are Goroutines? (An Analogy for Python Programmers)
 &lt;/h3&gt;&lt;p&gt;Imagine you&amp;rsquo;re managing an office.&lt;/p&gt;
@@ -737,10 +737,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Jsonless</title>
-        <link>http://localhost:1313/agentic/docs/docs/architectures/jsonless/</link>
+        <link>http://localhost:1313/agentic/docs/architectures/jsonless/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/architectures/jsonless/</guid>
+        <guid>http://localhost:1313/agentic/docs/architectures/jsonless/</guid>
         <description>&lt;h1 id=&#34;architectural-note-on-the-sanctity-of-the-compile-time-binary&#34;&gt;Architectural Note: On the Sanctity of the Compile-Time Binary
 &lt;/h1&gt;&lt;p&gt;This document addresses the suggestion to refactor static assets—specifically prompt templates and tool descriptions—into external JSON files to be loaded at runtime. The argument, rooted in patterns common to interpreted languages like Python, is that this improves modularity and ease of modification.&lt;/p&gt;
 &lt;p&gt;This document asserts that this approach is a critical design flaw in the context of a compiled Go application. It sacrifices the core Go tenets of safety, simplicity, and performance for a brittle and inappropriate form of &amp;ldquo;flexibility.&amp;rdquo;&lt;/p&gt;
@@ -812,10 +812,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Persistent Queues</title>
-        <link>http://localhost:1313/agentic/docs/docs/architectures/persistent_queue/</link>
+        <link>http://localhost:1313/agentic/docs/architectures/persistent_queue/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/architectures/persistent_queue/</guid>
+        <guid>http://localhost:1313/agentic/docs/architectures/persistent_queue/</guid>
         <description>&lt;h1 id=&#34;architectural-note-on-the-deliberate-rejection-of-persistent-queues&#34;&gt;Architectural Note: On the Deliberate Rejection of Persistent Queues
 &lt;/h1&gt;&lt;p&gt;This document addresses the perceived weakness of using in-memory Go channels for request queuing (&lt;code&gt;requestQueue&lt;/code&gt;, &lt;code&gt;preparedQueue&lt;/code&gt;) within &lt;code&gt;manager.go&lt;/code&gt;. If the application restarts, any requests currently in these channels are lost. The seemingly obvious solution is to replace these channels with a durable, external message queue like Redis Streams, RabbitMQ, or NATS.&lt;/p&gt;
 &lt;p&gt;This document asserts that for this specific application, such a change would be a critical design error. It is a solution that is far more dangerous than the problem it purports to solve.&lt;/p&gt;
@@ -925,10 +925,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Polling Janitor</title>
-        <link>http://localhost:1313/agentic/docs/docs/architectures/event_driven_janitor/</link>
+        <link>http://localhost:1313/agentic/docs/architectures/event_driven_janitor/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/architectures/event_driven_janitor/</guid>
+        <guid>http://localhost:1313/agentic/docs/architectures/event_driven_janitor/</guid>
         <description>&lt;h1 id=&#34;architectural-note-why-we-use-a-polling-janitor&#34;&gt;Architectural Note: Why We Use a Polling Janitor
 &lt;/h1&gt;&lt;p&gt;This document addresses a design choice in the &lt;code&gt;manager.go&lt;/code&gt; lifecycle management: the use of a periodic, polling &amp;ldquo;janitor&amp;rdquo; to clean up timed-out requests, rather than a purely event-driven timeout mechanism for each request. This choice is deliberate and grounded in engineering pragmatism.&lt;/p&gt;
 &lt;h2 id=&#34;the-question-can-the-janitor-be-event-driven&#34;&gt;The Question: Can the Janitor Be Event-Driven?
@@ -1017,10 +1017,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Pre-stream Deadlock</title>
-        <link>http://localhost:1313/agentic/docs/docs/architectures/prestream_deadlock/</link>
+        <link>http://localhost:1313/agentic/docs/architectures/prestream_deadlock/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/architectures/prestream_deadlock/</guid>
+        <guid>http://localhost:1313/agentic/docs/architectures/prestream_deadlock/</guid>
         <description>&lt;h1 id=&#34;architectural-deep-dive-the-manager-as-the-wolf&#34;&gt;Architectural Deep Dive: The Manager as &amp;ldquo;The Wolf&amp;rdquo;
 &lt;/h1&gt;&lt;p&gt;This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &amp;ldquo;The Wolf&amp;rdquo; from &lt;em&gt;Pulp Fiction&lt;/em&gt;.&lt;/p&gt;
 &lt;h2 id=&#34;1-context-the-race-to-stream&#34;&gt;1. Context: The Race to Stream
@@ -1127,10 +1127,10 @@ sequenceDiagram
         </item>
         <item>
         <title>Python vs Go</title>
-        <link>http://localhost:1313/agentic/docs/docs/python_stuff/python_vs_go/</link>
+        <link>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/python_stuff/python_vs_go/</guid>
+        <guid>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;p&gt;Please explain in detail the superiority of the new Golang code. back then, i thought about the concurrency problem the old Python program would&amp;rsquo;ve had, in case there are hundreds of people using the chatbot at the same time. i was afraid the Python code won&amp;rsquo;t hold.&lt;/p&gt;
 &lt;p&gt;That&amp;rsquo;s what motivated me to burn ship and start anew in Go.&lt;/p&gt;
@@ -1223,10 +1223,10 @@ Every query, no matter how simple, was forced through this expensive, multi-step
         </item>
         <item>
         <title>Python Workers</title>
-        <link>http://localhost:1313/agentic/docs/docs/python_stuff/python_workers/</link>
+        <link>http://localhost:1313/agentic/docs/python_stuff/python_workers/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/python_stuff/python_workers/</guid>
+        <guid>http://localhost:1313/agentic/docs/python_stuff/python_workers/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;p&gt;About the old Python code.&lt;/p&gt;
 &lt;p&gt;You said Python only use a single Thread. Then what about:&lt;/p&gt;
@@ -1288,10 +1288,10 @@ Every query, no matter how simple, was forced through this expensive, multi-step
         </item>
         <item>
         <title>RAG Stream</title>
-        <link>http://localhost:1313/agentic/docs/docs/caller_insights/rag_stream/</link>
+        <link>http://localhost:1313/agentic/docs/caller_insights/rag_stream/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/caller_insights/rag_stream/</guid>
+        <guid>http://localhost:1313/agentic/docs/caller_insights/rag_stream/</guid>
         <description>&lt;h1 id=&#34;architectural-blueprint-dual-path-request-processing&#34;&gt;Architectural Blueprint: Dual-Path Request Processing
 &lt;/h1&gt;&lt;h2 id=&#34;1-core-principle-no-nonsense-efficiency&#34;&gt;1. Core Principle: No-Nonsense Efficiency
 &lt;/h2&gt;&lt;p&gt;This system does not use a one-size-fits-all approach. That&amp;rsquo;s inefficient and expensive. Instead, it operates on a dual-path architecture designed to segregate requests based on complexity. Like Anton Chigurh, it chooses the right tool for the job, without sentiment.&lt;/p&gt;
@@ -1451,10 +1451,10 @@ graph TD
         </item>
         <item>
         <title>RAG Stream Part 2</title>
-        <link>http://localhost:1313/agentic/docs/docs/narratives/rag_stream_pt2/</link>
+        <link>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/narratives/rag_stream_pt2/</guid>
+        <guid>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</guid>
         <description>&lt;p&gt;Let&amp;rsquo;s trace the journey of the query &amp;ldquo;how to register in tuntun?&amp;rdquo; from the moment the user hits &amp;ldquo;send&amp;rdquo; to the final word appearing on their screen.&lt;/p&gt;
 &lt;p&gt;This story unfolds in four main acts:&lt;/p&gt;
 &lt;ol&gt;
@@ -1623,10 +1623,10 @@ graph LR
         </item>
         <item>
         <title>Request Lock</title>
-        <link>http://localhost:1313/agentic/docs/docs/general_go/request_lock/</link>
+        <link>http://localhost:1313/agentic/docs/general_go/request_lock/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/general_go/request_lock/</guid>
+        <guid>http://localhost:1313/agentic/docs/general_go/request_lock/</guid>
         <description>&lt;h1 id=&#34;concurrency-and-lock-strategy&#34;&gt;Concurrency and Lock Strategy
 &lt;/h1&gt;&lt;h2 id=&#34;1-overview-the-need-for-speed-and-safety&#34;&gt;1. Overview: The Need for Speed and Safety
 &lt;/h2&gt;&lt;p&gt;The chatbot manager is a highly concurrent system. Multiple requests are processed in parallel across different stages (preparation, streaming), while background tasks like the &lt;code&gt;janitor&lt;/code&gt; perform system-wide maintenance. This is not &lt;em&gt;12 Angry Men&lt;/em&gt; where everyone waits their turn to speak; this is the trading floor from &lt;em&gt;The Wolf of Wall Street&lt;/em&gt;—chaotic, fast, and every action must be precise.&lt;/p&gt;
@@ -1784,10 +1784,10 @@ graph LR
         </item>
         <item>
         <title>Static Concurrency</title>
-        <link>http://localhost:1313/agentic/docs/docs/architectures/frozen_concurrency/</link>
+        <link>http://localhost:1313/agentic/docs/architectures/frozen_concurrency/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/architectures/frozen_concurrency/</guid>
+        <guid>http://localhost:1313/agentic/docs/architectures/frozen_concurrency/</guid>
         <description>&lt;h1 id=&#34;architectural-note-on-the-deliberate-enforcement-of-static-concurrency-limits&#34;&gt;Architectural Note: On the Deliberate Enforcement of Static Concurrency Limits
 &lt;/h1&gt;&lt;p&gt;This document addresses the suggestion that the service&amp;rsquo;s concurrency limits (&lt;code&gt;MaxConcurrentRequests&lt;/code&gt;, &lt;code&gt;MaxConcurrentLLMStreams&lt;/code&gt;) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system&amp;rsquo;s capacity in response to changing load without requiring a restart.&lt;/p&gt;
 &lt;p&gt;This document asserts that such a feature would be a critical design flaw. It sacrifices stability, predictability, and safety for an illusory and dangerous form of flexibility.&lt;/p&gt;
@@ -1870,10 +1870,10 @@ graph LR
         </item>
         <item>
         <title>Superior Event-Driven</title>
-        <link>http://localhost:1313/agentic/docs/docs/general_go/superior_event_driven/</link>
+        <link>http://localhost:1313/agentic/docs/general_go/superior_event_driven/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/general_go/superior_event_driven/</guid>
+        <guid>http://localhost:1313/agentic/docs/general_go/superior_event_driven/</guid>
         <description>&lt;h1 id=&#34;the-flaw-of-polling-vs-the-power-of-event-driven-design&#34;&gt;The Flaw of Polling vs. The Power of Event-Driven Design
 &lt;/h1&gt;&lt;p&gt;You might look at the new &lt;code&gt;manager.go&lt;/code&gt; and wonder why it’s structured with a channel inside a struct (&lt;code&gt;RequestStream.Stream&lt;/code&gt;) which itself is passed between functions before finally being used. It might seem complex.&lt;/p&gt;
 &lt;p&gt;The reason is simple: this architecture is fundamentally more intelligent, efficient, and scalable than the common alternative—a polling loop. The alternative is the architectural equivalent of a security guard repeatedly running to the front gate every 10 seconds to see if a package has arrived. Our way is letting the guard sleep soundly at their desk until the delivery driver rings the bell.&lt;/p&gt;
@@ -1969,10 +1969,10 @@ graph LR
         </item>
         <item>
         <title>System</title>
-        <link>http://localhost:1313/agentic/docs/docs/manager_insights/system/</link>
+        <link>http://localhost:1313/agentic/docs/manager_insights/system/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/docs/manager_insights/system/</guid>
+        <guid>http://localhost:1313/agentic/docs/manager_insights/system/</guid>
         <description>&lt;h3 id=&#34;system-architecture-overview&#34;&gt;&lt;strong&gt;System Architecture Overview&lt;/strong&gt;
 &lt;/h3&gt;&lt;h4 id=&#34;i-executive-summary&#34;&gt;&lt;strong&gt;I. Executive Summary&lt;/strong&gt;
 &lt;/h4&gt;&lt;p&gt;This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering. This architecture explicitly separates inexpensive preparation tasks from resource-intensive LLM generation, enabling concurrent handling of numerous requests while strictly governing access to the LLM.&lt;/p&gt;
