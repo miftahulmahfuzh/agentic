@@ -2,10 +2,10 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuntun Go Agentic Chatbot</title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
   </head>
@@ -15,10 +15,8 @@
 
       <div class="intro">
         <p>
-          <strong
-            >An enterprise-grade, high-concurrency agentic chatbot system built
-            in Go.</strong
-          >
+          <strong>An enterprise-grade, high-concurrency agentic chatbot system built
+            in Go.</strong>
           It uses the Gin web framework and LangChainGo to provide a robust,
           intelligent assistant for the financial sector, integrating LLM
           capabilities with real-time financial data, market analysis, and news.
@@ -147,6 +145,7 @@ graph TD
                 <li><span class="popup-trigger" onclick="showPopup('two-stage-pipeline')">Two-Stage Pipeline</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('concurrent-tool-execution')">Concurrent Tool Execution</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('stateful-conversation')">Stateful Conversations</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('data-driven-tools')">Data-Driven Tooling</span></li>
             </ul>
           </div>
 
@@ -165,7 +164,7 @@ graph TD
             <ul>
                 <li><span class="popup-trigger" onclick="showPopup('token-truncation')">Targeted Token Truncation</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('context-aware-caching')">Context-Aware Caching</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('rag')">Retrieval-Augmented Generation</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('rag')">Direct Stream RAG</span></li>
             </ul>
           </div>
 
@@ -598,10 +597,10 @@ tuntun-go-chatbot/
 
           case "rag":
             popupContent = `
-                        <h2>🚀 Retrieval-Augmented Generation (RAG)</h2>
+                        <h2>🚀 Direct Stream RAG</h2>
                         <p>For designated <code>NATURAL_ANSWER_TOOLS</code> like knowledge base queries, the system activates a special RAG path. This bypasses the final LLM synthesis step, streaming the response from the knowledge tool directly to the user.</p>
                         <p><strong>Standard Flow:</strong> User Query → LLM Selects Tools → Execute Tools → LLM Synthesizes Answer from Tool Output</p>
-                        <p><strong>RAG Flow:</strong> User Query → LLM Selects RAG Tool → Execute RAG Tool → Stream Tool Output Directly to User</p>
+                        <p><strong>Direct Stream Flow:</strong> User Query → LLM Selects RAG Tool → Execute RAG Tool → Stream Tool Output Directly to User</p>
                         <p><strong>Benefits:</strong></p>
                         <ul>
                             <li><strong>Lower Latency:</strong> Skips an entire LLM round-trip.</li>
@@ -916,6 +915,41 @@ graph TD
                             <li><strong>Visualization (Grafana):</strong> Real-time dashboards and alerting.</li>
                         </ul>
                         <p>This stack provides end-to-end visibility, allowing operators to trace a single request by its <code>request_id</code> across all services, filter by error level, and monitor real-time metrics.</p>
+                    `;
+            break;
+
+          case "data-driven-tools":
+            popupContent = `
+                        <h2>🛠️ Data-Driven Tooling (Open/Closed Principle)</h2>
+                        <p>The system's tool architecture is not hard-coded. Instead, all available tools are defined as a list of data structures in a single file (<code>toolcore/definitions.go</code>). The core engine is generic and simply processes this list.</p>
+                        <p>This design adheres to the <strong>Open/Closed Principle</strong>: the system is <strong>open for extension</strong> (you can add new tools easily) but <strong>closed for modification</strong> (you don't need to change the core engine to add them).</p>
+                        <div class="mermaid">
+graph TD
+    subgraph BadWay ["❌ Brittle: Hard-coded Logic"]
+        CoreEngine["Core Engine<br/>(Big switch statement)"]
+        Tool1["case 'tool1': ..."]
+        Tool2["case 'tool2': ..."]
+        NewTool["// MUST EDIT THIS FILE!"]
+        CoreEngine --> Tool1; CoreEngine --> Tool2; CoreEngine --> NewTool
+    end
+
+    subgraph GoodWay ["✅ Robust: Data-Driven"]
+        GenericEngine["Generic Core Engine"]
+        ToolManifest["Tool Manifest<br/>(List of Tool Structs)"]
+        NewToolData["Add new Tool struct here.<br/>No engine change needed."]
+        GenericEngine -- "Reads from" --> ToolManifest
+        ToolManifest -.-> NewToolData
+    end
+
+    style BadWay fill:#f8d7da,stroke:#721c24
+    style GoodWay fill:#d4edda,stroke:#155724
+                        </div>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li><strong>Extreme Maintainability:</strong> Adding/modifying tools is low-risk and doesn't touch core logic.</li>
+                            <li><strong>Effortless Scalability:</strong> Adding the 100th tool is as simple as adding the first.</li>
+                            <li><strong>Single Source of Truth:</strong> All system capabilities are defined in one place.</li>
+                        </ul>
                     `;
             break;
 
