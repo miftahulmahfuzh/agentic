@@ -73,7 +73,7 @@ This dual implementation is a deliberate design choice. It allows the system to 
 
 This diagram shows the decision point and the two pathways of the dual pathways, including the fallback.
 
-```mermaid
+{{< mermaid >}}
 graph TD
     subgraph UserInputLayer ["User Input Layer"]
         UserQuery["User Query"]
@@ -124,7 +124,7 @@ graph TD
     class DirectPathway directStyle
     class ResponseLayer responseStyle
     class ProcessingPathways pathwayContainer
-```
+{{< /mermaid >}}
 
 ## 6. Side-by-Side Tactical Comparison
 
