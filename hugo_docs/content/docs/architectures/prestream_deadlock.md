@@ -1,5 +1,5 @@
 ---
-title: "Pre-cancellation Deadlock"
+title: "Pre-stream Deadlock"
 date: 2025-08-02
 draft: false
 ---
@@ -29,22 +29,19 @@ The old system created a standoff worthy of a Tarantino film.
 
 ### Problematic Flow Diagram
 
-```mermaid
+{{< mermaid >}}
 sequenceDiagram
     participant Frontend
     participant Gin Handler (`handleStreamRequest`)
     participant ChatManager
-
     Frontend->>+Gin Handler: GET /chat/stream/{req_id}
     Gin Handler->>+ChatManager: GetRequestResultStream(req_id)
     Note over Gin Handler,ChatManager: Handler blocks, waiting on internal channels.
-
     Frontend->>+ChatManager: POST /chat/cancel/{req_id}
     ChatManager->>ChatManager: Set state to Cancelled, call context.cancel()
     Note right of ChatManager: Cancellation is marked internally.
-
     Note over Frontend,ChatManager: DEADLOCK! <br/> The Gin Handler is still blocked. <br/> It was never notified of the cancellation. <br/> The Frontend's GET request will time out.
-```
+{{< /mermaid >}}
 
 ## 3. The Solution: The Manager Handles the Hit
 
@@ -77,7 +74,7 @@ In both scenarios, the `Manager` absorbs the complexity and resolves the situati
 
 ### Solved Flow Diagram
 
-```mermaid
+{{< mermaid >}}
 sequenceDiagram
     participant Frontend
     participant Gin Handler (`handleStreamRequest`)
@@ -98,7 +95,7 @@ sequenceDiagram
 
     Gin Handler-->>-Frontend: Stream the single cancellation event from the channel.
     Note over Frontend, Gin Handler: Connection closes gracefully. <br/> No deadlock. UI is updated correctly.
-```
+{{< /mermaid >}}
 
 ## 4. The Handler's Role: The Getaway Driver
 

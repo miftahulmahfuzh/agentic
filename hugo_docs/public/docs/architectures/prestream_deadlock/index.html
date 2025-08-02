@@ -2,16 +2,16 @@
 <html lang="en-us" dir="ltr">
     <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Architectural Deep Dive: The Manager as &ldquo;The Wolf&rdquo; This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &ldquo;The Wolf&rdquo; from Pulp Fiction. 1. Context: The Race to Stream The system is built for real-time interaction. This creates a classic race condition.">
-<title>Pre-cancellation Deadlock</title>
+<title>Pre-stream Deadlock</title>
 
 <link rel='canonical' href='http://localhost:1313/agentic/docs/docs/architectures/prestream_deadlock/'>
 
-<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Pre-cancellation Deadlock">
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Pre-stream Deadlock">
 <meta property='og:description' content="Architectural Deep Dive: The Manager as &ldquo;The Wolf&rdquo; This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &ldquo;The Wolf&rdquo; from Pulp Fiction. 1. Context: The Race to Stream The system is built for real-time interaction. This creates a classic race condition.">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/docs/architectures/prestream_deadlock/'>
 <meta property='og:site_name' content='Agentic Chatbot Documentation'>
 <meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
-<meta name="twitter:title" content="Pre-cancellation Deadlock">
+<meta name="twitter:title" content="Pre-stream Deadlock">
 <meta name="twitter:description" content="Architectural Deep Dive: The Manager as &ldquo;The Wolf&rdquo; This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &ldquo;The Wolf&rdquo; from Pulp Fiction. 1. Context: The Race to Stream The system is built for real-time interaction. This creates a classic race condition.">
     <link rel="shortcut icon" href="/favicon.png" />
 
@@ -149,7 +149,7 @@
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/agentic/docs/docs/architectures/prestream_deadlock/">Pre-cancellation Deadlock</a>
+            <a href="/agentic/docs/docs/architectures/prestream_deadlock/">Pre-stream Deadlock</a>
         </h2>
     
         
@@ -220,21 +220,27 @@
 <li>The handler was stuck, the client connection would hang, and the request would eventually time out with a generic network error. It was messy.</li>
 </ul>
 <h3 id="problematic-flow-diagram">Problematic Flow Diagram
-</h3><pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+</h3><div class="mermaid">
+
+sequenceDiagram
     participant Frontend
     participant Gin Handler (`handleStreamRequest`)
     participant ChatManager
-
-    Frontend-&gt;&gt;+Gin Handler: GET /chat/stream/{req_id}
-    Gin Handler-&gt;&gt;+ChatManager: GetRequestResultStream(req_id)
+    Frontend->>+Gin Handler: GET /chat/stream/{req_id}
+    Gin Handler->>+ChatManager: GetRequestResultStream(req_id)
     Note over Gin Handler,ChatManager: Handler blocks, waiting on internal channels.
-
-    Frontend-&gt;&gt;+ChatManager: POST /chat/cancel/{req_id}
-    ChatManager-&gt;&gt;ChatManager: Set state to Cancelled, call context.cancel()
+    Frontend->>+ChatManager: POST /chat/cancel/{req_id}
+    ChatManager->>ChatManager: Set state to Cancelled, call context.cancel()
     Note right of ChatManager: Cancellation is marked internally.
+    Note over Frontend,ChatManager: DEADLOCK! <br/> The Gin Handler is still blocked. <br/> It was never notified of the cancellation. <br/> The Frontend's GET request will time out.
 
-    Note over Frontend,ChatManager: DEADLOCK! &lt;br/&gt; The Gin Handler is still blocked. &lt;br/&gt; It was never notified of the cancellation. &lt;br/&gt; The Frontend&#39;s GET request will time out.
-</code></pre><h2 id="3-the-solution-the-manager-handles-the-hit">3. The Solution: The Manager Handles the Hit
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true });
+</script>
+
+<h2 id="3-the-solution-the-manager-handles-the-hit">3. The Solution: The Manager Handles the Hit
 </h2><p>The solution is not a clumsy, two-part fix between the Manager and the Handler. It&rsquo;s an elegant, self-contained strategy entirely within the <code>Chatbot Manager</code>. The Manager now handles all cancellation scenarios and provides a consistent, predictable output to the handler. There are two paths to cancellation, and the Manager handles both flawlessly.</p>
 <p><strong>Key Component:</strong> <code>newCancelledStream()</code> helper function. This function creates a &ldquo;ghost stream&rdquo;—a new channel that delivers a single, pre-formatted cancellation event and then immediately closes. It&rsquo;s the perfect tool for a clean getaway.</p>
 <h3 id="path-a-pre-emptive-strike-request-already-cancelled">Path A: Pre-emptive Strike (Request Already Cancelled)
@@ -258,27 +264,36 @@
 </ol>
 <p>In both scenarios, the <code>Manager</code> absorbs the complexity and resolves the situation internally. It never returns a special error to the handler that requires interpretation. It always provides a valid stream channel.</p>
 <h3 id="solved-flow-diagram">Solved Flow Diagram
-</h3><pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+</h3><div class="mermaid">
+
+sequenceDiagram
     participant Frontend
     participant Gin Handler (`handleStreamRequest`)
     participant ChatManager
 
-    Frontend-&gt;&gt;+Gin Handler: GET /chat/stream/{req_id}
-    Gin Handler-&gt;&gt;+ChatManager: GetRequestResultStream(req_id)
+    Frontend->>+Gin Handler: GET /chat/stream/{req_id}
+    Gin Handler->>+ChatManager: GetRequestResultStream(req_id)
     Note over Gin Handler,ChatManager: Handler blocks, waiting on internal channels.
 
-    Frontend-&gt;&gt;+ChatManager: POST /chat/cancel/{req_id}
-    ChatManager-&gt;&gt;ChatManager: 1. Set State=Cancelled&lt;br&gt;2. Send internal signal (ErrRequestCancelled)
+    Frontend->>+ChatManager: POST /chat/cancel/{req_id}
+    ChatManager->>ChatManager: 1. Set State=Cancelled<br>2. Send internal signal (ErrRequestCancelled)
 
-    ChatManager-&gt;&gt;ChatManager: 3. `GetRequestResultStream` catches signal&lt;br&gt;4. Calls `newCancelledStream()`
-    Note right of ChatManager: The Manager resolves the&lt;br&gt;cancellation internally.
+    ChatManager->>ChatManager: 3. `GetRequestResultStream` catches signal<br>4. Calls `newCancelledStream()`
+    Note right of ChatManager: The Manager resolves the<br>cancellation internally.
 
-    ChatManager--&gt;&gt;-Gin Handler: Return a NEW, pre-canned stream channel
+    ChatManager-->>-Gin Handler: Return a NEW, pre-canned stream channel
     Note over Gin Handler: Handler is unblocked with a valid channel.
 
-    Gin Handler--&gt;&gt;-Frontend: Stream the single cancellation event from the channel.
-    Note over Frontend, Gin Handler: Connection closes gracefully. &lt;br/&gt; No deadlock. UI is updated correctly.
-</code></pre><h2 id="4-the-handlers-role-the-getaway-driver">4. The Handler&rsquo;s Role: The Getaway Driver
+    Gin Handler-->>-Frontend: Stream the single cancellation event from the channel.
+    Note over Frontend, Gin Handler: Connection closes gracefully. <br/> No deadlock. UI is updated correctly.
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true });
+</script>
+
+<h2 id="4-the-handlers-role-the-getaway-driver">4. The Handler&rsquo;s Role: The Getaway Driver
 </h2><p>With the Manager acting as the &ldquo;fixer,&rdquo; the Gin handler (<code>handleStreamRequest</code>) becomes the simple getaway driver. Its job is not to think; its job is to drive.</p>
 <ul>
 <li>It calls <code>GetRequestResultStream</code>.</li>

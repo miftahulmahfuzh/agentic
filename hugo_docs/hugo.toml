@@ -45,6 +45,11 @@ theme = "hugo-theme-stack"
   # Looks better than the default
   style = "dracula"
 
+[markup.goldmark.extensions.passthrough]
+  enable = true
+  [markup.goldmark.extensions.passthrough.delimiters]
+    block = [['```mermaid', '```']]
+
 # Add this section for the Stack theme
 [params.colorScheme]
     toggle = true
