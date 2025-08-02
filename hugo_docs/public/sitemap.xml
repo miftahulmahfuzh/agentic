@@ -11,7 +11,19 @@
     <loc>http://localhost:1313/agentic/docs/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/architectures/jsonless/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/architectures/persistent_queue/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/docs/architectures/event_driven_janitor/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/architectures/prestream_deadlock/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/architectures/frozen_concurrency/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/categories/</loc>
