@@ -92,7 +92,7 @@ This is the core of your second question. The process involves a chain of channe
 
 Here is a visual representation of the channel flow:
 
-```mermaid
+{{< mermaid >}}
 graph LR
     %% Define Subgraphs for architectural layers
     subgraph Client_Tier ["Client Tier"]
@@ -136,7 +136,7 @@ graph LR
     RAG_API -->|"6. SSE Data Chunks"| ToolExecutor
     ToolExecutor -->|"7. Writes tooltypes.StreamEvent<br/>to internalStreamChan"| Streamer
     Streamer -->|"8. Relays events from internal to<br/>mainStreamChan"| Client
-```
+{{< /mermaid >}}
 
 **The Handoffs Explained:**
 

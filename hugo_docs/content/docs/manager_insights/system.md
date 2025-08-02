@@ -68,36 +68,36 @@ The `ChatApp` class within `app.js` encapsulates all client-side logic. It is a 
 
 The following sequence diagram describes the end-to-end data flow with detailed terminology.
 
-```mermaid
+{{< mermaid >}}
 flowchart TB
     %% Client Layer
     Client["🖥️ Client Interface<br/><i>frontend/app.js</i><br/>ChatApp Class"]
-    
+
     %% Gateway Layer
     subgraph Gateway ["🌐 Gateway Layer"]
         direction TB
         APIGateway["HTTP Gateway<br/><i>main.go</i><br/>• Authentication<br/>• Request Validation<br/>• Response Streaming"]
     end
-    
+
     %% Core Processing Engine
     subgraph CoreEngine ["⚙️ Core Processing Engine"]
         direction TB
-        
+
         subgraph RequestFlow ["Request Flow Pipeline"]
             direction LR
             RequestQueue[("📥 Request<br/>Queue")]
             PreparedQueue[("📦 Prepared<br/>Queue")]
         end
-        
+
         subgraph WorkerPools ["Worker Pool Architecture"]
             direction TB
             PrepPool["🔧 Preparation Pool<br/><i>chatbot/preparer.go</i><br/>• History Formatting<br/>• Cache Lookup<br/>• Tool Selection<br/>• Prompt Assembly<br/><br/>Semaphore: High Concurrency"]
             StreamPool["🚀 Streaming Pool<br/><i>chatbot/streamer.go</i><br/>• LLM Generation<br/>• Event Streaming<br/>• Response Caching<br/>• Transaction Logging<br/><br/>Semaphore: Controlled Access"]
         end
-        
+
         Manager["🎯 Manager<br/><i>chatbot/manager.go</i><br/>• Request Orchestration<br/>• State Management<br/>• Lifecycle Control<br/>• Resource Coordination"]
     end
-    
+
     %% External Services
     subgraph ExternalServices ["🔌 External Services"]
         direction TB
@@ -105,7 +105,7 @@ flowchart TB
         Redis["⚡ Redis Cache<br/>Response Storage"]
         ArangoDB["🗄️ ArangoDB<br/>Transaction Logs"]
     end
-    
+
     %% Flow Connections
     Client ---|"1. POST /chat/submit<br/>Query + Context"| APIGateway
     APIGateway ---|"2. manager.SubmitRequest()<br/>Generate request_id"| Manager
@@ -120,10 +120,10 @@ flowchart TB
     StreamPool ---|"8. Stream Events"| Manager
     Manager ---|"9. Relay Events"| APIGateway
     APIGateway ---|"10. SSE /chat/stream/:id<br/>Real-time Streaming"| Client
-    
+
     %% Real-time Connection
     Client -.-|"EventSource Connection<br/>Persistent Stream"| APIGateway
-    
+
     %% Styling
     classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef gatewayStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
@@ -132,7 +132,7 @@ flowchart TB
     classDef streamStyle fill:#fff8e1,stroke:#fbc02d,stroke-width:2px,color:#000
     classDef queueStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
     classDef serviceStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
-    
+
     class Client clientStyle
     class APIGateway gatewayStyle
     class Manager managerStyle
@@ -140,7 +140,7 @@ flowchart TB
     class StreamPool streamStyle
     class RequestQueue,PreparedQueue queueStyle
     class LLM,Redis,ArangoDB serviceStyle
-```
+{{< /mermaid >}}
 
 1.  The **Client** submits a user query via a `POST` request to `/chat/submit`.
 2.  The **Gateway** handler receives the request, authenticates it, and invokes `chatbot.Manager.SubmitRequest`.
