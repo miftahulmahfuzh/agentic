@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Documentation on Agentic Chatbot Documentation</title>
+        <link>http://localhost:1313/docs/</link>
+        <description>Recent content in Documentation on Agentic Chatbot Documentation</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>en-us</language>
+        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/docs/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Data Driven Tool</title>
+        <link>http://localhost:1313/docs/data_driven_tool/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/docs/data_driven_tool/</guid>
+        <description>&lt;h1 id=&#34;the-data-driven-tool-architecture&#34;&gt;The Data-Driven Tool Architecture
+&lt;/h1&gt;&lt;h2 id=&#34;1-overview-the-armory-philosophy&#34;&gt;1. Overview: The Armory Philosophy
+&lt;/h2&gt;&lt;p&gt;The term &amp;ldquo;data-driven&amp;rdquo; here doesn&amp;rsquo;t mean it uses analytics to make decisions. It means the system&amp;rsquo;s fundamental capabilities—the tools themselves—are defined as declarative &lt;strong&gt;data&lt;/strong&gt; structures, not as hard-coded imperative logic.&lt;/p&gt;
+&lt;p&gt;Think of it as the armory from &lt;em&gt;John Wick&lt;/em&gt;. The core system—the rules of engagement, the process of selecting a weapon—is fixed and robust. The arsenal itself, however, can be infinitely expanded. Adding a new shotgun doesn&amp;rsquo;t require rewriting the laws of physics or retraining John Wick; you simply add the weapon and its specifications to the inventory.&lt;/p&gt;
+&lt;p&gt;In our system:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;The Armory Manifest:&lt;/strong&gt; &lt;code&gt;toolcore/definitions.go&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Weapons (Tools):&lt;/strong&gt; &lt;code&gt;DynamicTool&lt;/code&gt; structs&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Rules of Engagement (The Engine):&lt;/strong&gt; &lt;code&gt;toolcore/caller.go&lt;/code&gt; and &lt;code&gt;toolutils/callerutils.go&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This design makes the system exceptionally maintainable, scalable, and robust, directly adhering to the Open/Closed Principle.&lt;/p&gt;
+&lt;h2 id=&#34;2-core-components&#34;&gt;2. Core Components
+&lt;/h2&gt;&lt;p&gt;The architecture relies on a few key components working in concert.&lt;/p&gt;
+&lt;h3 id=&#34;a-the-contract-tooltypesloggabletool-interface&#34;&gt;A. The Contract: &lt;code&gt;tooltypes.LoggableTool&lt;/code&gt; Interface
+&lt;/h3&gt;&lt;p&gt;This is the &amp;ldquo;One Ring to rule them all.&amp;rdquo; It is the non-negotiable contract that every tool in our system must honor.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// tools/tooltypes/interfaces.go
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;type&lt;/span&gt; LoggableTool &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;interface&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#50fa7b&#34;&gt;Name&lt;/span&gt;() &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#50fa7b&#34;&gt;Description&lt;/span&gt;() &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#50fa7b&#34;&gt;Call&lt;/span&gt;(ctx context.Context, input &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, logCtx zerolog.Logger) (&lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#50fa7b&#34;&gt;Stream&lt;/span&gt;(ctx context.Context, input &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, logCtx zerolog.Logger, streamChan &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; StreamEvent, requestID &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;) &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#50fa7b&#34;&gt;ToLLMSchema&lt;/span&gt;() llms.Tool
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Any struct that implements these methods can be treated as a tool by the core engine. This abstraction is critical. The engine doesn&amp;rsquo;t care about the tool&amp;rsquo;s specific implementation, only that it fulfills the contract.&lt;/p&gt;
+&lt;h3 id=&#34;b-the-concrete-implementation-toolcoredynamictool-struct&#34;&gt;B. The Concrete Implementation: &lt;code&gt;toolcore.DynamicTool&lt;/code&gt; Struct
+&lt;/h3&gt;&lt;p&gt;This is our standard-issue weapon chassis. It&amp;rsquo;s the concrete struct that implements the &lt;code&gt;LoggableTool&lt;/code&gt; interface and holds all the metadata and logic for a single tool.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// tools/toolcore/dynamic.go
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;type&lt;/span&gt; DynamicTool &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	NameStr        &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	DescriptionStr &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	Schema         json.RawMessage
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	Executor       ExecutorFunc       &lt;span style=&#34;color:#6272a4&#34;&gt;// For standard, blocking calls
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	StreamExecutor StreamExecutorFunc &lt;span style=&#34;color:#6272a4&#34;&gt;// For streaming calls
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;NameStr&lt;/code&gt;&lt;/strong&gt;: The unique identifier for the tool (e.g., &lt;code&gt;news_summary&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;DescriptionStr&lt;/code&gt;&lt;/strong&gt;: The text given to the LLM so it knows when to use the tool. This is a critical prompt engineering component.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;Schema&lt;/code&gt;&lt;/strong&gt;: The JSON schema defining the arguments the tool expects. This allows the LLM to format its requests correctly.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;Executor&lt;/code&gt; / &lt;code&gt;StreamExecutor&lt;/code&gt;&lt;/strong&gt;: A function pointer. This is the &amp;ldquo;trigger.&amp;rdquo; It&amp;rsquo;s the actual code that runs when the tool is called.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;c-the-manifest-toolcoredefinitionsgo&#34;&gt;C. The Manifest: &lt;code&gt;toolcore/definitions.go&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;This file is the single source of truth for the system&amp;rsquo;s capabilities. It contains one function, &lt;code&gt;BuildAllTools&lt;/code&gt;, which constructs a slice of &lt;code&gt;DynamicTool&lt;/code&gt; instances.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// tools/toolcore/definitions.go
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;BuildAllTools&lt;/span&gt;(&lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;) []DynamicTool {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	allTools &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; []DynamicTool{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			NameStr:        &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;get_current_time&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			DescriptionStr: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;...&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			Schema:         noArgsSchema,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			Executor:       &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(&lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;) (&lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;) { &lt;span style=&#34;color:#6272a4&#34;&gt;/* ... */&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			NameStr:        &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;news_summary&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			DescriptionStr: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;...&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			Schema:         codeArgsSchema,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			Executor:       &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(&lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;) (&lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;) { &lt;span style=&#34;color:#6272a4&#34;&gt;/* ... */&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// ... more tools
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; allTools
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is the &lt;strong&gt;data&lt;/strong&gt; in &amp;ldquo;data-driven.&amp;rdquo; It&amp;rsquo;s a simple list. The core engine consumes this list to understand what it can do.&lt;/p&gt;
+&lt;h3 id=&#34;d-the-engine-toolcorecallergo--getformattedtools&#34;&gt;D. The Engine: &lt;code&gt;toolcore/caller.go&lt;/code&gt; &amp;amp; &lt;code&gt;GetFormattedTools&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;The engine is completely generic. &lt;code&gt;GetFormattedTools&lt;/code&gt; iterates through the manifest (&lt;code&gt;allTools&lt;/code&gt;) and formats the data for different parts of the system:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;A &lt;code&gt;map[string]tooltypes.LoggableTool&lt;/code&gt; for quick lookups during execution.&lt;/li&gt;
+&lt;li&gt;A &lt;code&gt;[]llms.Tool&lt;/code&gt; slice for the LLM to perform tool selection.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The &lt;code&gt;SelectAndPrepareTools&lt;/code&gt; function uses this formatted data to orchestrate the LLM call and subsequent tool execution. It doesn&amp;rsquo;t contain any logic specific to &lt;code&gt;news_summary&lt;/code&gt; or any other tool. It&amp;rsquo;s a generic executor, like the T-1000: it can execute any plan, provided the plan follows the established structure.&lt;/p&gt;
+&lt;h2 id=&#34;3-the-openclosed-principle-ocp-in-action&#34;&gt;3. The Open/Closed Principle (OCP) in Action
+&lt;/h2&gt;&lt;p&gt;OCP states:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.&lt;/strong&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Let&amp;rsquo;s apply this to your code. It&amp;rsquo;s a textbook example.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Open for Extension:&lt;/strong&gt; You can extend the chatbot&amp;rsquo;s capabilities by adding new tools. You do this by adding a new &lt;code&gt;DynamicTool{...}&lt;/code&gt; entry to the &lt;code&gt;allTools&lt;/code&gt; slice in &lt;code&gt;toolcore/definitions.go&lt;/code&gt;. The system&amp;rsquo;s functionality grows.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Closed for Modification:&lt;/strong&gt; To add that new tool, you did &lt;strong&gt;not&lt;/strong&gt; have to modify &lt;code&gt;caller.go&lt;/code&gt;, &lt;code&gt;manager.go&lt;/code&gt;, &lt;code&gt;preparer.go&lt;/code&gt;, or &lt;code&gt;dynamic.go&lt;/code&gt;. Those core components are &amp;ldquo;closed.&amp;rdquo; They are stable, tested, and don&amp;rsquo;t need to be changed to support the new functionality. They are like the Terminator&amp;rsquo;s chassis—the endoskeleton is fixed, but you can give it different weapon loadouts (the tools).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;how-to-add-a-new-tool-the-right-way&#34;&gt;How to Add a New Tool (The Right Way)
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Implement the Logic:&lt;/strong&gt; Write the executor function, for example, a new &lt;code&gt;GetCompanyCompetitors&lt;/code&gt; function in &lt;code&gt;toolbe&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Define the Schema:&lt;/strong&gt; Create the JSON schema for its arguments in &lt;code&gt;definitions.go&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Add to the Manifest:&lt;/strong&gt; Add a new &lt;code&gt;DynamicTool{...}&lt;/code&gt; struct to the &lt;code&gt;allTools&lt;/code&gt; slice in &lt;code&gt;toolcore/definitions.go&lt;/code&gt;, wiring up the name, description, schema, and executor function.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;That&amp;rsquo;s it. You have extended the system&amp;rsquo;s functionality without modifying a single line of the core engine&amp;rsquo;s code.&lt;/p&gt;
+&lt;h4 id=&#34;the-wrong-way-violating-ocp&#34;&gt;The Wrong Way (Violating OCP)
+&lt;/h4&gt;&lt;p&gt;Imagine if &lt;code&gt;SelectAndPrepareTools&lt;/code&gt; looked like this:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// THIS IS THE PATH TO THE DARK SIDE. BRITTLE AND PAINFUL.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;executeTool&lt;/span&gt;(call llms.ToolCall) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;switch&lt;/span&gt; call.FunctionCall.Name {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;get_current_time&amp;#34;&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;news_summary&amp;#34;&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// To add a tool, you&amp;#39;d add:
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// case &amp;#34;get_company_competitors&amp;#34;:
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;//     // new logic here...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is a nightmare. It&amp;rsquo;s tightly coupled, hard to test, and every change carries the risk of breaking existing functionality. It&amp;rsquo;s the difference between adding a new app to your phone versus needing the manufacturer to issue a full firmware update for every new app.&lt;/p&gt;
+&lt;h2 id=&#34;4-architectural-prowess-the-payoff&#34;&gt;4. Architectural Prowess: The Payoff
+&lt;/h2&gt;&lt;p&gt;This data-driven design delivers significant advantages:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Extreme Maintainability:&lt;/strong&gt; Tool logic is self-contained. A bug in the &lt;code&gt;financial_annualreport&lt;/code&gt; tool is isolated to its executor function, not entangled in a 500-line &lt;code&gt;switch&lt;/code&gt; statement. You can fix or modify a tool with minimal risk to the rest of the system, like swapping a component in a modular rifle.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Effortless Scalability:&lt;/strong&gt; Adding the 100th tool is no more complex than adding the 1st. The core engine&amp;rsquo;s complexity does not increase as the number of tools grows.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Superior Testability:&lt;/strong&gt; Each tool&amp;rsquo;s executor can be unit-tested in complete isolation. The core engine can be tested with a set of mock tools to ensure its orchestration logic is sound.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Clarity and Single Source of Truth:&lt;/strong&gt; To understand the full capabilities of the chatbot, a developer only needs to read one file: &lt;code&gt;toolcore/definitions.go&lt;/code&gt;. It&amp;rsquo;s the Marauder&amp;rsquo;s Map of our system—it shows you everything.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;By separating the &lt;em&gt;what&lt;/em&gt; (the data in &lt;code&gt;definitions.go&lt;/code&gt;) from the &lt;em&gt;how&lt;/em&gt; (the generic logic in &lt;code&gt;caller.go&lt;/code&gt;), the architecture remains clean, robust, and ready for future expansion without collapsing under its own weight.&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Architectural Note: On the Deliberate Enforcement of Static Concurrency Limits This document addresses the suggestion that the service&rsquo;s concurrency limits (MaxConcurrentRequests, MaxConcurrentLLMStreams) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system&rsquo;s capacity in response to changing load without requiring a restart. This document asserts that such a feature would be a critical design flaw. It sacrifices stability, predictability, and safety for an illusory and dangerous form of flexibility.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/frozen_concurrency/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="Architectural Note: On the Deliberate Enforcement of Static Concurrency Limits This document addresses the suggestion that the service&rsquo;s concurrency limits (MaxConcurrentRequests, MaxConcurrentLLMStreams) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system&rsquo;s capacity in response to changing load without requiring a restart. This document asserts that such a feature would be a critical design flaw. It sacrifices stability, predictability, and safety for an illusory and dangerous form of flexibility.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/frozen_concurrency/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="Architectural Note: On the Deliberate Enforcement of Static Concurrency Limits This document addresses the suggestion that the service&rsquo;s concurrency limits (MaxConcurrentRequests, MaxConcurrentLLMStreams) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system&rsquo;s capacity in response to changing load without requiring a restart. This document asserts that such a feature would be a critical design flaw. It sacrifices stability, predictability, and safety for an illusory and dangerous form of flexibility.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/frozen_concurrency/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    5 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="architectural-note-on-the-deliberate-enforcement-of-static-concurrency-limits">Architectural Note: On the Deliberate Enforcement of Static Concurrency Limits
+</h1><p>This document addresses the suggestion that the service&rsquo;s concurrency limits (<code>MaxConcurrentRequests</code>, <code>MaxConcurrentLLMStreams</code>) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system&rsquo;s capacity in response to changing load without requiring a restart.</p>
+<p>This document asserts that such a feature would be a critical design flaw. It sacrifices stability, predictability, and safety for an illusory and dangerous form of flexibility.</p>
+<h2 id="the-question-why-are-our-capacity-limits-frozen-at-startup">The Question: Why Are Our Capacity Limits &lsquo;Frozen&rsquo; at Startup?
+</h2><p>The core argument for dynamic limits is one of adaptability. Why not have a lever we can pull to instantly increase the chatbot&rsquo;s processing power when traffic spikes? Why must we be constrained by static values set in a configuration file or environment variable?</p>
+<p>This line of thinking fundamentally misunderstands how robust, scalable systems are built. It treats a service instance like a video game character that can instantly chug a potion for a temporary strength boost. Real-world systems are not games. They are engines that require precise, predictable calibration. You don&rsquo;t adjust the timing on a Formula 1 car&rsquo;s engine in the middle of a race.</p>
+<h2 id="analysis-of-the-two-approaches">Analysis of the Two Approaches
+</h2><h3 id="the-current-static-limits-approach">The Current Static Limits Approach
+</h3><ul>
+<li><strong>Mechanism:</strong> Limits are read once from configuration on application startup and used to create fixed-capacity semaphore channels.</li>
+<li><strong>Execution:</strong> A worker goroutine attempts to acquire a token from the semaphore (<code>semaphore &lt;- struct{}{} </code>). If the pool is full, the goroutine blocks until a token is available. Simple, fast, and deterministic.</li>
+<li><strong>Complexity:</strong> Zero. The Go runtime handles the semaphore logic. It is bulletproof.</li>
+<li><strong>Stability:</strong> Absolute. The capacity of the instance is a known, predictable constant. It will not behave erratically or overwhelm its dependencies (LLM APIs, database) due to a sudden, operator-induced change. The system&rsquo;s performance profile is stable and easy to reason about.</li>
+<li><strong>Scalability Model:</strong> Horizontal. If more capacity is needed, you deploy more identical, predictable instances. This is the foundation of cloud-native architecture. The system scales by adding more soldiers to the army, not by trying to turn one soldier into The Hulk.</li>
+</ul>
+<h3 id="the-proposed-dynamic-limits-approach">The Proposed Dynamic Limits Approach
+</h3><ul>
+<li><strong>Mechanism:</strong> An API endpoint to receive new limit values. Internal logic to resize or replace the existing semaphore channels on the fly.</li>
+<li><strong>Execution:</strong>
+<ol>
+<li>An operator makes an API call to change a limit.</li>
+<li>The application must acquire a global lock to prevent race conditions while it modifies the concurrency settings.</li>
+<li><strong>Shrinking the pool:</strong> How do you safely reduce capacity? Do you kill the excess in-flight workers? Do you wait for them to finish, defeating the purpose of an &ldquo;instant&rdquo; change? This is a minefield of potential deadlocks and data corruption.</li>
+<li><strong>Growing the pool:</strong> This is safer, but still requires re-allocating the semaphore channel, a complex and risky operation in a live, multi-threaded environment.</li>
+<li>Every worker would have to constantly check the current limit value, adding overhead and complexity.</li>
+</ol>
+</li>
+<li><strong>Complexity:</strong> A nest of vipers. You&rsquo;ve introduced distributed systems problems (coordination, consensus) <em>inside</em> a single process. The logic required is brittle, hard to test, and an open invitation for subtle, catastrophic bugs.</li>
+<li><strong>Stability:</strong> Destroyed. You&rsquo;ve given operators a loaded gun. A typo in an API call (<code>1000</code> instead of <code>100</code>) could instantly DoS your own dependencies, leading to massive bills and a total system outage. The system is no longer a predictable unit.</li>
+<li><strong>Scalability Model:</strong> Vertical, and dangerously so. It encourages the anti-pattern of creating a single, monolithic &ldquo;pet&rdquo; instance that you constantly tinker with, rather than treating instances as disposable &ldquo;cattle.&rdquo;</li>
+</ul>
+<h2 id="conclusion-we-build-with-granite-blocks-not-jenga-towers">Conclusion: We Build With Granite Blocks, Not Jenga Towers
+</h2><p>The primary duty of this architecture is to be stable and predictable. A single service instance is a building block. We know its dimensions, its weight, and its breaking strain. We achieve scale by deploying more of these identical blocks.</p>
+<p>Dynamic limits violate this principle at a fundamental level. It&rsquo;s an attempt to make one block able to change its shape and size at will. This is not flexibility; it is chaos.</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Static Limits (Current)</th>
+<th>Dynamic Limits (Proposed)</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Complexity</strong></td>
+<td>Zero. Handled by Go runtime.</td>
+<td>Massive. A complex, stateful, and bug-prone internal system.</td>
+<td>The current approach is orders of magnitude safer and simpler.</td>
+</tr>
+<tr>
+<td><strong>Stability</strong></td>
+<td>Absolute and predictable.</td>
+<td>Fragile. Prone to operator error and race conditions.</td>
+<td>Static limits are the foundation of a reliable service.</td>
+</tr>
+<tr>
+<td><strong>Scalability Model</strong></td>
+<td><strong>Horizontal.</strong> Add more predictable instances.</td>
+<td><strong>Vertical.</strong> Create a single, dangerously powerful instance.</td>
+<td>The current model is the proven, industry-standard way to build scalable services.</td>
+</tr>
+<tr>
+<td><strong>Operational Risk</strong></td>
+<td>Low. Configuration is version-controlled and tested.</td>
+<td>High. A &ldquo;fat-finger&rdquo; API call can cause a system-wide outage.</td>
+<td>Dynamic limits are an unacceptable operational hazard.</td>
+</tr>
+<tr>
+<td><strong>Pragmatism</strong></td>
+<td>High. Solves the real need (capacity) correctly.</td>
+<td>Low. A theoretical &ldquo;nice-to-have&rdquo; that is practically a nightmare.</td>
+<td>This is engineering, not wishful thinking.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A system must have discipline. It must operate within known boundaries. John Wick doesn&rsquo;t decide to change his pistol&rsquo;s caliber in the middle of a fight. He carries a set of tools he has mastered and uses them with brutal, predictable efficiency. Our service instances are his tools.</p>
+<p><strong>Therefore, static concurrency limits are a deliberate and non-negotiable feature of this architecture.</strong> They enforce the stability and predictability that are paramount for a resilient, scalable system.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

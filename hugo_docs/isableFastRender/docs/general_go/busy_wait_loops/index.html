@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/general_go/busy_wait_loops/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/general_go/busy_wait_loops/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/general_go/busy_wait_loops/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    3 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="what-are-busy-wait-loops-and-why-are-they-terrible">What Are Busy-Wait Loops and Why Are They Terrible?
+</h1><p>Yes, the polling system from your old <code>manager.go</code> is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct.</p>
+<h3 id="what-is-a-busy-wait-loop">What is a Busy-Wait Loop?
+</h3><p>A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// DO NOT EVER DO THIS
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#50fa7b">while</span> (door_is_closed) {
+</span></span><span style="display:flex;"><span>    <span style="color:#6272a4">// do nothing but loop
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><p>A process running this code will consume 100% of a CPU core, doing absolutely nothing useful. It&rsquo;s the software equivalent of flooring the accelerator of a car that&rsquo;s in neutral. You&rsquo;re burning fuel, making a lot of noise, and going nowhere. The CPU is &ldquo;busy&rdquo; while it &ldquo;waits.&rdquo;</p>
+<p>The harm is obvious:</p>
+<ol>
+<li><strong>Wasted CPU Cycles:</strong> You are paying for computation that achieves nothing.</li>
+<li><strong>Resource Starvation:</strong> Other processes or goroutines that need the CPU can&rsquo;t get it.</li>
+<li><strong>Increased Power Consumption &amp; Heat:</strong> It&rsquo;s physically inefficient.</li>
+</ol>
+<h3 id="your-old-code-a-more-civilized-but-still-flawed-busy-wait">Your Old Code: A More Civilized, But Still Flawed, Busy-Wait
+</h3><p>Your old code wasn&rsquo;t as barbaric as a raw <code>while(true){}</code> loop, but it followed the same flawed principle.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// old manager.go&#39;s GetRequestResultStream
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>ticker <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">NewTicker</span>(<span style="color:#bd93f9">100</span> <span style="color:#ff79c6">*</span> time.Millisecond)
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">for</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#6272a4">// ... check condition ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#ff79c6">select</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">case</span> <span style="color:#ff79c6">&lt;-</span>ticker.C:
+</span></span><span style="display:flex;"><span>        <span style="color:#ff79c6">continue</span> <span style="color:#6272a4">// Loop again after a short nap
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#6272a4">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>This is a &ldquo;busy-wait with naps.&rdquo; Instead of spinning constantly, it spins, takes a 100ms nap, and then spins again. It&rsquo;s like a security guard told to watch a door. Instead of waiting for an alarm (an event), he walks to the door, checks the handle, walks back, sits down for a minute, and then repeats the process all night. It&rsquo;s pointless, repetitive work.</p>
+<p>Each time the <code>ticker</code> fires, the Go runtime has to:</p>
+<ol>
+<li>Wake the goroutine.</li>
+<li>Schedule it to run on a CPU.</li>
+<li>The goroutine runs, acquires a lock, checks a map, releases the lock.</li>
+<li>The goroutine goes back to sleep.</li>
+</ol>
+<p>For a request that takes 5 seconds to prepare, this pointless ritual happens 50 times. It&rsquo;s death by a thousand cuts.</p>
+<h3 id="channels-the-antidote-to-busy-waiting">Channels: The Antidote to Busy-Waiting
+</h3><p>The reason the new event-driven architecture is so much better is that it leverages the Go runtime&rsquo;s scheduler. When a goroutine blocks on a channel read (<code>&lt;-myChan</code>), it&rsquo;s not busy-waiting. The scheduler performs a &ldquo;context switch&rdquo;:</p>
+<ol>
+<li>The goroutine&rsquo;s state is saved.</li>
+<li>It is removed from the list of runnable goroutines.</li>
+<li>Another, different goroutine is scheduled to run on that CPU core.</li>
+</ol>
+<p>The waiting goroutine now consumes <strong>zero CPU resources</strong>. It is effectively frozen in time until another goroutine sends data to that specific channel (<code>myChan &lt;- data</code>). When that send event occurs, the scheduler is notified, and it moves the waiting goroutine <em>back</em> into the runnable queue.</p>
+<p>This is the fundamental difference:</p>
+<ul>
+<li><strong>Busy-Wait:</strong> You use the CPU to check for an event.</li>
+<li><strong>Channel Wait:</strong> You tell the scheduler &ldquo;wake me up when this event happens,&rdquo; and the CPU goes off to do other useful work.</li>
+</ul>
+<p>Your README is correct. The new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

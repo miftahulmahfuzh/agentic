@@ -1,3 +1,9 @@
+---
+title: "Data Driven"
+date: 2025-08-02
+draft: false
+---
+
 # The Data-Driven Tool Architecture
 
 ## 1. Overview: The Armory Philosophy

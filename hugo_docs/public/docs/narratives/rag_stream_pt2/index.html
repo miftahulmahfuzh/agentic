@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Let&rsquo;s trace the journey of the query &ldquo;how to register in tuntun?&rdquo; from the moment the user hits &ldquo;send&rdquo; to the final word appearing on their screen. This story unfolds in four main acts: The Submission: The request enters the system. The Preparation: The system decides what to do. This is the critical decision point. The Execution: The system performs the action, in this case, a direct RAG stream. The Delivery: The streaming answer reaches the user.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/narratives/rag_stream_pt2/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="Let&rsquo;s trace the journey of the query &ldquo;how to register in tuntun?&rdquo; from the moment the user hits &ldquo;send&rdquo; to the final word appearing on their screen. This story unfolds in four main acts: The Submission: The request enters the system. The Preparation: The system decides what to do. This is the critical decision point. The Execution: The system performs the action, in this case, a direct RAG stream. The Delivery: The streaming answer reaches the user.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/narratives/rag_stream_pt2/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="Let&rsquo;s trace the journey of the query &ldquo;how to register in tuntun?&rdquo; from the moment the user hits &ldquo;send&rdquo; to the final word appearing on their screen. This story unfolds in four main acts: The Submission: The request enters the system. The Preparation: The system decides what to do. This is the critical decision point. The Execution: The system performs the action, in this case, a direct RAG stream. The Delivery: The streaming answer reaches the user.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/narratives/rag_stream_pt2/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    7 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>Let&rsquo;s trace the journey of the query &ldquo;how to register in tuntun?&rdquo; from the moment the user hits &ldquo;send&rdquo; to the final word appearing on their screen.</p>
+<p>This story unfolds in four main acts:</p>
+<ol>
+<li><strong>The Submission:</strong> The request enters the system.</li>
+<li><strong>The Preparation:</strong> The system decides <em>what</em> to do. This is the critical decision point.</li>
+<li><strong>The Execution:</strong> The system performs the action, in this case, a direct RAG stream.</li>
+<li><strong>The Delivery:</strong> The streaming answer reaches the user.</li>
+</ol>
+<hr>
+<h3 id="the-story-of-how-to-register-in-tuntun">The Story of &ldquo;how to register in tuntun?&rdquo;
+</h3><h4 id="act-i-the-submission-managersubmitrequest">Act I: The Submission (<code>Manager.SubmitRequest</code>)
+</h4><p>A user opens the chatbot and types &ldquo;how to register in tuntun?&rdquo;. The client-facing API calls <code>Manager.SubmitRequest</code>.</p>
+<ol>
+<li><strong>Request ID Generation:</strong> A unique ID is created, let&rsquo;s say <code>req_f4a12</code>. This ID is the key to tracking the request throughout its lifecycle.</li>
+<li><strong>State Holder Creation:</strong> The <code>Manager</code> creates a <code>types.RequestStream</code> &ldquo;holder&rdquo;. This is a crucial control structure in <code>activeRequests[&quot;req_f4a12&quot;]</code>. It contains:
+<ul>
+<li><code>Stream (chan (&lt;-chan tooltypes.StreamEvent))</code>: A channel that will eventually carry the <em>actual</em> result channel. Think of it as a mailbox waiting for a letter that is, itself, a pipeline.</li>
+<li><code>Err (chan error)</code>: A channel to send fatal errors or cancellation signals.</li>
+<li><code>ClientConnected (chan struct{})</code>: A signal to indicate the client is ready to receive the stream.</li>
+<li><code>State</code>: Set to <code>types.StateQueued</code>.</li>
+</ul>
+</li>
+<li><strong>Enqueueing:</strong> The request details (ID, question, user) are wrapped in <code>types.SubmitRequestArgs</code> and placed into the <code>requestQueue</code>.</li>
+<li><strong>Immediate Return:</strong> The function immediately returns the <code>requestID</code> (&ldquo;req_f4a12&rdquo;) to the client. The client now holds this ID and will use it to ask for the results.</li>
+</ol>
+<p>The request is now waiting in a line, like a customer at a bank teller.</p>
+<h4 id="act-ii-the-preparation-prepareworkermanager--requestpreparer">Act II: The Preparation (<code>prepareWorkerManager</code> &amp; <code>RequestPreparer</code>)
+</h4><p>This is where the system&rsquo;s &ldquo;brain&rdquo; makes its decision.</p>
+<ol>
+<li><strong>Dequeueing:</strong> A <code>prepareWorker</code> goroutine, managed by <code>prepareWorkerManager</code>, picks up <code>req_f4a12</code> from the <code>requestQueue</code>. It acquires a slot from the <code>prepareSemaphore</code>.</li>
+<li><strong>State Update:</strong> The request&rsquo;s state is updated from <code>StateQueued</code> to <code>StateProcessing</code>. A cancellable context is created and its <code>cancelFunc</code> is stored in <code>cancellableStreams[&quot;req_f4a12&quot;]</code>, linking the request ID to a &ldquo;stop&rdquo; button.</li>
+<li><strong>Calling the Preparer:</strong> The worker calls <code>preparer.Prepare(..., req_f4a12, ...)</code>.</li>
+<li><strong>Inside the Preparer (<code>doExpensivePreparation</code>)</strong>:
+<ul>
+<li>It checks for a Redis cache entry based on the conversation history and question. It&rsquo;s a <code>miss</code>.</li>
+<li>It calls <code>toolcore.SelectAndPrepareTools</code>. This is the pivotal moment.</li>
+</ul>
+</li>
+<li><strong>The Critical Decision (<code>SelectAndPrepareTools</code>)</strong>:
+<ul>
+<li>The function assembles a prompt for the LLM that includes the tool descriptions and the user&rsquo;s question.</li>
+<li>The <code>frequently_asked</code> tool has a very specific description: <code>This is the primary tool for answering all user questions that seek knowledge, definitions, explanations, or guidance... Use this tool for any of the following: ... How-to guides for using Tuntun Sekuritas products.</code> It even has an instruction to translate informal queries into formal ones.</li>
+<li>The LLM analyzes &ldquo;how to register in tuntun?&rdquo; and sees a perfect match. It decides to call the <code>frequently_asked</code> tool. It also formalizes the query.</li>
+<li>The LLM&rsquo;s response is a single tool call: <code>frequently_asked(query=&quot;how to register on the Tuntun application&quot;)</code>.</li>
+<li>The code in <code>SelectAndPrepareTools</code> checks this result. It sees:
+<ul>
+<li>There is only one tool call.</li>
+<li>The tool&rsquo;s name, <code>frequently_asked</code>, is listed in the <code>config.AppSettings.NaturalAnswerTools</code> array.</li>
+</ul>
+</li>
+<li><strong>The Flag is Set:</strong> Because both conditions are met, it returns a <code>tooltypes.ToolPreparationResult</code> with <code>IsDirectStream: true</code>. It does <em>not</em> execute the tool here. It simply flags this request for the direct streaming path.</li>
+</ul>
+</li>
+<li><strong>Back to the Manager:</strong> The <code>prepareWorker</code> receives the <code>PreparedRequestData</code> with <code>IsDirectStream: true</code>. It puts this prepared data onto the <code>preparedQueue</code>, ready for the next stage.</li>
+</ol>
+<p>The system has now decided: &ldquo;This doesn&rsquo;t need complex reasoning. I will connect the user directly to the knowledge base.&rdquo;</p>
+<h4 id="act-iii-the-execution-streamworkermanager--responsestreamer">Act III: The Execution (<code>streamWorkerManager</code> &amp; <code>ResponseStreamer</code>)
+</h4><p>This is where the direct RAG streaming path is executed and where the channels play their intricate dance.</p>
+<ol>
+<li><strong>Dequeueing for Streaming:</strong> A <code>streamWorker</code> goroutine picks up the prepared data for <code>req_f4a12</code> from the <code>preparedQueue</code>. It acquires a slot from the <code>llmStreamSemaphore</code>.</li>
+<li><strong>Locating the Holder:</strong> It finds the original <code>RequestStream</code> holder using the <code>requestID</code>.</li>
+<li><strong>Calling the Streamer:</strong> It calls <code>s.streamer.Stream(streamChan, preparedData, ...)</code>.</li>
+<li><strong>Inside the Streamer (<code>runDirectToolStream</code>)</strong>:
+<ul>
+<li>The <code>Stream</code> method sees <code>IsDirectStream</code> is true and immediately calls <code>runDirectToolStream</code>.</li>
+<li>It finds the <code>frequently_asked</code> tool&rsquo;s definition in <code>availableTools</code>. This <code>DynamicTool</code> struct contains a <code>StreamExecutor</code> field pointing to <code>toolnonbe.StreamTencentFrequentlyAsked</code>.</li>
+<li><strong>The Tool is Called:</strong> It invokes the tool&rsquo;s <code>Stream</code> method, passing it the request&rsquo;s cancellable context, arguments, logger, and a <em>newly created internal channel</em> (<code>internalStreamChan</code>).</li>
+</ul>
+</li>
+<li><strong>Inside the Tool (<code>StreamTencentFrequentlyAsked</code>)</strong>:
+<ul>
+<li>This function is now active. It makes an HTTP POST request to the Tencent RAG API, which is a Server-Sent Events (SSE) endpoint.</li>
+<li>It starts reading the streaming response body from Tencent line-by-line.</li>
+<li>As it receives data chunks (e.g., <code>data: {&quot;payload&quot;: {&quot;content&quot;: &quot;To register,&quot;}}</code>, <code>data: {&quot;payload&quot;: {&quot;content&quot;: &quot;To register, you must first&quot;}}</code>, etc.), it calculates the new text (<code>delta</code>).</li>
+<li>For each <code>delta</code>, it creates a <code>tooltypes.StreamEvent</code> and <strong>sends it into the channel it was given (<code>internalStreamChan</code>)</strong>.</li>
+</ul>
+</li>
+<li><strong>Forwarding the Stream:</strong> Simultaneously, back in <code>runDirectToolStream</code>, a <code>for range</code> loop is listening on that same <code>internalStreamChan</code>. As it receives events from the tool, it <strong>immediately forwards them to <code>streamChan</code></strong> (the channel it received from the <code>streamWorkerManager</code>). This acts as a simple relay.</li>
+</ol>
+<h4 id="act-iv-the-delivery-getrequestresultstream">Act IV: The Delivery (<code>GetRequestResultStream</code>)
+</h4><p>While all of this is happening, the user&rsquo;s client has been waiting.</p>
+<ol>
+<li><strong>Client Polls for Result:</strong> The client code calls <code>Manager.GetRequestResultStream(&quot;req_f4a12&quot;)</code>.</li>
+<li><strong>Waiting for the Pipe:</strong> The function finds the <code>RequestStream</code> holder for <code>req_f4a12</code>. It blocks on the <code>select</code> statement, specifically on <code>stream := &lt;-streamHolder.Stream</code>. It&rsquo;s waiting for the &ldquo;pipeline&rdquo; to be delivered to its &ldquo;mailbox&rdquo;.</li>
+<li><strong>The Handoff:</strong> In Act III, the <code>streamWorkerManager</code> put the main <code>streamChan</code> into the holder&rsquo;s <code>Stream</code> channel. This action unblocks <code>GetRequestResultStream</code>.</li>
+<li><strong>Connection Complete:</strong> <code>GetRequestResultStream</code> now has the <code>streamChan</code>—the very same one the <code>ResponseStreamer</code> is feeding events into—and returns it to the client.</li>
+<li><strong>Receiving Tokens:</strong> The client now has a direct line to the output. It runs a <code>for event := range streamChan</code> loop. As the <code>StreamTencentFrequentlyAsked</code> tool sends tokens to the <code>ResponseStreamer</code>, which forwards them to the <code>streamChan</code>, the client receives them in near real-time and displays them to the user.</li>
+</ol>
+<p>The user sees the answer &ldquo;To register, you must first download the Tuntun application from&hellip;&rdquo; appearing on their screen word by word.</p>
+<hr>
+<h3 id="how-the-direct-rag-streaming-channels-work">How the Direct RAG Streaming Channels Work
+</h3><p>This is the core of your second question. The process involves a chain of channels, like a bucket brigade, ensuring a direct, cancellable path from the RAG API to the user&rsquo;s screen.</p>
+<p>Here is a visual representation of the channel flow:</p>
+<pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">graph LR
+    %% Define Subgraphs for architectural layers
+    subgraph Client_Tier [&#34;Client Tier&#34;]
+        Client[Client Application]
+    end
+
+    subgraph Application_Backend [&#34;Application Backend&#34;]
+        subgraph Request_Lifecycle [&#34;Request Lifecycle Management&#34;]
+            Manager[&#34;Request Manager&lt;br/&gt;Manages state for req_f4a12&#34;]
+        end
+
+        subgraph Execution_Engine [&#34;Execution Engine (Direct RAG Path)&#34;]
+            Streamer[&#34;Response Streamer&lt;br/&gt;Orchestrates the streaming process&#34;]
+            ToolExecutor[&#34;RAG Tool Executor&lt;br/&gt;(e.g., StreamTencentFrequentlyAsked)&#34;]
+        end
+    end
+
+    subgraph External_Services [&#34;External Services&#34;]
+        RAG_API[&#34;External RAG Service&lt;br/&gt;(Server-Sent Events Endpoint)&#34;]
+    end
+
+    %% Define Styles for clarity and elegance
+    classDef client fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px
+    classDef manager fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef executor fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px
+
+    class Client client
+    class Manager manager
+    class Streamer,ToolExecutor executor
+    class RAG_API external
+
+    %% Control Flow: Establishes the connection
+    Client -.-&gt;|&#34;1. Polls with request ID&lt;br/&gt;(GetRequestResultStream)&#34;| Manager
+    Manager -.-&gt;|&#34;2. Provides client with&lt;br/&gt;mainStreamChan for results&#34;| Client
+
+    %% Execution &amp; Data Flow: The main pipeline
+    Manager --&gt;|&#34;3. Dispatches Prepared Request&#34;| Streamer
+    Streamer --&gt;|&#34;4. Invokes Tool with a new&lt;br/&gt;internalStreamChan &amp; context&#34;| ToolExecutor
+    ToolExecutor --&gt;|&#34;5. HTTP Stream Request&#34;| RAG_API
+    RAG_API --&gt;|&#34;6. SSE Data Chunks&#34;| ToolExecutor
+    ToolExecutor --&gt;|&#34;7. Writes tooltypes.StreamEvent&lt;br/&gt;to internalStreamChan&#34;| Streamer
+    Streamer --&gt;|&#34;8. Relays events from internal to&lt;br/&gt;mainStreamChan&#34;| Client
+</code></pre><p><strong>The Handoffs Explained:</strong></p>
+<ol>
+<li>
+<p><strong>Handoff 1 (The Pipe Delivery):</strong> The <code>streamWorkerManager</code> creates the primary channel (<code>streamChan</code>) that the client will eventually read. It places this channel <em>inside</em> another channel (<code>holder.Stream</code>), essentially delivering the pipe to a known location. <code>GetRequestResultStream</code> is waiting at that location to pick it up.</p>
+</li>
+<li>
+<p><strong>Handoff 2 (The Tool Connection):</strong> The <code>ResponseStreamer</code> acts as an adapter. It can&rsquo;t give <code>streamChan</code> directly to the tool because it might need to intercept or modify events (e.g., add a &ldquo;Time to First Token&rdquo; event). So it creates its own <code>internalStreamChan</code>, passes <em>that</em> to the tool, and starts a goroutine to relay messages from <code>internalStreamChan</code> to <code>streamChan</code>.</p>
+</li>
+<li>
+<p><strong>The Source:</strong> The <code>StreamTencentFrequentlyAsked</code> function is the ultimate source of the data. It&rsquo;s blissfully unaware of the client or the manager; its only job is to read from an HTTP stream and write the parsed events into the channel it was given (<code>internalStreamChan</code>).</p>
+</li>
+</ol>
+<p>This separation of concerns makes the system robust:</p>
+<ul>
+<li>The <strong>Manager</strong> handles request lifecycle and state.</li>
+<li>The <strong>Streamer</strong> orchestrates <em>how</em> a response is generated (cache, tool, or LLM).</li>
+<li>The <strong>Tool</strong> is an expert in one thing: getting data from its specific source and streaming it.</li>
+</ul>
+<p>This layered channel approach creates a direct, efficient, and fully managed data pipeline from the external RAG service straight to the end-user.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

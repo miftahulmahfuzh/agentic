@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Architectural Deep Dive: The Manager as &ldquo;The Wolf&rdquo; This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &ldquo;The Wolf&rdquo; from Pulp Fiction. 1. Context: The Race to Stream The system is built for real-time interaction. This creates a classic race condition.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/prestream_deadlock/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="Architectural Deep Dive: The Manager as &ldquo;The Wolf&rdquo; This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &ldquo;The Wolf&rdquo; from Pulp Fiction. 1. Context: The Race to Stream The system is built for real-time interaction. This creates a classic race condition.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/prestream_deadlock/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="Architectural Deep Dive: The Manager as &ldquo;The Wolf&rdquo; This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &ldquo;The Wolf&rdquo; from Pulp Fiction. 1. Context: The Race to Stream The system is built for real-time interaction. This creates a classic race condition.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/prestream_deadlock/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    5 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="architectural-deep-dive-the-manager-as-the-wolf">Architectural Deep Dive: The Manager as &ldquo;The Wolf&rdquo;
+</h1><p>This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &ldquo;The Wolf&rdquo; from <em>Pulp Fiction</em>.</p>
+<h2 id="1-context-the-race-to-stream">1. Context: The Race to Stream
+</h2><p>The system is built for real-time interaction. This creates a classic race condition.</p>
+<ol>
+<li><strong>Submission:</strong> Client <code>POST</code>s to <code>/chat/submit</code>. A request is created and queued.</li>
+<li><strong>Connection:</strong> Client immediately opens an SSE connection to <code>GET /chat/stream/{request_id}</code>. The handler for this route blocks, waiting for the Manager to provide a stream channel.</li>
+<li><strong>Work Begins:</strong> A worker picks up the request and starts processing.</li>
+<li><strong>Cancellation:</strong> The user can <code>POST</code> to <code>/chat/cancel/{request_id}</code> at any moment.</li>
+</ol>
+<p>The deadlock happens if the cancellation (4) occurs after the client connects (2) but before the worker has produced a stream (3). The handler is left waiting for a stream that will never arrive—a zombie connection, like a Terminator that&rsquo;s lost its target.</p>
+<h2 id="2-the-problem-a-deadlock-standoff">2. The Problem: A Deadlock Standoff
+</h2><p>The old system created a standoff worthy of a Tarantino film.</p>
+<ul>
+<li>The <code>handleStreamRequest</code> goroutine was blocked, waiting for a channel (<code>streamHolder.Stream</code> or <code>streamHolder.Err</code>) to receive data.</li>
+<li>The <code>CancelStream</code> function would stop the backend worker, guaranteeing those channels would <em>never</em> receive data from the worker.</li>
+<li>The handler was stuck, the client connection would hang, and the request would eventually time out with a generic network error. It was messy.</li>
+</ul>
+<h3 id="problematic-flow-diagram">Problematic Flow Diagram
+</h3><pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+    participant Frontend
+    participant Gin Handler (`handleStreamRequest`)
+    participant ChatManager
+
+    Frontend-&gt;&gt;+Gin Handler: GET /chat/stream/{req_id}
+    Gin Handler-&gt;&gt;+ChatManager: GetRequestResultStream(req_id)
+    Note over Gin Handler,ChatManager: Handler blocks, waiting on internal channels.
+
+    Frontend-&gt;&gt;+ChatManager: POST /chat/cancel/{req_id}
+    ChatManager-&gt;&gt;ChatManager: Set state to Cancelled, call context.cancel()
+    Note right of ChatManager: Cancellation is marked internally.
+
+    Note over Frontend,ChatManager: DEADLOCK! &lt;br/&gt; The Gin Handler is still blocked. &lt;br/&gt; It was never notified of the cancellation. &lt;br/&gt; The Frontend&#39;s GET request will time out.
+</code></pre><h2 id="3-the-solution-the-manager-handles-the-hit">3. The Solution: The Manager Handles the Hit
+</h2><p>The solution is not a clumsy, two-part fix between the Manager and the Handler. It&rsquo;s an elegant, self-contained strategy entirely within the <code>Chatbot Manager</code>. The Manager now handles all cancellation scenarios and provides a consistent, predictable output to the handler. There are two paths to cancellation, and the Manager handles both flawlessly.</p>
+<p><strong>Key Component:</strong> <code>newCancelledStream()</code> helper function. This function creates a &ldquo;ghost stream&rdquo;—a new channel that delivers a single, pre-formatted cancellation event and then immediately closes. It&rsquo;s the perfect tool for a clean getaway.</p>
+<h3 id="path-a-pre-emptive-strike-request-already-cancelled">Path A: Pre-emptive Strike (Request Already Cancelled)
+</h3><p>This occurs when the <code>GET /chat/stream</code> request arrives for a request ID that has <em>already</em> been marked as cancelled.</p>
+<ol>
+<li><code>GetRequestResultStream</code> is called.</li>
+<li>It first checks the request&rsquo;s state: <code>if streamHolder.State == types.StateCancelled</code>.</li>
+<li>The check is <code>true</code>. The target is already down.</li>
+<li>The Manager immediately calls <code>m.newCancelledStream()</code>.</li>
+<li>This returns a <em>new, valid channel</em> to the handler that will emit one cancellation event and then close. No deadlock. No error. Just a clean, finished job.</li>
+</ol>
+<h3 id="path-b-the-race-condition-cancelled-during-wait">Path B: The Race Condition (Cancelled During Wait)
+</h3><p>This is the classic deadlock scenario. The handler is already blocked inside <code>GetRequestResultStream</code>, waiting in the <code>select</code> block.</p>
+<ol>
+<li><code>CancelStream</code> is called from another goroutine.</li>
+<li>It sets the request state to <code>StateCancelled</code>.</li>
+<li><strong>The Signal:</strong> It sends <code>types.ErrRequestCancelled</code> to the <code>streamHolder.Err</code> channel. This is not for the handler; it&rsquo;s an <em>internal signal</em> to the waiting <code>GetRequestResultStream</code> goroutine.</li>
+<li><strong>The Unblocking:</strong> The <code>select</code> block inside <code>GetRequestResultStream</code> immediately unblocks, having received the signal on the <code>Err</code> channel.</li>
+<li><strong>The Pivot:</strong> Instead of propagating this error up to the handler, it catches it and calls <code>m.newCancelledStream()</code>.</li>
+<li>Just like in Path A, it returns a clean, valid channel to the handler.</li>
+</ol>
+<p>In both scenarios, the <code>Manager</code> absorbs the complexity and resolves the situation internally. It never returns a special error to the handler that requires interpretation. It always provides a valid stream channel.</p>
+<h3 id="solved-flow-diagram">Solved Flow Diagram
+</h3><pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">sequenceDiagram
+    participant Frontend
+    participant Gin Handler (`handleStreamRequest`)
+    participant ChatManager
+
+    Frontend-&gt;&gt;+Gin Handler: GET /chat/stream/{req_id}
+    Gin Handler-&gt;&gt;+ChatManager: GetRequestResultStream(req_id)
+    Note over Gin Handler,ChatManager: Handler blocks, waiting on internal channels.
+
+    Frontend-&gt;&gt;+ChatManager: POST /chat/cancel/{req_id}
+    ChatManager-&gt;&gt;ChatManager: 1. Set State=Cancelled&lt;br&gt;2. Send internal signal (ErrRequestCancelled)
+
+    ChatManager-&gt;&gt;ChatManager: 3. `GetRequestResultStream` catches signal&lt;br&gt;4. Calls `newCancelledStream()`
+    Note right of ChatManager: The Manager resolves the&lt;br&gt;cancellation internally.
+
+    ChatManager--&gt;&gt;-Gin Handler: Return a NEW, pre-canned stream channel
+    Note over Gin Handler: Handler is unblocked with a valid channel.
+
+    Gin Handler--&gt;&gt;-Frontend: Stream the single cancellation event from the channel.
+    Note over Frontend, Gin Handler: Connection closes gracefully. &lt;br/&gt; No deadlock. UI is updated correctly.
+</code></pre><h2 id="4-the-handlers-role-the-getaway-driver">4. The Handler&rsquo;s Role: The Getaway Driver
+</h2><p>With the Manager acting as the &ldquo;fixer,&rdquo; the Gin handler (<code>handleStreamRequest</code>) becomes the simple getaway driver. Its job is not to think; its job is to drive.</p>
+<ul>
+<li>It calls <code>GetRequestResultStream</code>.</li>
+<li>It receives a channel. It has no idea if this is a real-time LLM stream or a pre-canned cancellation stream from <code>newCancelledStream</code>. <strong>It doesn&rsquo;t care.</strong></li>
+<li>It loops, reads events from the channel, and writes them to the client until the channel is closed.</li>
+</ul>
+<p>This is a perfect separation of concerns. The handler handles HTTP I/O. The Manager handles business logic and state.</p>
+<h2 id="5-conclusion">5. Conclusion
+</h2><p>This architecture resolves the pre-stream cancellation deadlock with precision. By centralizing the cancellation logic within the <code>Chatbot Manager</code> and using the &ldquo;ghost stream&rdquo; pattern (<code>newCancelledStream</code>), we eliminate race conditions and provide a single, reliable interface to the I/O layer. The system is no longer a messy shootout; it&rsquo;s a John Wick headshot. The problem is eliminated cleanly, efficiently, and without collateral damage to the user experience.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="The Flaw of Polling vs. The Power of Event-Driven Design You might look at the new manager.go and wonder why it’s structured with a channel inside a struct (RequestStream.Stream) which itself is passed between functions before finally being used. It might seem complex. The reason is simple: this architecture is fundamentally more intelligent, efficient, and scalable than the common alternative—a polling loop. The alternative is the architectural equivalent of a security guard repeatedly running to the front gate every 10 seconds to see if a package has arrived.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/general_go/superior_event_driven/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="The Flaw of Polling vs. The Power of Event-Driven Design You might look at the new manager.go and wonder why it’s structured with a channel inside a struct (RequestStream.Stream) which itself is passed between functions before finally being used. It might seem complex. The reason is simple: this architecture is fundamentally more intelligent, efficient, and scalable than the common alternative—a polling loop. The alternative is the architectural equivalent of a security guard repeatedly running to the front gate every 10 seconds to see if a package has arrived.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/general_go/superior_event_driven/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="The Flaw of Polling vs. The Power of Event-Driven Design You might look at the new manager.go and wonder why it’s structured with a channel inside a struct (RequestStream.Stream) which itself is passed between functions before finally being used. It might seem complex. The reason is simple: this architecture is fundamentally more intelligent, efficient, and scalable than the common alternative—a polling loop. The alternative is the architectural equivalent of a security guard repeatedly running to the front gate every 10 seconds to see if a package has arrived.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/general_go/superior_event_driven/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    5 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="the-flaw-of-polling-vs-the-power-of-event-driven-design">The Flaw of Polling vs. The Power of Event-Driven Design
+</h1><p>You might look at the new <code>manager.go</code> and wonder why it’s structured with a channel inside a struct (<code>RequestStream.Stream</code>) which itself is passed between functions before finally being used. It might seem complex.</p>
+<p>The reason is simple: this architecture is fundamentally more intelligent, efficient, and scalable than the common alternative—a polling loop. The alternative is the architectural equivalent of a security guard repeatedly running to the front gate every 10 seconds to see if a package has arrived. Our way is letting the guard sleep soundly at their desk until the delivery driver rings the bell.</p>
+<h3 id="the-old-way-inefficient-polling-are-we-there-yet">The Old Way: Inefficient Polling (&ldquo;Are We There Yet?&rdquo;)
+</h3><p>Let&rsquo;s imagine for a moment we had designed <code>GetRequestResultStream</code> using a naive polling strategy. It would be a disaster. The client would call the function, and to get the result, it would have to constantly check if the workers were done yet.</p>
+<p>It would look something like this <strong>(this is a hypothetical bad example, not our actual code)</strong>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// A HYPOTHETICAL, INEFFICIENT POLLING IMPLEMENTATION
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">GetRequestResultStream_BAD</span>(ctx context.Context, requestID <span style="color:#8be9fd">string</span>) (<span style="color:#ff79c6">&lt;-</span><span style="color:#8be9fd;font-style:italic">chan</span> types.StreamEvent, <span style="color:#8be9fd">error</span>) {
+</span></span><span style="display:flex;"><span>	ticker <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">NewTicker</span>(<span style="color:#bd93f9">100</span> <span style="color:#ff79c6">*</span> time.Millisecond) <span style="color:#6272a4">// Check every 100ms
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	<span style="color:#ff79c6">defer</span> ticker.<span style="color:#50fa7b">Stop</span>()
+</span></span><span style="display:flex;"><span>	timeout <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">After</span>(config.AppSettings.ProcessingTimeout)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">for</span> { <span style="color:#6272a4">// &lt;-- THIS IS THE PROBLEM
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>		requestsLock.<span style="color:#50fa7b">RLock</span>()
+</span></span><span style="display:flex;"><span>		streamHolder, ok <span style="color:#ff79c6">:=</span> activeRequests[requestID]
+</span></span><span style="display:flex;"><span>		requestsLock.<span style="color:#50fa7b">RUnlock</span>()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff79c6">if</span> ok {
+</span></span><span style="display:flex;"><span>            <span style="color:#6272a4">// How do we know it&#39;s ready? We can&#39;t peek into a channel.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>            <span style="color:#6272a4">// So we&#39;d have to check the State. Let&#39;s pretend we update
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>            <span style="color:#6272a4">// the state to &#39;Ready&#39; right before we start the stream.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>			<span style="color:#ff79c6">if</span> streamHolder.State <span style="color:#ff79c6">==</span> types.StateReadyToStream { <span style="color:#6272a4">// A FAKE STATE
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>				<span style="color:#6272a4">// Now we can try to grab the stream...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>                <span style="color:#ff79c6">return</span> streamHolder.Stream, <span style="color:#ff79c6">nil</span> <span style="color:#6272a4">// Hope it&#39;s there!
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>			}
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#6272a4">// ... error handling for not found ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span>		<span style="color:#ff79c6">select</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff79c6">case</span> <span style="color:#ff79c6">&lt;-</span>ticker.C:
+</span></span><span style="display:flex;"><span>			<span style="color:#ff79c6">continue</span> <span style="color:#6272a4">// WAKE UP, LOCK, CHECK, UNLOCK, SLEEP. REPEAT.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>		<span style="color:#ff79c6">case</span> <span style="color:#ff79c6">&lt;-</span>timeout:
+</span></span><span style="display:flex;"><span>			<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, fmt.<span style="color:#50fa7b">Errorf</span>(<span style="color:#f1fa8c">&#34;timed out waiting for stream&#34;</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#ff79c6">case</span> <span style="color:#ff79c6">&lt;-</span>ctx.<span style="color:#50fa7b">Done</span>():
+</span></span><span style="display:flex;"><span>			<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, ctx.<span style="color:#50fa7b">Err</span>()
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>This is fundamentally wasteful. For the entire duration that the request is being prepared by the <code>prepareWorker</code> and waiting in the <code>preparedQueue</code>, this goroutine would be in a frantic cycle of:</p>
+<ol>
+<li>Waking up.</li>
+<li>Acquiring a global read lock.</li>
+<li>Checking a map for a value.</li>
+<li>Releasing the lock.</li>
+<li>Going back to sleep.</li>
+</ol>
+<p>This burns CPU cycles for no reason, creates unnecessary lock contention on the critical <code>activeRequests</code> map, and adds latency. It&rsquo;s a headless chicken running around a barn, hoping to stumble upon some corn.</p>
+<h3 id="the-new-way-event-driven-the-rendezvous">The New Way: Event-Driven (&ldquo;The Rendezvous&rdquo;)
+</h3><p>Our new code is intelligent. It doesn&rsquo;t ask &ldquo;is it ready?&rdquo;. It says, &ldquo;I am going to wait right here. Notify me when it&rsquo;s ready,&rdquo; and then goes to sleep. It’s a rendezvous. The goroutine arrives at the meeting point and waits, consuming zero resources until the other party arrives with the goods.</p>
+<p>Look at the new flow:</p>
+<ol>
+<li>
+<p><strong><code>SubmitRequest</code>:</strong> It creates a <code>RequestStream</code> holder. Think of this as a briefcase or a secure drop-box. It contains two channels: one for the eventual result stream (<code>Stream</code>) and one for an error (<code>Err</code>). This drop-box is immediately placed in the global <code>activeRequests</code> map.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>streamHolder <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&amp;</span>types.RequestStream{
+</span></span><span style="display:flex;"><span>	Stream:          <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">chan</span> (<span style="color:#ff79c6">&lt;-</span><span style="color:#8be9fd;font-style:italic">chan</span> types.StreamEvent), <span style="color:#bd93f9">1</span>),
+</span></span><span style="display:flex;"><span>	Err:             <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd">error</span>, <span style="color:#bd93f9">1</span>),
+</span></span><span style="display:flex;"><span>	ClientConnected: <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd;font-style:italic">struct</span>{}),
+</span></span><span style="display:flex;"><span>	State:           types.StateQueued,
+</span></span><span style="display:flex;"><span>	LastStateChange: time.<span style="color:#50fa7b">Now</span>(),
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li>
+<p><strong><code>GetRequestResultStream</code>:</strong> The client calls this function. It finds the drop-box for its <code>requestID</code> and immediately does this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff79c6">select</span> {
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">case</span> stream <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&lt;-</span>streamHolder.Stream: <span style="color:#6272a4">// &lt;-- WAITING HERE
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	log.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;[GetStream - %s] Stream is ready. Returning to client.&#34;</span>, requestID)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">return</span> stream, <span style="color:#ff79c6">nil</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">case</span> err <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&lt;-</span>streamHolder.Err:      <span style="color:#6272a4">// &lt;-- OR WAITING HERE FOR AN ERROR
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	log.<span style="color:#50fa7b">Printf</span>(<span style="color:#f1fa8c">&#34;[GetStream - %s] An error occurred: %v&#34;</span>, requestID, err)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, err
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// ... timeout cases ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><p>The key is <code>&lt;-streamHolder.Stream</code>. This is a <strong>blocking read on a channel</strong>. The goroutine stops dead. It is descheduled by the Go runtime. It consumes <strong>ZERO CPU</strong>. It is completely asleep, waiting for something to be put into that channel.</p>
+</li>
+<li>
+<p><strong><code>streamWorkerManager</code>:</strong> Meanwhile, in a completely separate part of the application, a worker has picked the request from the <code>preparedQueue</code>. It&rsquo;s ready to start the expensive LLM call. It gets the same <code>streamHolder</code> drop-box and performs the rendezvous:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>streamChan <span style="color:#ff79c6">:=</span> <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">chan</span> types.StreamEvent, config.AppSettings.StreamTokenBuffer)
+</span></span><span style="display:flex;"><span>holder.Stream <span style="color:#ff79c6">&lt;-</span> streamChan <span style="color:#6272a4">// &lt;-- THE ACTIVATION SIGNAL. THE PACKAGE IS DROPPED.
+</span></span></span></code></pre></div><p>This single line is the &ldquo;event&rdquo;. The worker creates the <em>actual</em> channel that the LLM tokens will flow through (<code>streamChan</code>) and places it inside the <code>holder.Stream</code> channel.</p>
+</li>
+<li>
+<p><strong>The Payoff:</strong> The moment <code>holder.Stream &lt;- streamChan</code> executes, the sleeping <code>GetRequestResultStream</code> goroutine, which has been patiently and efficiently waiting on <code>&lt;-streamHolder.Stream</code>, instantly wakes up. It receives the <code>streamChan</code>, returns it to the client, and the streaming of data begins.</p>
+</li>
+</ol>
+<h3 id="conclusion">Conclusion
+</h3><p>The new architecture is superior because it replaces an active, wasteful polling loop with a passive, efficient, channel-based waiting mechanism.</p>
+<ul>
+<li><strong>Flawed Way:</strong> CPU is busy checking a condition repeatedly. Wastes energy, causes lock contention, doesn&rsquo;t scale.</li>
+<li><strong>Superior Way:</strong> CPU is free. The goroutine sleeps until the Go runtime, notified by a channel event, wakes it up to perform work. It&rsquo;s efficient, clean, and highly scalable.</li>
+</ul>
+<p>This is the essence of modern concurrent design. You don&rsquo;t look for work; the work comes to you. It&rsquo;s the difference between being a mindless drone and a trained assassin.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

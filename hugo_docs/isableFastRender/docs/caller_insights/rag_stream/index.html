@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Architectural Blueprint: Dual-Path Request Processing 1. Core Principle: No-Nonsense Efficiency This system does not use a one-size-fits-all approach. That&rsquo;s inefficient and expensive. Instead, it operates on a dual-path architecture designed to segregate requests based on complexity. Like Anton Chigurh, it chooses the right tool for the job, without sentiment. The architecture features two distinct processing pathways, chosen dynamically by an LLM router: The Agentic Synthesis Loop: For complex, multi-faceted queries requiring data fusion from several sources.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/caller_insights/rag_stream/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="Architectural Blueprint: Dual-Path Request Processing 1. Core Principle: No-Nonsense Efficiency This system does not use a one-size-fits-all approach. That&rsquo;s inefficient and expensive. Instead, it operates on a dual-path architecture designed to segregate requests based on complexity. Like Anton Chigurh, it chooses the right tool for the job, without sentiment. The architecture features two distinct processing pathways, chosen dynamically by an LLM router: The Agentic Synthesis Loop: For complex, multi-faceted queries requiring data fusion from several sources.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/caller_insights/rag_stream/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="Architectural Blueprint: Dual-Path Request Processing 1. Core Principle: No-Nonsense Efficiency This system does not use a one-size-fits-all approach. That&rsquo;s inefficient and expensive. Instead, it operates on a dual-path architecture designed to segregate requests based on complexity. Like Anton Chigurh, it chooses the right tool for the job, without sentiment. The architecture features two distinct processing pathways, chosen dynamically by an LLM router: The Agentic Synthesis Loop: For complex, multi-faceted queries requiring data fusion from several sources.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/caller_insights/rag_stream/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    6 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="architectural-blueprint-dual-path-request-processing">Architectural Blueprint: Dual-Path Request Processing
+</h1><h2 id="1-core-principle-no-nonsense-efficiency">1. Core Principle: No-Nonsense Efficiency
+</h2><p>This system does not use a one-size-fits-all approach. That&rsquo;s inefficient and expensive. Instead, it operates on a dual-path architecture designed to segregate requests based on complexity. Like Anton Chigurh, it chooses the right tool for the job, without sentiment.</p>
+<p>The architecture features two distinct processing pathways, chosen dynamically by an LLM router:</p>
+<ol>
+<li><strong>The Agentic Synthesis Loop:</strong> For complex, multi-faceted queries requiring data fusion from several sources. This is the thinking path. It&rsquo;s powerful but slow and expensive.</li>
+<li><strong>Direct Stream Passthrough:</strong> For simple, factual queries that can be answered by a single, authoritative source (like a RAG knowledge base). This is the knowing path. It&rsquo;s brutally fast, cheap, and high-fidelity.</li>
+</ol>
+<p>An LLM-based router in <code>toolcore.SelectAndPrepareTools</code> inspects every query and routes it down the appropriate path. Simple questions get fast, direct answers. Complex questions get the full analytical power of the agentic engine. We don&rsquo;t waste compute cycles on questions a simple lookup can solve.</p>
+<h2 id="2-the-processing-pathways">2. The Processing Pathways
+</h2><h3 id="path-1-the-agentic-synthesis-loop-the-goodfellas-crew">Path 1: The Agentic Synthesis Loop (The &ldquo;Goodfellas&rdquo; Crew)
+</h3><p>This is the multi-step, heavy-hitting path for queries that need more than a simple answer. It assembles a crew of tools to pull off a job.</p>
+<p><strong>Use Case:</strong> &ldquo;Compare BBCA&rsquo;s profitability ratios to its historical stock performance over the last year and summarize any relevant news.&rdquo;</p>
+<p><strong>Execution Flow:</strong></p>
+<ol>
+<li><strong>The Sit-Down (LLM Call #1):</strong> The query enters <code>toolcore.SelectAndPrepareTools</code>. The LLM acts as a capo, assessing the job and assigning a crew of tools (e.g., <code>financial_profitability_ratio</code>, <code>historical_marketdata</code>, <code>news_summary</code>). This is the first LLM call.</li>
+<li><strong>The Heist (Parallel Tool Execution):</strong> The system calls <code>toolutils.ExecuteToolsInParallel</code>. Each tool&rsquo;s standard <code>Call()</code> method is invoked. They run concurrently to gather their piece of the score—raw JSON data, news text, etc.</li>
+<li><strong>The Kick-Up (LLM Call #2):</strong> The raw outputs from all tools are consolidated into a single context. This context, plus the original query, is fed to the LLM a second time within the response streaming component. The LLM&rsquo;s job is to synthesize this raw intelligence into a coherent, human-readable answer. This is the second, more expensive LLM call.</li>
+</ol>
+<p><strong>Operational Reality:</strong></p>
+<ul>
+<li><strong>Capability:</strong> Handles intricate, multi-domain questions that require reasoning.</li>
+<li><strong>Latency:</strong> High. The total time is <code>LLM_Call_1 + max(Tool_Execution_Time) + LLM_Call_2</code>.</li>
+<li><strong>Cost:</strong> High. Two LLM calls. The second (synthesis) call can be token-heavy.</li>
+<li><strong>Fidelity:</strong> The final answer is an LLM <em>interpretation</em> of the tool data. There is a non-zero risk of hallucination, like a witness getting the facts wrong.</li>
+</ul>
+<h3 id="path-2-direct-stream-passthrough-the-john-wick-path">Path 2: Direct Stream Passthrough (The &ldquo;John Wick&rdquo; Path)
+</h3><p>This is the surgical, high-speed path. It is engaged when the router identifies that a query can be answered by a single, designated &ldquo;Natural Answer&rdquo; tool that supports streaming. It executes with a singular, brutal efficiency.</p>
+<p><strong>Use Case:</strong> &ldquo;How do I register on the Tuntun application?&rdquo;</p>
+<p><strong>Execution Flow:</strong></p>
+<ol>
+<li><strong>Target Acquisition (LLM Call #1):</strong> In <code>toolcore.SelectAndPrepareTools</code>, the LLM router sees the query and recognizes it can be handled by the <code>frequently_asked</code> RAG tool alone. It generates a single tool call for it and returns, setting <code>IsDirectStream: true</code>. Its job is done.</li>
+<li><strong>Execution (Bypass and Stream):</strong> The <code>Manager</code> sees the <code>IsDirectStream</code> flag and <strong>skips the second LLM call entirely</strong>. It invokes the tool&rsquo;s dedicated <code>.Stream()</code> method (<code>toolnonbe.StreamTencentFrequentlyAsked</code>). This method pipes the response from the underlying RAG service directly to the user, token by token. The synthesis loop is completely bypassed.</li>
+</ol>
+<p><strong>Operational Reality:</strong></p>
+<ul>
+<li><strong>Speed:</strong> Maximum velocity. Latency is reduced to a single, small LLM call plus the Time-To-First-Token of the RAG service.</li>
+<li><strong>Cost:</strong> Minimal. We pay for one cheap tool-selection call. High-volume FAQ traffic becomes financially trivial.</li>
+<li><strong>Fidelity:</strong> Absolute. The user gets the raw, unaltered truth from the knowledge base. There is <strong>zero chance</strong> of LLM misinterpretation because the LLM never touches the answer content.</li>
+</ul>
+<h2 id="3-the-dual-mode-tool-a-tool-for-two-paths">3. The Dual-Mode Tool: A Tool for Two Paths
+</h2><p>The key to this architecture&rsquo;s flexibility is not just having two paths, but having tools that can walk both.</p>
+<p>The <code>frequently_asked</code> RAG tool, as defined in <code>toolcore/definitions.go</code>, is the prime example. It implements the <code>tooltypes.LoggableTool</code> interface by providing <strong>two distinct executors</strong>:</p>
+<ol>
+<li><strong><code>Executor</code> (the <code>Call</code> method):</strong> A standard, blocking function that returns a complete string. This is used when the RAG tool is just one member of a multi-tool crew in the <strong>Agentic Synthesis Loop (Path 1)</strong>.</li>
+<li><strong><code>StreamExecutor</code> (the <code>Stream</code> method):</strong> A streaming function that pipes data to a channel. This is used when the RAG tool is chosen for a solo mission in the <strong>Direct Stream Passthrough (Path 2)</strong>.</li>
+</ol>
+<p>This dual implementation is a deliberate design choice. It allows the system to leverage the same authoritative RAG knowledge base in the most efficient manner possible based on the query&rsquo;s context. It&rsquo;s either a contributing member of a team or a lone operative, and the system decides which role it plays.</p>
+<h2 id="4-architectural-resilience-the-fallback-protocol">4. Architectural Resilience: The Fallback Protocol
+</h2><p>&ldquo;Hope is not a strategy.&rdquo; The system is built to anticipate failure. The response streaming component has a fallback protocol. If Path 2 is chosen (Direct Stream) but the tool&rsquo;s <code>Stream()</code> method fails or returns no data, the system doesn&rsquo;t just die. It reverts, treating the failure as if Path 1 was chosen all along. It takes the original query, notes the tool failure, and proceeds to the <strong>Agentic Synthesis Loop (Path 1, LLM Call #2)</strong> to try and generate an answer from the available information. This ensures robustness. The mission succeeds, even if the primary plan goes sideways.</p>
+<h2 id="5-visual-architecture">5. Visual Architecture
+</h2><p>This diagram shows the decision point and the two pathways of the dual pathways, including the fallback.</p>
+<pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">graph TD
+    subgraph UserInputLayer [&#34;User Input Layer&#34;]
+        UserQuery[&#34;User Query&#34;]
+    end
+
+    subgraph DecisionLayer [&#34;Routing &amp; Decision Layer&#34;]
+        LLMRouter[&#34;LLM-based Router&lt;br/&gt;Tool Selection &amp; Path Determination&lt;br/&gt;(in `SelectAndPrepareTools`)&#34;]
+    end
+
+    subgraph ProcessingPathways [&#34;Processing Pathways&#34;]
+        subgraph AgenticPathway [&#34;Path 1: Agentic Synthesis Pathway&#34;]
+            direction TB
+            ToolExecution[&#34;Concurrent Tool Execution&lt;br/&gt;Standard `Call()` Invocation&#34;]
+            LLMSynthesis[&#34;LLM-based Synthesis&lt;br/&gt;Consolidates Tool Outputs into a Final Response&#34;]
+            ToolExecution --&gt; LLMSynthesis
+        end
+
+        subgraph DirectPathway [&#34;Path 2: Direct Stream Pathway&#34;]
+            direction TB
+            DirectToolStream[&#34;Direct Tool Stream&lt;br/&gt;Streaming `Stream()` Invocation&lt;br/&gt;Bypasses Synthesis Stage&#34;]
+        end
+    end
+
+    subgraph ResponseLayer [&#34;Response Generation Layer&#34;]
+        StreamedResponse[&#34;Streamed Response to Client&#34;]
+    end
+
+    %% Flow Connections
+    UserQuery --&gt; LLMRouter
+    LLMRouter -- &#34;Complex Query&lt;br/&gt;(Multiple Tools Selected)&#34; --&gt; ToolExecution
+    LLMRouter -- &#34;Simple Query&lt;br/&gt;(Single Streaming Tool Selected)&#34; --&gt; DirectToolStream
+    LLMSynthesis --&gt; StreamedResponse
+    DirectToolStream --&gt; StreamedResponse
+    DirectToolStream -. &#34;Fallback on Stream Failure&#34; .-&gt; LLMSynthesis
+
+    %% Styling Definitions
+    classDef userInputStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#0d47a1
+    classDef decisionStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+    classDef agenticStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#e65100
+    classDef directStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#1b5e20
+    classDef responseStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#880e4f
+    classDef pathwayContainer fill:#f8f9fa,stroke:#6c757d,stroke-width:1px,stroke-dasharray: 5 5
+
+    %% Class Assignments
+    class UserInputLayer userInputStyle
+    class DecisionLayer decisionStyle
+    class AgenticPathway agenticStyle
+    class DirectPathway directStyle
+    class ResponseLayer responseStyle
+    class ProcessingPathways pathwayContainer
+</code></pre><h2 id="6-side-by-side-tactical-comparison">6. Side-by-Side Tactical Comparison
+</h2><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">Feature</th>
+<th style="text-align:left">Path 1: Agentic Synthesis Loop (The Strategist)</th>
+<th style="text-align:left">Path 2: Direct Stream Passthrough (The Specialist)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Core Task</strong></td>
+<td style="text-align:left">Analysis, Reasoning, Data Fusion</td>
+<td style="text-align:left">Factual Recall, Direct Retrieval</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Latency</strong></td>
+<td style="text-align:left">High (2 LLM calls + Tool execution)</td>
+<td style="text-align:left"><strong>Low</strong> (1 LLM call + RAG stream TTFT)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>API Cost</strong></td>
+<td style="text-align:left">High (2 LLM API calls)</td>
+<td style="text-align:left"><strong>Low</strong> (1 small LLM API call)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Data Fidelity</strong></td>
+<td style="text-align:left">Interpreted by LLM. Risk of hallucination.</td>
+<td style="text-align:left"><strong>Absolute.</strong> Direct from the source of truth. Zero interpretation risk.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Tool Method Used</strong></td>
+<td style="text-align:left">Standard <code>tool.Call()</code> for all selected tools.</td>
+<td style="text-align:left">Specialized <code>tool.Stream()</code> for the single selected tool.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Best Use Case</strong></td>
+<td style="text-align:left">&ldquo;What should I think about this data?&rdquo;</td>
+<td style="text-align:left">&ldquo;What is the data?&rdquo;</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-conclusion">7. Conclusion
+</h2><p>This dual-path architecture is not a fancy feature; it&rsquo;s a fundamental requirement for a production-grade system that balances capability with cost and performance. It intelligently applies force where needed and finesse where it&rsquo;s most effective. One path is for complex reasoning, the other is for delivering hard facts with extreme prejudice. A professional system knows the difference and acts accordingly.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

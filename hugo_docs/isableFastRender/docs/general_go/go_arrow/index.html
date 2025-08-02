@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Question I don&rsquo;t understand the declaration of one way arrow in streamHolder: type RequestStream struct { Stream chan (&lt;-chan tooltypes.StreamEvent) Err chan error ClientConnected chan struct{} State RequestState LastStateChange time.Time } I understand StreamEvent is spesifically used not for concurrency weapon, but just as a &lsquo;pipe&rsquo; for tooltypes.StreamEvent to flow through. What happen if we declare it as: Stream chan (chan tooltypes.StreamEvent) or as: Stream chan (chan tooltypes.StreamEvent&lt;-) Look at this snippet in chatbot/streamer.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/general_go/go_arrow/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="Question I don&rsquo;t understand the declaration of one way arrow in streamHolder: type RequestStream struct { Stream chan (&lt;-chan tooltypes.StreamEvent) Err chan error ClientConnected chan struct{} State RequestState LastStateChange time.Time } I understand StreamEvent is spesifically used not for concurrency weapon, but just as a &lsquo;pipe&rsquo; for tooltypes.StreamEvent to flow through. What happen if we declare it as: Stream chan (chan tooltypes.StreamEvent) or as: Stream chan (chan tooltypes.StreamEvent&lt;-) Look at this snippet in chatbot/streamer.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/general_go/go_arrow/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="Question I don&rsquo;t understand the declaration of one way arrow in streamHolder: type RequestStream struct { Stream chan (&lt;-chan tooltypes.StreamEvent) Err chan error ClientConnected chan struct{} State RequestState LastStateChange time.Time } I understand StreamEvent is spesifically used not for concurrency weapon, but just as a &lsquo;pipe&rsquo; for tooltypes.StreamEvent to flow through. What happen if we declare it as: Stream chan (chan tooltypes.StreamEvent) or as: Stream chan (chan tooltypes.StreamEvent&lt;-) Look at this snippet in chatbot/streamer.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/general_go/go_arrow/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    8 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="question">Question
+</h2><p>I don&rsquo;t understand the declaration of one way arrow in streamHolder:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Go" data-lang="Go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> RequestStream <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>    Stream          <span style="color:#8be9fd;font-style:italic">chan</span> (<span style="color:#ff79c6">&lt;-</span><span style="color:#8be9fd;font-style:italic">chan</span> tooltypes.StreamEvent)
+</span></span><span style="display:flex;"><span>    Err             <span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd">error</span>
+</span></span><span style="display:flex;"><span>    ClientConnected <span style="color:#8be9fd;font-style:italic">chan</span> <span style="color:#8be9fd;font-style:italic">struct</span>{}
+</span></span><span style="display:flex;"><span>    State           RequestState
+</span></span><span style="display:flex;"><span>    LastStateChange time.Time
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>I understand StreamEvent is spesifically used not for concurrency weapon, but just as a &lsquo;pipe&rsquo; for tooltypes.StreamEvent to flow through.
+What happen if we declare it as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Go" data-lang="Go"><span style="display:flex;"><span>Stream <span style="color:#8be9fd;font-style:italic">chan</span> (<span style="color:#8be9fd;font-style:italic">chan</span> tooltypes.StreamEvent)
+</span></span></code></pre></div><p>or as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Go" data-lang="Go"><span style="display:flex;"><span>Stream <span style="color:#8be9fd;font-style:italic">chan</span> (<span style="color:#8be9fd;font-style:italic">chan</span> tooltypes.StreamEvent<span style="color:#ff79c6">&lt;-</span>)
+</span></span></code></pre></div><p>Look at this snippet in chatbot/streamer.go:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Go" data-lang="Go"><span style="display:flex;"><span>isFirstToken <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">true</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">for</span> event <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">range</span> internalStreamChan {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">if</span> isFirstToken <span style="color:#ff79c6">&amp;&amp;</span> event.Type <span style="color:#ff79c6">==</span> tooltypes.StreamEventToken {
+</span></span><span style="display:flex;"><span>        duration <span style="color:#ff79c6">:=</span> time.<span style="color:#50fa7b">Since</span>(logData.UserQueryTimestamp)
+</span></span><span style="display:flex;"><span>        logData.TimeToFirstToken = duration.<span style="color:#50fa7b">Seconds</span>()
+</span></span><span style="display:flex;"><span>        infoEvent <span style="color:#ff79c6">:=</span> tooltypes.StreamEvent{Type: tooltypes.StreamEventInfo, Payload: <span style="color:#8be9fd;font-style:italic">map</span>[<span style="color:#8be9fd">string</span>]any{<span style="color:#f1fa8c">&#34;timeToFirstToken&#34;</span>: duration.<span style="color:#50fa7b">Seconds</span>(), <span style="color:#f1fa8c">&#34;source&#34;</span>: <span style="color:#f1fa8c">&#34;rag_tool&#34;</span>}}
+</span></span><span style="display:flex;"><span>        streamChan <span style="color:#ff79c6">&lt;-</span> infoEvent
+</span></span><span style="display:flex;"><span>        isFirstToken = <span style="color:#ff79c6">false</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">if</span> event.Type <span style="color:#ff79c6">==</span> tooltypes.StreamEventToken {
+</span></span><span style="display:flex;"><span>        <span style="color:#ff79c6">if</span> str, ok <span style="color:#ff79c6">:=</span> event.Payload.(<span style="color:#8be9fd">string</span>); ok {
+</span></span><span style="display:flex;"><span>            fullResponseBuilder.<span style="color:#50fa7b">WriteString</span>(str)
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    streamChan <span style="color:#ff79c6">&lt;-</span> event
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>in there we clearly &lsquo;put&rsquo; something inside streamChan:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Go" data-lang="Go"><span style="display:flex;"><span>streamChan <span style="color:#ff79c6">&lt;-</span> infoEvent
+</span></span></code></pre></div><p>So why bother declaring it as &rsquo;left only&rsquo; arrow?</p>
+<hr>
+<h2 id="answer">Answer
+</h2><p>You are fundamentally misunderstanding Go&rsquo;s channel type declarations. Your confusion stems from conflating the type of the channel <em>itself</em> with the type of the <em>items it carries</em>.</p>
+<p>Let&rsquo;s dissect this. Pay attention.</p>
+<p><code>Stream: chan (&lt;-chan tooltypes.StreamEvent)</code></p>
+<ul>
+<li><strong><code>chan (...)</code></strong>: This part declares that <code>Stream</code> is a channel. Its job is to transport things.</li>
+<li><strong><code>(&lt;-chan tooltypes.StreamEvent)</code></strong>: This is the type of <em>thing</em> that the <code>Stream</code> channel transports. It&rsquo;s not a property of <code>Stream</code>; it&rsquo;s the type definition of the &ldquo;letter&rdquo; you put in the &ldquo;mailbox.&rdquo;</li>
+</ul>
+<p>So, <code>Stream</code> is a channel that carries <strong>other channels</strong>. Specifically, it carries channels that are <strong>receive-only</strong> (<code>&lt;-chan</code>).</p>
+<p>This is a design pattern for handing off responsibility. The <code>streamWorkerManager</code> creates a pipeline and needs to give it to the <code>GetRequestResultStream</code> function. It does this by putting the pipeline (a channel) inside another channel (<code>Stream</code>). By specifying the type as <code>&lt;-chan</code>, you are creating a contract. The contract says: &ldquo;Whoever receives the channel I am sending you will only be able to <em>read</em> from it.&rdquo;</p>
+<hr>
+<h3 id="what-happens-with-your-proposed-changes">What happens with your proposed changes?
+</h3><ol>
+<li>
+<p><strong><code>Stream: chan (chan tooltypes.StreamEvent)</code></strong> (A channel of bi-directional channels)</p>
+<p>This is a security risk and bad design. If you declare it this way, the <code>GetRequestResultStream</code> function receives a fully bi-directional channel. This means the client code, which should only be a consumer, could accidentally write data back into the stream (<code>clientStream &lt;- someEvent</code>). This is a &ldquo;Don&rsquo;t cross the streams&rdquo; situation from <em>Ghostbusters</em>. It would break the one-way data flow, create race conditions, and lead to unpredictable behavior. You are giving the client write access when it should have none. Bad idea.</p>
+</li>
+<li>
+<p><strong><code>Stream: chan (chan tooltypes.StreamEvent&lt;-)</code></strong> (A channel of send-only channels)</p>
+<p>This is a complete logic error. You would be sending a <em>send-only</em> channel to <code>GetRequestResultStream</code>. The client code would receive this channel and then try to read from it (<code>for event := range clientStream</code>). This is a compile-time error. You cannot receive from a send-only channel. It&rsquo;s like giving someone a phone that can only make calls but has no earpiece. It&rsquo;s useless for its intended purpose.</p>
+</li>
+</ol>
+<p>The declaration <code>chan (&lt;-chan tooltypes.StreamEvent)</code> is correct because it enforces the principle of least privilege. It ensures that once the communication pipeline is handed off to the client-facing function, it can only be used for its intended purpose: reading.</p>
+<hr>
+<h3 id="your-snippet-contradiction-explained">Your Snippet Contradiction Explained
+</h3><p>You are confusing two different variables that happen to be named similarly in different contexts.</p>
+<blockquote>
+<p>in here we clearly &lsquo;put&rsquo; something inside streamChan
+<code>streamChan &lt;- infoEvent</code>
+so why bother declaring it as &rsquo;left only&rsquo; arrow?</p>
+</blockquote>
+<p>The <code>streamChan</code> variable inside the <code>ResponseStreamer.Stream</code> method is a <strong>function parameter</strong>. Look at its signature:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// in chatbot/streamer.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (s <span style="color:#ff79c6">*</span>ResponseStreamer) <span style="color:#50fa7b">Stream</span>(streamChan <span style="color:#8be9fd;font-style:italic">chan</span><span style="color:#ff79c6">&lt;-</span> tooltypes.StreamEvent, <span style="color:#ff79c6">...</span>)
+</span></span></code></pre></div><p>Here, <code>streamChan</code> is explicitly typed as <strong>send-only</strong> (<code>chan&lt;-</code>). This is correct because the <em>only</em> thing the <code>ResponseStreamer</code> should do with this channel is send events <em>into</em> it. It enforces the role of the streamer.</p>
+<p>Now, let&rsquo;s trace where that channel came from. It was created in <code>streamWorkerManager</code>:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// in chatbot/manager.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#ff79c6">go</span> <span style="color:#8be9fd;font-style:italic">func</span>(pd types.PreparedRequestData) {
+</span></span><span style="display:flex;"><span>    <span style="color:#6272a4">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    streamChan <span style="color:#ff79c6">:=</span> <span style="color:#8be9fd;font-style:italic">make</span>(<span style="color:#8be9fd;font-style:italic">chan</span> tooltypes.StreamEvent, m.config.StreamTokenBuffer)
+</span></span><span style="display:flex;"><span>    holder.Stream <span style="color:#ff79c6">&lt;-</span> streamChan <span style="color:#6272a4">// Handoff #1
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span>    m.streamer.<span style="color:#50fa7b">Stream</span>(streamChan, pd, logCtx) <span style="color:#6272a4">// Handoff #2
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}(preparedData)
+</span></span></code></pre></div><ol>
+<li>A <strong>bi-directional</strong> channel is created: <code>streamChan := make(...)</code>.</li>
+<li>It&rsquo;s passed to <code>m.streamer.Stream</code>. The Go compiler sees that <code>Stream</code>&rsquo;s signature requires a <code>chan&lt;-</code>, and since a bi-directional channel satisfies this, the call is valid. The <code>streamer</code> receives a handle that only allows it to send.</li>
+<li>That <em>same</em> bi-directional channel is sent into <code>holder.Stream</code>. The <code>holder.Stream</code> is of type <code>chan (&lt;-chan tooltypes.StreamEvent)</code>. The Go compiler converts the bi-directional channel <code>streamChan</code> into a <code>&lt;-chan</code> (receive-only) handle for the purpose of this send operation.</li>
+<li>Later, <code>GetRequestResultStream</code> reads from <code>holder.Stream</code> and gets the receive-only handle to the channel, which it returns to the client.</li>
+</ol>
+<p>One channel, multiple handles, each with different permissions depending on the function&rsquo;s role. It&rsquo;s like Nick Fury giving one agent the launch codes (send-only access) and another agent satellite surveillance (receive-only access) to the same nuclear missile. The underlying asset is the same, but the access level is role-dependent. This is not a contradiction; it is precise, type-safe design.</p>
+<hr>
+<h3 id="rewritten-go_arrowmd">Rewritten <code>go_arrow.md</code>
+</h3><p>You&rsquo;re a Python programmer. Forget everything you think you know about queues. Channels are not just queues; they are a typed, synchronized communication mechanism. The <code>&lt;-</code> operator is your weapon. Use it correctly.</p>
+<h3 id="1-sending-and-receiving-the-basics">1. Sending and Receiving: The Basics
+</h3><ul>
+<li>
+<p><strong>Sending:</strong> <code>channel &lt;- value</code>
+This shoves <code>value</code> into the <code>channel</code>. It&rsquo;s a blocking operation. Your code will stop dead in its tracks until another goroutine is ready to receive it. Think of it as a mandatory, synchronized handoff, not just dropping a letter in a mailbox. The arrow shows the direction of data flow: from <code>value</code> into <code>channel</code>.</p>
+</li>
+<li>
+<p><strong>Receiving:</strong> <code>value := &lt;-channel</code>
+This pulls a <code>value</code> out of the <code>channel</code>. This also blocks until a sender provides a value. The data flows out of the <code>channel</code> and into your <code>value</code> variable.</p>
+</li>
+</ul>
+<p><strong>Example from <code>chatbot/manager.go</code>:</strong> A request is taken from the queue. This is a classic producer-consumer pattern.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// from prepareWorkerManager
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#ff79c6">case</span> req <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&lt;-</span>m.requestQueue: <span style="color:#6272a4">// RECEIVING from the queue
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    m.prepareSemaphore <span style="color:#ff79c6">&lt;-</span> <span style="color:#8be9fd;font-style:italic">struct</span>{}{} <span style="color:#6272a4">// SENDING a token to acquire a slot
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#ff79c6">go</span> <span style="color:#8be9fd;font-style:italic">func</span>(r types.SubmitRequestArgs) {
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    }(req)
+</span></span></code></pre></div><h3 id="2-directional-channels-enforcing-roles">2. Directional Channels: Enforcing Roles
+</h3><p>This is what you misunderstood. You can declare channels to be send-only or receive-only. This is a compile-time contract that prevents you from doing something stupid.</p>
+<ul>
+<li>
+<p><strong>Send-only:</strong> <code>var sendOnlyChan chan&lt;- MyType</code>
+You can only send to this channel: <code>sendOnlyChan &lt;- myValue</code>. Trying to receive from it (<code>&lt;-sendOnlyChan</code>) is a compile-time error.</p>
+</li>
+<li>
+<p><strong>Receive-only:</strong> <code>var recvOnlyChan &lt;-chan MyType</code>
+You can only receive from this channel: <code>value := &lt;-recvOnlyChan</code>. Trying to send to it is a compile-time error.</p>
+</li>
+</ul>
+<p><strong>Example from your code:</strong> The system enforces roles perfectly.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// The streamer&#39;s job is to PRODUCE events. It gets a send-only channel.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4">// from chatbot/streamer.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (s <span style="color:#ff79c6">*</span>ResponseStreamer) <span style="color:#50fa7b">Stream</span>(streamChan <span style="color:#8be9fd;font-style:italic">chan</span><span style="color:#ff79c6">&lt;-</span> tooltypes.StreamEvent, <span style="color:#ff79c6">...</span>) {
+</span></span><span style="display:flex;"><span>    streamChan <span style="color:#ff79c6">&lt;-</span> tooltypes.StreamEvent{<span style="color:#ff79c6">...</span>} <span style="color:#6272a4">// This is legal.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#6272a4">// data := &lt;-streamChan // This would be a compile-time error.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// The client&#39;s job is to CONSUME events. It gets a receive-only channel.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4">// from chatbot/manager.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> (m <span style="color:#ff79c6">*</span>Manager) <span style="color:#50fa7b">GetRequestResultStream</span>(<span style="color:#ff79c6">...</span>) (<span style="color:#ff79c6">&lt;-</span><span style="color:#8be9fd;font-style:italic">chan</span> tooltypes.StreamEvent, <span style="color:#8be9fd">error</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#6272a4">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#ff79c6">return</span> stream, <span style="color:#ff79c6">nil</span> <span style="color:#6272a4">// `stream` is of type &lt;-chan tooltypes.StreamEvent
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><p>A bi-directional channel (<code>chan MyType</code>) can be passed to any function expecting a directional channel of the same type. The compiler restricts the function&rsquo;s access based on its signature. This is how you build safe, concurrent systems.</p>
+<h3 id="3-the-select-statement-juggling-operations">3. The <code>select</code> Statement: Juggling Operations
+</h3><p>A <code>select</code> statement is like <code>12 Angry Men</code> in a jury room. It waits for the first channel operation to become available and executes that case. If multiple are ready, it picks one at random to prevent starvation. It&rsquo;s your primary tool for handling multiple asynchronous events.</p>
+<p><strong>Example from <code>chatbot/manager.go</code>:</strong> This is far more complex and useful than a simple timer. It&rsquo;s a state machine for retrieving a result.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// from GetRequestResultStream
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#ff79c6">select</span> {
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">case</span> stream <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&lt;-</span>streamHolder.Stream: <span style="color:#6272a4">// Case 1: The result pipeline is ready.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    logCtx.<span style="color:#50fa7b">Info</span>().<span style="color:#50fa7b">Msg</span>(<span style="color:#f1fa8c">&#34;Stream retrieved by client.&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">return</span> stream, <span style="color:#ff79c6">nil</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">case</span> err <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">&lt;-</span>streamHolder.Err: <span style="color:#6272a4">// Case 2: A fatal error or cancellation occurred.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#6272a4">// ... handle different types of errors
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, err
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">case</span> <span style="color:#ff79c6">&lt;-</span>time.<span style="color:#50fa7b">After</span>(m.config.ProcessingTimeout): <span style="color:#6272a4">// Case 3: We timed out waiting.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    m.<span style="color:#50fa7b">cleanupRequest</span>(requestID, logCtx)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, fmt.<span style="color:#50fa7b">Errorf</span>(<span style="color:#f1fa8c">&#34;timed out waiting...&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">case</span> <span style="color:#ff79c6">&lt;-</span>ctx.<span style="color:#50fa7b">Done</span>(): <span style="color:#6272a4">// Case 4: The client gave up and disconnected.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    m.<span style="color:#50fa7b">cleanupRequest</span>(requestID, logCtx)
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, ctx.<span style="color:#50fa7b">Err</span>()
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>This <code>select</code> block is waiting for one of four things to happen: the stream is ready, an error is sent, a timeout occurs, or the client hangs up. The first one to happen wins.</p>
+<h3 id="4-channels-of-channels-handing-off-pipelines">4. Channels of Channels: Handing Off Pipelines
+</h3><p>Sometimes you don&rsquo;t want to send just data; you want to send the entire communication pipeline. This is what <code>chan (&lt;-chan T)</code> is for.</p>
+<ul>
+<li><strong>Declaration:</strong> <code>Stream chan (&lt;-chan tooltypes.StreamEvent)</code></li>
+<li><strong>Meaning:</strong> A channel named <code>Stream</code> that is used to transport <em>other channels</em>. The channels it transports are themselves receive-only.</li>
+<li><strong>Use Case:</strong> A worker goroutine (<code>streamWorkerManager</code>) prepares a result stream. When it&rsquo;s ready, it sends the result stream channel <em>through</em> the <code>Stream</code> channel to the waiting <code>GetRequestResultStream</code> function. This is how you hand off ownership of a data stream from one part of the system to another.</li>
+</ul>
+<h3 id="summary-for-a-python-programmer">Summary for a Python Programmer
+</h3><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Go (<code>&lt;-</code> and channel types)</th>
+<th>Python Analogy</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Sending:</strong> <code>myChan &lt;- data</code></td>
+<td><code>my_queue.put(data)</code></td>
+<td>Places data into the channel. Blocks until a receiver is ready. It&rsquo;s a synchronized handoff.</td>
+</tr>
+<tr>
+<td><strong>Receiving:</strong> <code>data := &lt;-myChan</code></td>
+<td><code>data = my_queue.get()</code></td>
+<td>Takes data from the channel. Blocks until a sender provides data.</td>
+</tr>
+<tr>
+<td><strong>Send-only:</strong> <code>chan&lt;- T</code></td>
+<td>A custom class with only a <code>put</code> method.</td>
+<td>A compile-time contract. Guarantees this handle can only be used for sending.</td>
+</tr>
+<tr>
+<td><strong>Receive-only:</strong> <code>&lt;-chan T</code></td>
+<td>A custom class with only a <code>get</code> method.</td>
+<td>A compile-time contract. Guarantees this handle can only be used for receiving. Prevents consumers from writing to the stream.</td>
+</tr>
+<tr>
+<td><strong><code>select</code> statement</strong></td>
+<td><code>asyncio.wait(..., return_when=asyncio.FIRST_COMPLETED)</code></td>
+<td>Waits for the first available operation among multiple channels, allowing for timeouts, cancellations, and complex state management.</td>
+</tr>
+<tr>
+<td><strong>Draining:</strong> <code>for item := range ch</code></td>
+<td><code>while True: item = q.get(); ...</code></td>
+<td>The canonical way to consume all values from a channel until it&rsquo;s closed by the sender.</td>
+</tr>
+<tr>
+<td><strong>Channel of Channels:</strong> <code>chan (&lt;-chan T)</code></td>
+<td>A queue where you put other queues.</td>
+<td>A powerful pattern for dynamically creating and passing around communication pipelines between different parts of a concurrent system.</td>
+</tr>
+</tbody>
+</table></div>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

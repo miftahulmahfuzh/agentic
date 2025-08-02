@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Goroutines get to the very heart of what makes Go so powerful for concurrent programming. As a Python programmer, you&rsquo;re used to concepts like threads, asyncio, and multiprocessing, and understanding how goroutines relate to them is key. What are Goroutines? (An Analogy for Python Programmers) Imagine you&rsquo;re managing an office. Python threading: You hire a few very qualified (but heavyweight) employees (OS Threads). However, a strict office rule (the Global Interpreter Lock or GIL) says only one employee can use the main office equipment (the Python interpreter) at a time for CPU-intensive tasks.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/general_go/goroutines/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="Goroutines get to the very heart of what makes Go so powerful for concurrent programming. As a Python programmer, you&rsquo;re used to concepts like threads, asyncio, and multiprocessing, and understanding how goroutines relate to them is key. What are Goroutines? (An Analogy for Python Programmers) Imagine you&rsquo;re managing an office. Python threading: You hire a few very qualified (but heavyweight) employees (OS Threads). However, a strict office rule (the Global Interpreter Lock or GIL) says only one employee can use the main office equipment (the Python interpreter) at a time for CPU-intensive tasks.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/general_go/goroutines/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="Goroutines get to the very heart of what makes Go so powerful for concurrent programming. As a Python programmer, you&rsquo;re used to concepts like threads, asyncio, and multiprocessing, and understanding how goroutines relate to them is key. What are Goroutines? (An Analogy for Python Programmers) Imagine you&rsquo;re managing an office. Python threading: You hire a few very qualified (but heavyweight) employees (OS Threads). However, a strict office rule (the Global Interpreter Lock or GIL) says only one employee can use the main office equipment (the Python interpreter) at a time for CPU-intensive tasks.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/general_go/goroutines/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    7 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>Goroutines get to the very heart of what makes Go so powerful for concurrent programming. As a Python programmer, you&rsquo;re used to concepts like threads, <code>asyncio</code>, and <code>multiprocessing</code>, and understanding how goroutines relate to them is key.</p>
+<h3 id="what-are-goroutines-an-analogy-for-python-programmers">What are Goroutines? (An Analogy for Python Programmers)
+</h3><p>Imagine you&rsquo;re managing an office.</p>
+<ul>
+<li><strong>Python <code>threading</code>:</strong> You hire a few very qualified (but heavyweight) employees (OS Threads). However, a strict office rule (the Global Interpreter Lock or GIL) says only one employee can use the main office equipment (the Python interpreter) at a time for CPU-intensive tasks. They can wait for phone calls (I/O) simultaneously, but they can&rsquo;t do two calculations at once.</li>
+<li><strong>Python <code>multiprocessing</code>:</strong> To get around the GIL, you build entirely separate, identical office buildings (Processes). Each has its own equipment and staff. They can all work in parallel, but they are very expensive to build (high memory usage), and getting them to talk to each other requires a formal, slow courier service (inter-process communication).</li>
+<li><strong>Python <code>asyncio</code>:</strong> You have one, extremely disciplined employee (a single thread). You give them a long list of tasks. They work on one task until they have to wait for something (like a file to download). Instead of just waiting, they <em>immediately</em> put that task aside and pick up the next one on the list. They only come back to the first task when the file is ready. It&rsquo;s very efficient, but the employee has to be explicitly told when to switch tasks (using <code>await</code>).</li>
+<li><strong>Go Goroutines:</strong> You hire a huge team of incredibly cheap, lightweight interns (<strong>goroutines</strong>). They each only need a tiny desk and a notepad (a few KB of stack memory). You also have a brilliant office manager (<strong>Go&rsquo;s Runtime Scheduler</strong>) who supervises a small number of your best employees (OS Threads). The manager is constantly and automatically assigning interns to the employees. If an intern has to wait for a phone call (I/O), the manager instantly pulls them off the employee&rsquo;s desk and assigns a different intern who is ready to work. The manager can have multiple employees working on different interns in parallel on different CPU cores.</li>
+</ul>
+<p><strong>In summary, Goroutines are:</strong></p>
+<ol>
+<li><strong>Lightweight:</strong> They start with a tiny amount of memory and can grow if needed, unlike OS threads which have a large, fixed stack size. You can easily have hundreds of thousands or even millions of goroutines running.</li>
+<li><strong>Managed by Go, Not the OS:</strong> The Go runtime scheduler multiplexes (schedules) many goroutines onto a small number of OS threads. This is much more efficient than having a 1:1 mapping of goroutines to OS threads.</li>
+<li><strong>Concurrent AND Parallel:</strong> Because the scheduler can assign goroutines to different OS threads running on different CPU cores, your Go program can achieve true parallelism, unlike Python&rsquo;s GIL-limited threads.</li>
+</ol>
+<p>They are <strong>NOT</strong> the same as Python workers. They are a much more fundamental, efficient, and integrated concurrency primitive. They feel a bit like <code>asyncio</code> tasks in their lightness but behave more like true threads in their ability to run in parallel, without the developer needing to manually <code>await</code> everywhere.</p>
+<hr>
+<h1 id="goroutines-in-the-assembly-line-architecture-managergo">Goroutines in the Assembly Line Architecture (<code>manager.go</code>)
+</h1><p>Goroutines are the heart of Go&rsquo;s concurrency model. They are extremely lightweight threads managed by the Go runtime, not the OS. This allows you to run hundreds of thousands of them concurrently, making them perfect for I/O-bound and parallel tasks.</p>
+<p>Your <code>manager.go</code> has evolved from a simple worker pool into a more sophisticated, two-stage <strong>assembly line pipeline</strong>. This design explicitly recognizes that request processing has two phases with different resource requirements: a fast, cheap &ldquo;preparation&rdquo; phase and a slow, expensive &ldquo;streaming&rdquo; phase. The architecture uses distinct goroutine pools for each, preventing the slow phase from blocking the fast one. This maximizes throughput and resource utilization.</p>
+<p>Let&rsquo;s break down the roles of the goroutines in this superior architecture.</p>
+<h3 id="1-the-singleton-manager-goroutines-the-foremen">1. The Singleton &ldquo;Manager&rdquo; Goroutines (The Foremen)
+</h3><ul>
+<li><strong>Where they are started:</strong> In <code>Init()</code>, with <code>go prepareWorkerManager(ctx)</code> and <code>go streamWorkerManager(ctx)</code>.</li>
+<li><strong>How many:</strong> Exactly <strong>two</strong> manager goroutines for the entire application lifetime.
+<ol>
+<li><code>prepareWorkerManager</code>: The &ldquo;Prep Foreman.&rdquo;</li>
+<li><code>streamWorkerManager</code>: The &ldquo;Baking Foreman.&rdquo;</li>
+</ol>
+</li>
+<li><strong>Purpose:</strong> These are the master coordinators for each stage of the assembly line. They are simple, non-blocking loops.
+<ul>
+<li>The <strong>Prep Foreman</strong>&rsquo;s only job is to listen on the initial <code>requestQueue</code>. When a request arrives, it acquires a &ldquo;prep station&rdquo; slot from <code>prepareSemaphore</code> and immediately spawns a &ldquo;Preparation Worker&rdquo; goroutine to handle that task.</li>
+<li>The <strong>Streaming Foreman</strong>&rsquo;s only job is to listen on the <code>preparedQueue</code>. When a &ldquo;prepared&rdquo; request arrives, it acquires an expensive &ldquo;oven&rdquo; slot from <code>llmStreamSemaphore</code> and immediately spawns a &ldquo;Streaming Worker&rdquo; goroutine.</li>
+</ul>
+</li>
+</ul>
+<p>By delegating the actual work, these foremen remain free to manage the flow of tasks into their respective stages without ever getting blocked.</p>
+<h3 id="2-the-preparation-worker-goroutine-pool-the-apprentices">2. The &ldquo;Preparation Worker&rdquo; Goroutine Pool (The Apprentices)
+</h3><ul>
+<li><strong>Where it&rsquo;s started:</strong> Inside <code>prepareWorkerManager</code>.</li>
+<li><strong>How many:</strong> A pool of up to <code>config.AppSettings.MaxConcurrentRequests</code>.</li>
+<li><strong>Purpose:</strong> This is the &ldquo;first stage&rdquo; worker, the cook&rsquo;s apprentice. Its job is to perform all the fast, non-streaming preparation for a single request. This is a well-defined, bounded set of tasks:
+<ol>
+<li>Transition the request&rsquo;s state in the central <code>activeRequests</code> map from <code>Queued</code> to <code>Processing</code>.</li>
+<li>Fetch chat history from the database.</li>
+<li>Check Redis for a cached response.</li>
+<li>Execute the first LLM call for tool selection (<code>toolcore.ProcessTools</code>).</li>
+<li>Assemble the final prompt.</li>
+</ol>
+</li>
+<li><strong>Key Behavior &amp; Handoff:</strong> Once preparation is complete, its job is done. It packages all its work into a <code>PreparedRequestData</code> struct and places it onto the <code>preparedQueue</code>. Then, crucially, <strong>it immediately releases its <code>prepareSemaphore</code> slot and exits</strong>. It does <strong>not</strong> wait for the streaming to start. This frees up the &ldquo;prep station&rdquo; for the next request.</li>
+</ul>
+<h3 id="3-the-streaming-worker-goroutine-pool-the-senior-cooks">3. The &ldquo;Streaming Worker&rdquo; Goroutine Pool (The Senior Cooks)
+</h3><ul>
+<li><strong>Where it&rsquo;s started:</strong> Inside <code>streamWorkerManager</code>.</li>
+<li><strong>How many:</strong> A smaller, more exclusive pool of up to <code>config.AppSettings.MaxConcurrentLLMStreams</code>.</li>
+<li><strong>Purpose:</strong> This is the &ldquo;second stage&rdquo; worker, the senior cook with access to the expensive ovens. It picks up a fully prepared request from the <code>preparedQueue</code> and performs the final, blocking, resource-intensive work:
+<ol>
+<li>Check for a cached response (a final check in case the request was for a common, already-cached item that didn&rsquo;t need tools).</li>
+<li>Call the main LLM with the final prompt (<code>llms.GenerateFromSinglePrompt</code>). This is the slow, expensive part.</li>
+<li>Stream the LLM&rsquo;s token responses back to the client via the <code>streamChan</code>.</li>
+<li>Perform final logging to the database.</li>
+<li><strong>Perform final cleanup.</strong> This worker is responsible for removing the completed request from the central <code>activeRequests</code> and <code>cancellableStreams</code> maps.</li>
+</ol>
+</li>
+<li><strong>Lifespan:</strong> This goroutine lives for the duration of the LLM stream. It releases its <code>llmStreamSemaphore</code> slot only when it is completely finished.</li>
+</ul>
+<h3 id="visualizing-the-handoff-a-requests-journey">Visualizing the Handoff: A Request&rsquo;s Journey
+</h3><p>This architecture creates a clean, efficient flow, communicating through channels and a shared map.</p>
+<ol>
+<li>
+<p><strong>Client -&gt; <code>SubmitRequest</code>:</strong> A request is born. A <code>RequestStream</code> holder is created and placed in the central <code>activeRequests</code> map with <code>State: StateQueued</code>. A <code>SubmitRequestArgs</code> struct is put on the <strong><code>requestQueue</code> channel</strong>.</p>
+</li>
+<li>
+<p><strong><code>requestQueue</code> -&gt; <code>prepareWorkerManager</code> (Prep Foreman):</strong> The foreman sees the new task. It acquires a slot from <code>prepareSemaphore</code> and spins up a <strong>Preparation Worker</strong>.</p>
+</li>
+<li>
+<p><strong>Preparation Worker:</strong> This goroutine executes. It locks the <code>requestsLock</code>, finds its request in <code>activeRequests</code>, and updates its state to <code>StateProcessing</code>. It then does its work (history, tools, etc.). After creating the <code>PreparedRequestData</code> struct, its last act is to send this struct to the <strong><code>preparedQueue</code> channel</strong>. The worker then exits, releasing its <code>prepareSemaphore</code> slot.</p>
+</li>
+<li>
+<p><strong><code>preparedQueue</code> -&gt; <code>streamWorkerManager</code> (Streaming Foreman):</strong> This foreman sees the prepared data. It acquires a slot from <code>llmStreamSemaphore</code> and spins up a <strong>Streaming Worker</strong>.</p>
+</li>
+<li>
+<p><strong>Streaming Worker:</strong> This goroutine executes. It finds its <code>RequestStream</code> holder in <code>activeRequests</code> to get the <code>Stream</code> and <code>Err</code> channels. It sends the real <code>streamChan</code> to the holder, waking up the client-facing <code>GetRequestResultStream</code> function. It then performs the LLM call and streams tokens. Finally, it cleans up the <code>activeRequests</code> and <code>cancellableStreams</code> maps and exits, releasing its <code>llmStreamSemaphore</code> slot.</p>
+</li>
+<li>
+<p><strong><code>GetRequestResultStream</code> -&gt; Client:</strong> This function, called by the client, simply waits on the channels inside the <code>RequestStream</code> holder. It is a passive observer. When the Streaming Worker sends the <code>streamChan</code>, it receives it and begins forwarding tokens to the client.</p>
+</li>
+</ol>
+<p>This is a true pipeline. The fast &ldquo;preparation&rdquo; workers are never held hostage by the slow &ldquo;streaming&rdquo; workers, allowing the system to process a high volume of incoming requests efficiently, even when the final LLM calls are slow.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

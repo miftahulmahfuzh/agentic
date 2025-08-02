@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="The Data-Driven Tool Architecture 1. Overview: The Armory Philosophy The term &ldquo;data-driven&rdquo; here doesn&rsquo;t mean it uses analytics to make decisions. It means the system&rsquo;s fundamental capabilities—the tools themselves—are defined as declarative data structures, not as hard-coded imperative logic. Think of it as the armory from John Wick. The core system—the rules of engagement, the process of selecting a weapon—is fixed and robust. The arsenal itself, however, can be infinitely expanded.">
+<title>Data Driven</title>
+
+<link rel='canonical' href='http://localhost:1313/docs/general_go/data_driven_tool/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Data Driven">
+<meta property='og:description' content="The Data-Driven Tool Architecture 1. Overview: The Armory Philosophy The term &ldquo;data-driven&rdquo; here doesn&rsquo;t mean it uses analytics to make decisions. It means the system&rsquo;s fundamental capabilities—the tools themselves—are defined as declarative data structures, not as hard-coded imperative logic. Think of it as the armory from John Wick. The core system—the rules of engagement, the process of selecting a weapon—is fixed and robust. The arsenal itself, however, can be infinitely expanded.">
+<meta property='og:url' content='http://localhost:1313/docs/general_go/data_driven_tool/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Data Driven">
+<meta name="twitter:description" content="The Data-Driven Tool Architecture 1. Overview: The Armory Philosophy The term &ldquo;data-driven&rdquo; here doesn&rsquo;t mean it uses analytics to make decisions. It means the system&rsquo;s fundamental capabilities—the tools themselves—are defined as declarative data structures, not as hard-coded imperative logic. Think of it as the armory from John Wick. The core system—the rules of engagement, the process of selecting a weapon—is fixed and robust. The arsenal itself, however, can be infinitely expanded.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/docs/general_go/data_driven_tool/">Data Driven</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 02, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    5 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="the-data-driven-tool-architecture">The Data-Driven Tool Architecture
+</h1><h2 id="1-overview-the-armory-philosophy">1. Overview: The Armory Philosophy
+</h2><p>The term &ldquo;data-driven&rdquo; here doesn&rsquo;t mean it uses analytics to make decisions. It means the system&rsquo;s fundamental capabilities—the tools themselves—are defined as declarative <strong>data</strong> structures, not as hard-coded imperative logic.</p>
+<p>Think of it as the armory from <em>John Wick</em>. The core system—the rules of engagement, the process of selecting a weapon—is fixed and robust. The arsenal itself, however, can be infinitely expanded. Adding a new shotgun doesn&rsquo;t require rewriting the laws of physics or retraining John Wick; you simply add the weapon and its specifications to the inventory.</p>
+<p>In our system:</p>
+<ul>
+<li><strong>The Armory Manifest:</strong> <code>toolcore/definitions.go</code></li>
+<li><strong>The Weapons (Tools):</strong> <code>DynamicTool</code> structs</li>
+<li><strong>The Rules of Engagement (The Engine):</strong> <code>toolcore/caller.go</code> and <code>toolutils/callerutils.go</code></li>
+</ul>
+<p>This design makes the system exceptionally maintainable, scalable, and robust, directly adhering to the Open/Closed Principle.</p>
+<h2 id="2-core-components">2. Core Components
+</h2><p>The architecture relies on a few key components working in concert.</p>
+<h3 id="a-the-contract-tooltypesloggabletool-interface">A. The Contract: <code>tooltypes.LoggableTool</code> Interface
+</h3><p>This is the &ldquo;One Ring to rule them all.&rdquo; It is the non-negotiable contract that every tool in our system must honor.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// tools/tooltypes/interfaces.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">type</span> LoggableTool <span style="color:#8be9fd;font-style:italic">interface</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#50fa7b">Name</span>() <span style="color:#8be9fd">string</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#50fa7b">Description</span>() <span style="color:#8be9fd">string</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#50fa7b">Call</span>(ctx context.Context, input <span style="color:#8be9fd">string</span>, logCtx zerolog.Logger) (<span style="color:#8be9fd">string</span>, <span style="color:#8be9fd">error</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#50fa7b">Stream</span>(ctx context.Context, input <span style="color:#8be9fd">string</span>, logCtx zerolog.Logger, streamChan <span style="color:#8be9fd;font-style:italic">chan</span><span style="color:#ff79c6">&lt;-</span> StreamEvent, requestID <span style="color:#8be9fd">string</span>) <span style="color:#8be9fd">error</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#50fa7b">ToLLMSchema</span>() llms.Tool
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Any struct that implements these methods can be treated as a tool by the core engine. This abstraction is critical. The engine doesn&rsquo;t care about the tool&rsquo;s specific implementation, only that it fulfills the contract.</p>
+<h3 id="b-the-concrete-implementation-toolcoredynamictool-struct">B. The Concrete Implementation: <code>toolcore.DynamicTool</code> Struct
+</h3><p>This is our standard-issue weapon chassis. It&rsquo;s the concrete struct that implements the <code>LoggableTool</code> interface and holds all the metadata and logic for a single tool.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// tools/toolcore/dynamic.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">type</span> DynamicTool <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	NameStr        <span style="color:#8be9fd">string</span>
+</span></span><span style="display:flex;"><span>	DescriptionStr <span style="color:#8be9fd">string</span>
+</span></span><span style="display:flex;"><span>	Schema         json.RawMessage
+</span></span><span style="display:flex;"><span>	Executor       ExecutorFunc       <span style="color:#6272a4">// For standard, blocking calls
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	StreamExecutor StreamExecutorFunc <span style="color:#6272a4">// For streaming calls
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><ul>
+<li><strong><code>NameStr</code></strong>: The unique identifier for the tool (e.g., <code>news_summary</code>).</li>
+<li><strong><code>DescriptionStr</code></strong>: The text given to the LLM so it knows when to use the tool. This is a critical prompt engineering component.</li>
+<li><strong><code>Schema</code></strong>: The JSON schema defining the arguments the tool expects. This allows the LLM to format its requests correctly.</li>
+<li><strong><code>Executor</code> / <code>StreamExecutor</code></strong>: A function pointer. This is the &ldquo;trigger.&rdquo; It&rsquo;s the actual code that runs when the tool is called.</li>
+</ul>
+<h3 id="c-the-manifest-toolcoredefinitionsgo">C. The Manifest: <code>toolcore/definitions.go</code>
+</h3><p>This file is the single source of truth for the system&rsquo;s capabilities. It contains one function, <code>BuildAllTools</code>, which constructs a slice of <code>DynamicTool</code> instances.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// tools/toolcore/definitions.go
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">BuildAllTools</span>(<span style="color:#ff79c6">...</span>) []DynamicTool {
+</span></span><span style="display:flex;"><span>	allTools <span style="color:#ff79c6">:=</span> []DynamicTool{
+</span></span><span style="display:flex;"><span>		{
+</span></span><span style="display:flex;"><span>			NameStr:        <span style="color:#f1fa8c">&#34;get_current_time&#34;</span>,
+</span></span><span style="display:flex;"><span>			DescriptionStr: <span style="color:#f1fa8c">&#34;...&#34;</span>,
+</span></span><span style="display:flex;"><span>			Schema:         noArgsSchema,
+</span></span><span style="display:flex;"><span>			Executor:       <span style="color:#8be9fd;font-style:italic">func</span>(<span style="color:#ff79c6">...</span>) (<span style="color:#8be9fd">string</span>, <span style="color:#8be9fd">error</span>) { <span style="color:#6272a4">/* ... */</span> },
+</span></span><span style="display:flex;"><span>		},
+</span></span><span style="display:flex;"><span>		{
+</span></span><span style="display:flex;"><span>			NameStr:        <span style="color:#f1fa8c">&#34;news_summary&#34;</span>,
+</span></span><span style="display:flex;"><span>			DescriptionStr: <span style="color:#f1fa8c">&#34;...&#34;</span>,
+</span></span><span style="display:flex;"><span>			Schema:         codeArgsSchema,
+</span></span><span style="display:flex;"><span>			Executor:       <span style="color:#8be9fd;font-style:italic">func</span>(<span style="color:#ff79c6">...</span>) (<span style="color:#8be9fd">string</span>, <span style="color:#8be9fd">error</span>) { <span style="color:#6272a4">/* ... */</span> },
+</span></span><span style="display:flex;"><span>		},
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4">// ... more tools
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">return</span> allTools
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>This is the <strong>data</strong> in &ldquo;data-driven.&rdquo; It&rsquo;s a simple list. The core engine consumes this list to understand what it can do.</p>
+<h3 id="d-the-engine-toolcorecallergo--getformattedtools">D. The Engine: <code>toolcore/caller.go</code> &amp; <code>GetFormattedTools</code>
+</h3><p>The engine is completely generic. <code>GetFormattedTools</code> iterates through the manifest (<code>allTools</code>) and formats the data for different parts of the system:</p>
+<ol>
+<li>A <code>map[string]tooltypes.LoggableTool</code> for quick lookups during execution.</li>
+<li>A <code>[]llms.Tool</code> slice for the LLM to perform tool selection.</li>
+</ol>
+<p>The <code>SelectAndPrepareTools</code> function uses this formatted data to orchestrate the LLM call and subsequent tool execution. It doesn&rsquo;t contain any logic specific to <code>news_summary</code> or any other tool. It&rsquo;s a generic executor, like the T-1000: it can execute any plan, provided the plan follows the established structure.</p>
+<h2 id="3-the-openclosed-principle-ocp-in-action">3. The Open/Closed Principle (OCP) in Action
+</h2><p>OCP states:</p>
+<blockquote>
+<p><strong>Software entities (classes, modules, functions, etc.) should be open for extension, but closed for modification.</strong></p>
+</blockquote>
+<p>Let&rsquo;s apply this to your code. It&rsquo;s a textbook example.</p>
+<ul>
+<li><strong>Open for Extension:</strong> You can extend the chatbot&rsquo;s capabilities by adding new tools. You do this by adding a new <code>DynamicTool{...}</code> entry to the <code>allTools</code> slice in <code>toolcore/definitions.go</code>. The system&rsquo;s functionality grows.</li>
+<li><strong>Closed for Modification:</strong> To add that new tool, you did <strong>not</strong> have to modify <code>caller.go</code>, <code>manager.go</code>, <code>preparer.go</code>, or <code>dynamic.go</code>. Those core components are &ldquo;closed.&rdquo; They are stable, tested, and don&rsquo;t need to be changed to support the new functionality. They are like the Terminator&rsquo;s chassis—the endoskeleton is fixed, but you can give it different weapon loadouts (the tools).</li>
+</ul>
+<h4 id="how-to-add-a-new-tool-the-right-way">How to Add a New Tool (The Right Way)
+</h4><ol>
+<li><strong>Implement the Logic:</strong> Write the executor function, for example, a new <code>GetCompanyCompetitors</code> function in <code>toolbe</code>.</li>
+<li><strong>Define the Schema:</strong> Create the JSON schema for its arguments in <code>definitions.go</code>.</li>
+<li><strong>Add to the Manifest:</strong> Add a new <code>DynamicTool{...}</code> struct to the <code>allTools</code> slice in <code>toolcore/definitions.go</code>, wiring up the name, description, schema, and executor function.</li>
+</ol>
+<p>That&rsquo;s it. You have extended the system&rsquo;s functionality without modifying a single line of the core engine&rsquo;s code.</p>
+<h4 id="the-wrong-way-violating-ocp">The Wrong Way (Violating OCP)
+</h4><p>Imagine if <code>SelectAndPrepareTools</code> looked like this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// THIS IS THE PATH TO THE DARK SIDE. BRITTLE AND PAINFUL.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">executeTool</span>(call llms.ToolCall) {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">switch</span> call.FunctionCall.Name {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">case</span> <span style="color:#f1fa8c">&#34;get_current_time&#34;</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#ff79c6">case</span> <span style="color:#f1fa8c">&#34;news_summary&#34;</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#6272a4">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#6272a4">// To add a tool, you&#39;d add:
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#6272a4">// case &#34;get_company_competitors&#34;:
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    <span style="color:#6272a4">//     // new logic here...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>This is a nightmare. It&rsquo;s tightly coupled, hard to test, and every change carries the risk of breaking existing functionality. It&rsquo;s the difference between adding a new app to your phone versus needing the manufacturer to issue a full firmware update for every new app.</p>
+<h2 id="4-architectural-prowess-the-payoff">4. Architectural Prowess: The Payoff
+</h2><p>This data-driven design delivers significant advantages:</p>
+<ol>
+<li><strong>Extreme Maintainability:</strong> Tool logic is self-contained. A bug in the <code>financial_annualreport</code> tool is isolated to its executor function, not entangled in a 500-line <code>switch</code> statement. You can fix or modify a tool with minimal risk to the rest of the system, like swapping a component in a modular rifle.</li>
+<li><strong>Effortless Scalability:</strong> Adding the 100th tool is no more complex than adding the 1st. The core engine&rsquo;s complexity does not increase as the number of tools grows.</li>
+<li><strong>Superior Testability:</strong> Each tool&rsquo;s executor can be unit-tested in complete isolation. The core engine can be tested with a set of mock tools to ensure its orchestration logic is sound.</li>
+<li><strong>Clarity and Single Source of Truth:</strong> To understand the full capabilities of the chatbot, a developer only needs to read one file: <code>toolcore/definitions.go</code>. It&rsquo;s the Marauder&rsquo;s Map of our system—it shows you everything.</li>
+</ol>
+<p>By separating the <em>what</em> (the data in <code>definitions.go</code>) from the <em>how</em> (the generic logic in <code>caller.go</code>), the architecture remains clean, robust, and ready for future expansion without collapsing under its own weight.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

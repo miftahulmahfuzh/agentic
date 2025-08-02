@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="System Architecture Overview I. Executive Summary This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/docs/manager_insights/system/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="System Architecture Overview I. Executive Summary This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/docs/manager_insights/system/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="System Architecture Overview I. Executive Summary This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/docs/manager_insights/system/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    8 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h3 id="system-architecture-overview"><strong>System Architecture Overview</strong>
+</h3><h4 id="i-executive-summary"><strong>I. Executive Summary</strong>
+</h4><p>This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering. This architecture explicitly separates inexpensive preparation tasks from resource-intensive LLM generation, enabling concurrent handling of numerous requests while strictly governing access to the LLM.</p>
+<hr>
+<h4 id="ii-component-breakdown"><strong>II. Component Breakdown</strong>
+</h4><h5 id="a-gateway--web-layer-maingo"><strong>A. Gateway &amp; Web Layer (<code>main.go</code>)</strong>
+</h5><p>The <code>main.go</code> file serves as the system&rsquo;s entry point and primary interface to the outside world. It is not merely a server; it is the gatekeeper.</p>
+<ul>
+<li><strong>Responsibilities:</strong>
+<ul>
+<li><strong>System Initialization:</strong> Orchestrates the startup sequence, ensuring all dependencies (logging, configuration, databases, LLM services) are initialized in the correct order before instantiating the core <code>chatbot.Manager</code>. Failure at any step is fatal.</li>
+<li><strong>API Routing (Gin):</strong> Establishes all HTTP endpoints. It intelligently segregates public endpoints (e.g., <code>/chat/stream/:request_id</code> for Server-Sent Events) from protected endpoints (<code>/chat/*</code>) which require API key authentication via middleware.</li>
+<li><strong>Request Handling:</strong> Contains the HTTP handler functions that act as a liaison between raw network requests and the core engine. These handlers are responsible for request validation, data binding, and invoking the appropriate methods on the <code>chatbot.Manager</code>. They are the bouncers at the club door, checking IDs before letting anyone into the main room.</li>
+</ul>
+</li>
+</ul>
+<h5 id="b-core-processing-engine-chatbotmanagergo-chatbotpreparergo-chatbotstreamergo"><strong>B. Core Processing Engine (<code>chatbot/manager.go</code>, <code>chatbot/preparer.go</code>, <code>chatbot/streamer.go</code>)</strong>
+</h5><p>This is the system&rsquo;s engine room and central nervous system, architected as a non-blocking pipeline. The <code>Manager</code> is the director, the <code>Preparer</code> is the logistics officer, and the <code>Streamer</code> is the special operations unit. It&rsquo;s the Nick Fury of this operation, assembling the team but not throwing every punch.</p>
+<ul>
+<li>
+<p><strong><code>Manager</code>:</strong> The central orchestrator.</p>
+<ul>
+<li><strong>Request Ingestion:</strong> The <code>SubmitRequest</code> function is the sole entry point from the API. It generates a unique request identifier, establishes a state-tracking structure (<code>types.RequestStream</code>), and enqueues the request into the initial processing queue (<code>requestQueue</code>).</li>
+<li><strong>State Management:</strong> Maintains a master map of all <code>activeRequests</code>, tracking their state (<code>Queued</code>, <code>Processing</code>, <code>Cancelled</code>). This is the system&rsquo;s single source of truth for in-flight operations.</li>
+<li><strong>Worker Pool Coordination:</strong> Spawns and manages the goroutine pools for both the preparation and streaming stages, using dedicated queues (<code>requestQueue</code>, <code>preparedQueue</code>) to pass work between them.</li>
+<li><strong>Lifecycle and Cleanup:</strong> Implements the <code>CancelStream</code> logic to gracefully terminate operations via <code>context</code> cancellation. A <code>janitor</code> goroutine runs periodically to purge stale or timed-out requests, preventing memory leaks. It&rsquo;s The Wolf from <em>Pulp Fiction</em>, cleaning up messy situations.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>Preparer</code> &amp; The Preparation Pipeline (Stage 1):</strong></p>
+<ul>
+<li><strong>Purpose:</strong> To execute all computationally inexpensive, non-LLM tasks required before final generation. This stage is designed for high concurrency.</li>
+<li><strong>Resource Governor:</strong> A semaphore (<code>prepareSemaphore</code>) limits the number of concurrent preparation workers, preventing CPU saturation from an influx of requests.</li>
+<li><strong>Key Operations:</strong>
+<ol>
+<li><strong>History Formatting:</strong> Fetches and formats previous conversation turns.</li>
+<li><strong>Cache Interrogation (<code>singleflight</code> &amp; Redis):</strong> Checks a Redis cache for a pre-existing answer to an identical query. It uses a <code>singleflight</code> group to ensure that multiple identical, concurrent requests only trigger one cache check and one preparation process. The first request does the work; the others get the result. This is not the droid they&rsquo;re looking for&hellip; it&rsquo;s the <em>same</em> droid.</li>
+<li><strong>Tool Selection &amp; Pre-computation:</strong> Analyzes the query to determine if specialized tools are needed.</li>
+<li><strong>Prompt Assembly:</strong> Constructs the final prompt payload for the LLM.</li>
+</ol>
+</li>
+<li><strong>Output:</strong> A <code>types.PreparedRequestData</code> struct—an intermediate artifact containing all necessary data—is pushed to the <code>preparedQueue</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong><code>Streamer</code> &amp; The LLM Streaming Pipeline (Stage 2):</strong></p>
+<ul>
+<li><strong>Purpose:</strong> To manage the resource-intensive, final LLM generation phase. This stage has low concurrency to protect the LLM service from overload.</li>
+<li><strong>Resource Governor:</strong> A separate, more restrictive semaphore (<code>llmStreamSemaphore</code>) strictly limits the number of concurrent LLM streaming calls. This is the primary bottleneck by design. You shall not pass&hellip; unless there&rsquo;s a free slot.</li>
+<li><strong>Key Operations:</strong>
+<ol>
+<li><strong>Execute Generation:</strong> If no cached response exists, it initiates the streaming call to the LLM service or a direct tool stream.</li>
+<li><strong>Real-time Event Generation:</strong> As data (tokens, info, errors) arrives from the LLM or tool, it is wrapped in a <code>tooltypes.StreamEvent</code> and pushed into the client-facing channel.</li>
+<li><strong>Response Caching:</strong> Upon successful generation, it populates the Redis cache (unless the query involved time-sensitive tools).</li>
+<li><strong>Logging:</strong> Persists the final transaction record to the database (<code>ArangoDB</code>).</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<h5 id="c-client-side-interface-frontendappjs"><strong>C. Client-Side Interface (<code>frontend/app.js</code>)</strong>
+</h5><p>The <code>ChatApp</code> class within <code>app.js</code> encapsulates all client-side logic. It is a stateful application responsible for interacting with the backend API and rendering a dynamic user experience.</p>
+<ul>
+<li><strong>Responsibilities:</strong>
+<ul>
+<li><strong>API Communication:</strong> Manages all HTTP requests to the backend, including the initial <code>POST /chat/submit</code> and subsequent <code>POST /chat/cancel/:request_id</code> or reaction updates.</li>
+<li><strong>Real-time Data Handling (<code>EventSource</code>):</strong> Upon receiving a <code>request_id</code>, it establishes a persistent Server-Sent Events (<code>EventSource</code>) connection to the <code>/chat/stream/:request_id</code> endpoint. This is the primary mechanism for receiving the real-time response from the server.</li>
+<li><strong>Incremental Rendering:</strong> Listens for <code>message</code> events on the <code>EventSource</code> stream. Each event payload is a JSON-encoded <code>StreamEvent</code>. It parses these events and incrementally renders the <code>token</code> payloads as markdown into the DOM, providing a &ldquo;live typing&rdquo; effect.</li>
+<li><strong>State Management:</strong> Manages the UI state, toggling the input field&rsquo;s disabled status and switching the send button&rsquo;s function between &ldquo;Send&rdquo; and &ldquo;Stop&rdquo; based on whether a request is in flight.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h4 id="iii-system-workflow--data-flow"><strong>III. System Workflow &amp; Data Flow</strong>
+</h4><p>The following sequence diagram describes the end-to-end data flow with detailed terminology.</p>
+<pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">flowchart TB
+    %% Client Layer
+    Client[&#34;🖥️ Client Interface&lt;br/&gt;&lt;i&gt;frontend/app.js&lt;/i&gt;&lt;br/&gt;ChatApp Class&#34;]
+    
+    %% Gateway Layer
+    subgraph Gateway [&#34;🌐 Gateway Layer&#34;]
+        direction TB
+        APIGateway[&#34;HTTP Gateway&lt;br/&gt;&lt;i&gt;main.go&lt;/i&gt;&lt;br/&gt;• Authentication&lt;br/&gt;• Request Validation&lt;br/&gt;• Response Streaming&#34;]
+    end
+    
+    %% Core Processing Engine
+    subgraph CoreEngine [&#34;⚙️ Core Processing Engine&#34;]
+        direction TB
+        
+        subgraph RequestFlow [&#34;Request Flow Pipeline&#34;]
+            direction LR
+            RequestQueue[(&#34;📥 Request&lt;br/&gt;Queue&#34;)]
+            PreparedQueue[(&#34;📦 Prepared&lt;br/&gt;Queue&#34;)]
+        end
+        
+        subgraph WorkerPools [&#34;Worker Pool Architecture&#34;]
+            direction TB
+            PrepPool[&#34;🔧 Preparation Pool&lt;br/&gt;&lt;i&gt;chatbot/preparer.go&lt;/i&gt;&lt;br/&gt;• History Formatting&lt;br/&gt;• Cache Lookup&lt;br/&gt;• Tool Selection&lt;br/&gt;• Prompt Assembly&lt;br/&gt;&lt;br/&gt;Semaphore: High Concurrency&#34;]
+            StreamPool[&#34;🚀 Streaming Pool&lt;br/&gt;&lt;i&gt;chatbot/streamer.go&lt;/i&gt;&lt;br/&gt;• LLM Generation&lt;br/&gt;• Event Streaming&lt;br/&gt;• Response Caching&lt;br/&gt;• Transaction Logging&lt;br/&gt;&lt;br/&gt;Semaphore: Controlled Access&#34;]
+        end
+        
+        Manager[&#34;🎯 Manager&lt;br/&gt;&lt;i&gt;chatbot/manager.go&lt;/i&gt;&lt;br/&gt;• Request Orchestration&lt;br/&gt;• State Management&lt;br/&gt;• Lifecycle Control&lt;br/&gt;• Resource Coordination&#34;]
+    end
+    
+    %% External Services
+    subgraph ExternalServices [&#34;🔌 External Services&#34;]
+        direction TB
+        LLM[&#34;🤖 LLM Service&lt;br/&gt;Token Generation&#34;]
+        Redis[&#34;⚡ Redis Cache&lt;br/&gt;Response Storage&#34;]
+        ArangoDB[&#34;🗄️ ArangoDB&lt;br/&gt;Transaction Logs&#34;]
+    end
+    
+    %% Flow Connections
+    Client ---|&#34;1. POST /chat/submit&lt;br/&gt;Query + Context&#34;| APIGateway
+    APIGateway ---|&#34;2. manager.SubmitRequest()&lt;br/&gt;Generate request_id&#34;| Manager
+    Manager ---|&#34;3. Enqueue Request&#34;| RequestQueue
+    RequestQueue ---|&#34;4a. Dequeue &amp; Process&#34;| PrepPool
+    PrepPool ---|&#34;4b. Cache Check &amp; Tools&#34;| Redis
+    PrepPool ---|&#34;5. Enqueue Prepared Data&#34;| PreparedQueue
+    PreparedQueue ---|&#34;6. Dequeue &amp; Stream&#34;| StreamPool
+    StreamPool ---|&#34;7a. Generate Response&#34;| LLM
+    StreamPool ---|&#34;7b. Cache Result&#34;| Redis
+    StreamPool ---|&#34;7c. Log Transaction&#34;| ArangoDB
+    StreamPool ---|&#34;8. Stream Events&#34;| Manager
+    Manager ---|&#34;9. Relay Events&#34;| APIGateway
+    APIGateway ---|&#34;10. SSE /chat/stream/:id&lt;br/&gt;Real-time Streaming&#34;| Client
+    
+    %% Real-time Connection
+    Client -.-|&#34;EventSource Connection&lt;br/&gt;Persistent Stream&#34;| APIGateway
+    
+    %% Styling
+    classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef gatewayStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef managerStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef prepStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef streamStyle fill:#fff8e1,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef queueStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef serviceStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
+    
+    class Client clientStyle
+    class APIGateway gatewayStyle
+    class Manager managerStyle
+    class PrepPool prepStyle
+    class StreamPool streamStyle
+    class RequestQueue,PreparedQueue queueStyle
+    class LLM,Redis,ArangoDB serviceStyle
+</code></pre><ol>
+<li>The <strong>Client</strong> submits a user query via a <code>POST</code> request to <code>/chat/submit</code>.</li>
+<li>The <strong>Gateway</strong> handler receives the request, authenticates it, and invokes <code>chatbot.Manager.SubmitRequest</code>.</li>
+<li>The <strong>Manager</strong> enqueues the request arguments into <code>requestQueue</code>. The client receives a <code>request_id</code> and immediately opens an <code>EventSource</code> connection.</li>
+<li>A worker from the <strong>Preparation Pool</strong> dequeues the request. It performs history formatting, cache checks, and tool processing, potentially interacting with Redis.</li>
+<li>The worker produces a <code>PreparedRequestData</code> payload and enqueues it into <code>preparedQueue</code>.</li>
+<li>A worker from the <strong>Streaming Pool</strong> dequeues the prepared payload, having acquired a slot from its restrictive semaphore.</li>
+<li>The worker executes the final generation logic, either by streaming from the <strong>LLM</strong> or a direct tool stream.</li>
+<li>As data arrives, the worker wraps it in <code>StreamEvent</code> objects and pushes them into the channel associated with the <code>request_id</code>.</li>
+<li>The <strong>Gateway</strong>&rsquo;s <code>handleStreamRequest</code> handler, which holds the open <code>EventSource</code> connection, receives these events.</li>
+<li>The events are serialized to JSON and written to the HTTP response stream, which the <strong>Client</strong> receives and renders in real-time.</li>
+</ol>
+<hr>
+<h4 id="iv-architectural-design-rationale"><strong>IV. Architectural Design Rationale</strong>
+</h4><p>The two-stage architecture is a deliberate design choice, not an accident. It addresses fundamental challenges in building scalable AI systems.</p>
+<ul>
+<li><strong>Decoupling and Throughput:</strong> By separating fast preparation tasks from slow generation tasks, the system avoids a situation where a simple cache lookup is stuck waiting behind a complex LLM query. The high-concurrency preparation stage can rapidly process a large influx of requests, queuing them up for the metered generation stage. This is the assembly line principle: don&rsquo;t let one slow station halt all production.</li>
+<li><strong>Resource Protection:</strong> The LLM is the most expensive and fragile resource. The <code>llmStreamSemaphore</code> acts as a critical load balancer, preventing the system from overwhelming the LLM service, which could lead to rate-limiting, service degradation, or excessive costs.</li>
+<li><strong>Enhanced Responsiveness:</strong> From the user&rsquo;s perspective, the system appears highly responsive. The initial <code>POST</code> returns a <code>request_id</code> almost instantly. Even if the request has to wait in the <code>preparedQueue</code>, the user sees a &ldquo;processing&rdquo; state immediately. This is far superior to a simple blocking architecture where the user&rsquo;s browser would wait idly for the entire response to be generated.</li>
+<li><strong>Scalability and Maintainability:</strong> Each component (<code>Gateway</code>, <code>Manager</code>, <code>Preparer</code>, <code>Streamer</code>) has a clearly defined responsibility. This separation of concerns makes the system easier to debug, maintain, and scale. The concurrency of each stage can be tuned independently by adjusting its semaphore limit in the configuration, allowing for fine-grained performance optimization without code changes.</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

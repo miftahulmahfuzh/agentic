@@ -1,5 +1,5 @@
 # hugo_docs/hugo.toml
-baseURL = "https://miftahulmahfuzh.github.io/agentic/docs/"
+baseURL = "http://localhost:1313/"
 languageCode = "en-us"
 title = "Agentic Chatbot Documentation"
 theme = "hugo-theme-stack"
@@ -17,10 +17,6 @@ theme = "hugo-theme-stack"
     [params.sidebar]
         emoji = "🤖"
         subtitle = "Deep Dives & Architecture"
-        [params.sidebar.avatar]
-            enabled = true
-            local = true
-            src = "img/penguin.png" # You'll need to add an avatar image here
 
     [params.article]
         math = false
@@ -47,3 +43,14 @@ theme = "hugo-theme-stack"
 [markup.highlight]
   # Looks better than the default
   style = "dracula"
+
+# Add this section for the Stack theme
+[params.colorScheme]
+    toggle = true
+    default = "auto"
+
+[params.imageProcessing.cover]
+    enabled = true
+
+[params.imageProcessing.content]
+    enabled = true

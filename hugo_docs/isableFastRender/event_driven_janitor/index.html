@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Architectural Note: Why We Use a Polling Janitor This document addresses a design choice in the manager.go lifecycle management: the use of a periodic, polling &ldquo;janitor&rdquo; to clean up timed-out requests, rather than a purely event-driven timeout mechanism for each request. This choice is deliberate and grounded in engineering pragmatism. The Question: Can the Janitor Be Event-Driven? The core system architecture strongly favors non-blocking, event-driven designs over polling to maximize CPU efficiency.">
+<title></title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/event_driven_janitor/'>
+
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<meta property='og:description' content="Architectural Note: Why We Use a Polling Janitor This document addresses a design choice in the manager.go lifecycle management: the use of a periodic, polling &ldquo;janitor&rdquo; to clean up timed-out requests, rather than a purely event-driven timeout mechanism for each request. This choice is deliberate and grounded in engineering pragmatism. The Question: Can the Janitor Be Event-Driven? The core system architecture strongly favors non-blocking, event-driven designs over polling to maximize CPU efficiency.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/event_driven_janitor/'>
+<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:type' content='article'><meta property='article:section' content='' />
+<meta name="twitter:title" content="">
+<meta name="twitter:description" content="Architectural Note: Why We Use a Polling Janitor This document addresses a design choice in the manager.go lifecycle management: the use of a periodic, polling &ldquo;janitor&rdquo; to clean up timed-out requests, rather than a purely event-driven timeout mechanism for each request. This choice is deliberate and grounded in engineering pragmatism. The Question: Can the Janitor Be Event-Driven? The core system architecture strongly favors non-blocking, event-driven designs over polling to maximize CPU efficiency.">
+    <link rel="shortcut icon" href="/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/docs/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/docs/img/avatar_huda2458f72ce188392d75c5d51cd8e24e_373_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic/docs">Agentic Chatbot Documentation</a></h1>
+            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/docs/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/event_driven_janitor/"></a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    4 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="architectural-note-why-we-use-a-polling-janitor">Architectural Note: Why We Use a Polling Janitor
+</h1><p>This document addresses a design choice in the <code>manager.go</code> lifecycle management: the use of a periodic, polling &ldquo;janitor&rdquo; to clean up timed-out requests, rather than a purely event-driven timeout mechanism for each request. This choice is deliberate and grounded in engineering pragmatism.</p>
+<h2 id="the-question-can-the-janitor-be-event-driven">The Question: Can the Janitor Be Event-Driven?
+</h2><p>The core system architecture strongly favors non-blocking, event-driven designs over polling to maximize CPU efficiency. A valid question arises: Why doesn&rsquo;t the resource janitor follow this pattern? The current implementation uses a single goroutine that wakes up periodically (<code>JanitorInterval</code>), iterates through all active requests, and checks if any have exceeded their state-specific timeout (<code>QueueTimeout</code> or <code>ProcessingTimeout</code>).</p>
+<p>An alternative &ldquo;event-driven&rdquo; approach might involve spawning a dedicated timer-goroutine for each individual request. This goroutine would sleep until the request&rsquo;s specific timeout is reached and then trigger a cleanup.</p>
+<p>This document argues that the current polling approach is superior for this specific use case.</p>
+<h2 id="analysis-of-the-two-approaches">Analysis of the Two Approaches
+</h2><h3 id="the-current-polling-janitor">The Current Polling Janitor
+</h3><ul>
+<li><strong>Mechanism:</strong> A single, long-lived goroutine.</li>
+<li><strong>Execution:</strong> Wakes up once per <code>JanitorInterval</code> (e.g., 2 minutes).</li>
+<li><strong>Work Done:</strong> Acquires a lock, iterates a map, performs a cheap <code>time.Since()</code> check for each entry.</li>
+<li><strong>Resource Cost:</strong>
+<ul>
+<li><strong>CPU:</strong> Effectively zero. The work is measured in microseconds and occurs infrequently. For the vast majority of its life, the goroutine is asleep and consumes no CPU.</li>
+<li><strong>Memory:</strong> The cost of one goroutine stack. Minimal.</li>
+</ul>
+</li>
+<li><strong>Complexity:</strong> Low. All cleanup logic is centralized in a single, simple, easy-to-debug loop.</li>
+</ul>
+<h3 id="the-proposed-event-driven-janitor">The Proposed Event-Driven Janitor
+</h3><ul>
+<li><strong>Mechanism:</strong> One new goroutine and one <code>time.Timer</code> object are created <em>for every active request</em>.</li>
+<li><strong>Execution:</strong>
+<ol>
+<li>When a request is submitted, a goroutine is launched with a <code>time.NewTimer</code> set to <code>QueueTimeout</code>.</li>
+<li>If the request is dequeued, the first timer/goroutine must be cancelled, and a <em>new</em> one launched with a timer for <code>ProcessingTimeout</code>.</li>
+<li>If the request completes successfully, its associated timer/goroutine must be found and terminated.</li>
+</ol>
+</li>
+<li><strong>Resource Cost:</strong>
+<ul>
+<li><strong>CPU:</strong> While each individual goroutine is sleeping, the Go runtime&rsquo;s internal scheduler must now manage a heap of potentially thousands of <code>time.Timer</code> objects. This pushes the polling work down into the runtime, which is more complex and has more overhead than a simple map iteration.</li>
+<li><strong>Memory:</strong> N goroutine stacks and N <code>time.Timer</code> objects, where N is the number of concurrent active requests. This scales linearly with load and is significantly higher than the single-goroutine approach.</li>
+</ul>
+</li>
+<li><strong>Complexity:</strong> High.
+<ul>
+<li>The cleanup logic is now distributed across thousands of ephemeral goroutines.</li>
+<li>It requires a complex system of timer cancellation and synchronization to prevent leaking goroutines when requests complete normally or are cancelled by the user.</li>
+<li>This massively increases the surface area for subtle race conditions.</li>
+</ul>
+</li>
+</ul>
+<h2 id="conclusion-pragmatism-over-dogma">Conclusion: Pragmatism Over Dogma
+</h2><p>The goal of event-driven design is to avoid wasting resources on unproductive work, like a CPU spinning in a busy-wait loop. The current janitor does not do this. It is a highly efficient, low-frequency task whose performance impact is negligible, even at massive scale.</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Polling Janitor (Current)</th>
+<th>Event-Driven Janitor (Proposed)</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CPU Usage</strong></td>
+<td>Microscopic spikes every few minutes.</td>
+<td>Constant low-level scheduler overhead managing N timers.</td>
+<td>Polling is demonstrably cheaper in this scenario.</td>
+</tr>
+<tr>
+<td><strong>Memory Usage</strong></td>
+<td>Constant (1 goroutine).</td>
+<td>Linear (<code>O(N)</code> goroutines + timers).</td>
+<td>Polling is vastly more memory-efficient under load.</td>
+</tr>
+<tr>
+<td><strong>Code Complexity</strong></td>
+<td>Low. Centralized, simple, robust.</td>
+<td>High. Distributed, complex state management, prone to races.</td>
+<td>Polling leads to more maintainable and reliable code.</td>
+</tr>
+<tr>
+<td><strong>Philosophical Purity</strong></td>
+<td>Appears to violate the &ldquo;no polling&rdquo; rule.</td>
+<td>Appears to be purely &ldquo;event-driven.&rdquo;</td>
+<td>This is a red herring. The goal is efficiency, not blind adherence to a pattern.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The proposed event-driven janitor is a solution in search of a problem. It represents a form of <strong>premature optimization</strong> that would trade a simple, robust, and performant system for a complex, fragile one that offers no tangible benefits.</p>
+<p><strong>Therefore, the single-goroutine, periodic polling janitor is the correct and final design choice.</strong> It is a pragmatic engineering decision that prioritizes simplicity, reliability, and real-world performance over dogmatic adherence to a design pattern in a context where it is inappropriate.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Agentic Chatbot Documentation
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/docs/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

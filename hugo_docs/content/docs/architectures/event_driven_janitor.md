@@ -1,3 +1,9 @@
+---
+title: "Polling Janitor"
+date: 2025-08-02
+draft: false
+---
+
 # Architectural Note: Why We Use a Polling Janitor
 
 This document addresses a design choice in the `manager.go` lifecycle management: the use of a periodic, polling "janitor" to clean up timed-out requests, rather than a purely event-driven timeout mechanism for each request. This choice is deliberate and grounded in engineering pragmatism.
@@ -51,3 +57,4 @@ The goal of event-driven design is to avoid wasting resources on unproductive wo
 The proposed event-driven janitor is a solution in search of a problem. It represents a form of **premature optimization** that would trade a simple, robust, and performant system for a complex, fragile one that offers no tangible benefits.
 
 **Therefore, the single-goroutine, periodic polling janitor is the correct and final design choice.** It is a pragmatic engineering decision that prioritizes simplicity, reliability, and real-world performance over dogmatic adherence to a design pattern in a context where it is inappropriate.
+
