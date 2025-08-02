@@ -126,16 +126,16 @@ graph LR
     class RAG_API external
 
     %% Control Flow: Establishes the connection
-    Client -.->|"Poll Request"| Manager
-    Manager -.->|"Provide Channel"| Client
+    Client -.->|"1-Polls with request ID<br/>(GetRequestResultStream)"| Manager
+    Manager -.->|"2-Provides client with<br/>mainStreamChan for results"| Client
 
     %% Execution & Data Flow: The main pipeline
-    Manager -->|"Dispatch Request"| Streamer
-    Streamer -->|"Invoke Tool"| ToolExecutor
-    ToolExecutor -->|"HTTP Stream"| RAG_API
-    RAG_API -->|"SSE Data"| ToolExecutor
-    ToolExecutor -->|"Stream Events"| Streamer
-    Streamer -->|"Relay Events"| Client
+    Manager -->|"3-Dispatches Prepared Request"| Streamer
+    Streamer -->|"4-Invokes Tool with a new<br/>internalStreamChan & context"| ToolExecutor
+    ToolExecutor -->|"5-HTTP Stream Request"| RAG_API
+    RAG_API -->|"6-SSE Data Chunks"| ToolExecutor
+    ToolExecutor -->|"7-Writes tooltypes.StreamEvent<br/>to internalStreamChan"| Streamer
+    Streamer -->|"8-Relays events from internal to<br/>mainStreamChan"| Client
 {{< /mermaid >}}
 
 **The Handoffs Explained:**

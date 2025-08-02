@@ -1583,16 +1583,16 @@ graph LR
     class RAG_API external
 
     %% Control Flow: Establishes the connection
-    Client -.-&gt;|&#34;Poll Request&#34;| Manager
-    Manager -.-&gt;|&#34;Provide Channel&#34;| Client
+    Client -.-&gt;|&#34;1-Polls with request ID&lt;br/&gt;(GetRequestResultStream)&#34;| Manager
+    Manager -.-&gt;|&#34;2-Provides client with&lt;br/&gt;mainStreamChan for results&#34;| Client
 
     %% Execution &amp; Data Flow: The main pipeline
-    Manager --&gt;|&#34;Dispatch Request&#34;| Streamer
-    Streamer --&gt;|&#34;Invoke Tool&#34;| ToolExecutor
-    ToolExecutor --&gt;|&#34;HTTP Stream&#34;| RAG_API
-    RAG_API --&gt;|&#34;SSE Data&#34;| ToolExecutor
-    ToolExecutor --&gt;|&#34;Stream Events&#34;| Streamer
-    Streamer --&gt;|&#34;Relay Events&#34;| Client
+    Manager --&gt;|&#34;3-Dispatches Prepared Request&#34;| Streamer
+    Streamer --&gt;|&#34;4-Invokes Tool with a new&lt;br/&gt;internalStreamChan &amp; context&#34;| ToolExecutor
+    ToolExecutor --&gt;|&#34;5-HTTP Stream Request&#34;| RAG_API
+    RAG_API --&gt;|&#34;6-SSE Data Chunks&#34;| ToolExecutor
+    ToolExecutor --&gt;|&#34;7-Writes tooltypes.StreamEvent&lt;br/&gt;to internalStreamChan&#34;| Streamer
+    Streamer --&gt;|&#34;8-Relays events from internal to&lt;br/&gt;mainStreamChan&#34;| Client
 
 &lt;/div&gt;
 &lt;script src=&#34;https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js&#34;&gt;&lt;/script&gt;
