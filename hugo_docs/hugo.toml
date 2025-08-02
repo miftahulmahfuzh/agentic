@@ -9,7 +9,7 @@ theme = "hugo-theme-stack"
     mainSections = ["docs"]
     featuredImageField = "image"
     rssFullContent = true
-    favicon = "/favicon.png"
+    favicon = "/img/penguin.png"
 
     [params.footer]
         since = 2024
