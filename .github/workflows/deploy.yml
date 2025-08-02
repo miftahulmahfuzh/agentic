@@ -1,41 +1,64 @@
 # .github/workflows/deploy.yml
-name: Deploy GitHub Pages
+name: Deploy Hugo site to Pages
 
 on:
   push:
     branches:
-      - main # Or whatever your primary branch is
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # Necessary to push the built site to the gh-pages branch
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: true # Fetches the Hugo theme submodule
+          submodules: recursive
           fetch-depth: 0
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v3
         with:
           hugo-version: 'latest'
+          extended: true
 
-      - name: Build Hugo Site
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v4
+
+      - name: Build with Hugo
+        env:
+          HUGO_ENVIRONMENT: production
+          HUGO_ENV: production
         run: |
           cd hugo_docs
-          hugo --minify
+          hugo \
+            --gc \
+            --minify \
+            --baseURL "${{ steps.pages.outputs.base_url }}/"
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: . # Publish the whole repo
-          # The user who pushes the commit to the gh-pages branch
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+          path: ./hugo_docs/public
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
