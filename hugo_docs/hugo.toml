@@ -1,0 +1,49 @@
+# hugo_docs/hugo.toml
+baseURL = "https://miftahulmahfuzh.github.io/agentic/docs/"
+languageCode = "en-us"
+title = "Agentic Chatbot Documentation"
+theme = "hugo-theme-stack"
+
+[params]
+    mainSections = ["docs"]
+    featuredImageField = "image"
+    rssFullContent = true
+    favicon = "/favicon.png"
+
+    [params.footer]
+        since = 2024
+        powered = true
+
+    [params.sidebar]
+        emoji = "🤖"
+        subtitle = "Deep Dives & Architecture"
+        [params.sidebar.avatar]
+            enabled = true
+            local = true
+            src = "img/penguin.png" # You'll need to add an avatar image here
+
+    [params.article]
+        math = false
+        toc = true
+        readingTime = true
+
+[menu]
+    [[menu.main]]
+        identifier = "home"
+        name = "Home"
+        url = "/"
+        weight = -100
+    [[menu.social]]
+        identifier = "github"
+        name = "GitHub"
+        url = "https://github.com/miftahulmahfuzh/agentic"
+        weight = 1
+        [menu.social.params]
+            icon = "brand-github"
+
+[markup.goldmark.renderer]
+  unsafe = true # Allows you to use raw HTML in markdown if needed
+
+[markup.highlight]
+  # Looks better than the default
+  style = "dracula"

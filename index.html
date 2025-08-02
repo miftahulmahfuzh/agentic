@@ -1,4 +1,4 @@
-<!-- README index.html -->
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
   <head>
@@ -34,6 +34,7 @@
           <li><a href="#configuration">Configuration</a></li>
           <li><a href="#usage">Usage & Testing</a></li>
           <li><a href="#development">Development</a></li>
+          <li><a href="#documentation">Documentation</a></li>
         </ul>
       </div>
 
@@ -533,6 +534,20 @@ tuntun-go-chatbot/
           </div>
         </div>
       </section>
+
+      <!-- NEW DOCUMENTATION SECTION -->
+      <section id="documentation">
+        <h2>📚 Documentation & Deep Dives</h2>
+        <div class="intro">
+          <p>
+            This page provides a high-level overview. For detailed architectural breakdowns, technical narratives, and implementation guides, explore the full documentation site.
+          </p>
+          <p style="text-align:center; margin-top: 20px;">
+            <a href="docs/" class="cta-button">Explore Full Documentation</a>
+          </p>
+        </div>
+      </section>
+
     </div>
 
     <!-- Modal for detailed explanations -->
@@ -989,7 +1004,7 @@ graph TD
       });
 
       // Smooth scrolling for TOC links
-      document.querySelectorAll('.toc a[href^="#"]').forEach((anchor) => {
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
         anchor.addEventListener("click", function (e) {
           e.preventDefault();
           const target = document.querySelector(this.getAttribute("href"));
