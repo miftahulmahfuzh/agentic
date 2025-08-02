@@ -2,16 +2,16 @@
 <html lang="en-us" dir="ltr">
     <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Let&rsquo;s trace the journey of the query &ldquo;how to register in tuntun?&rdquo; from the moment the user hits &ldquo;send&rdquo; to the final word appearing on their screen. This story unfolds in four main acts: The Submission: The request enters the system. The Preparation: The system decides what to do. This is the critical decision point. The Execution: The system performs the action, in this case, a direct RAG stream. The Delivery: The streaming answer reaches the user.">
-<title></title>
+<title>RAG Stream Part 2</title>
 
 <link rel='canonical' href='http://localhost:1313/agentic/docs/docs/narratives/rag_stream_pt2/'>
 
-<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="RAG Stream Part 2">
 <meta property='og:description' content="Let&rsquo;s trace the journey of the query &ldquo;how to register in tuntun?&rdquo; from the moment the user hits &ldquo;send&rdquo; to the final word appearing on their screen. This story unfolds in four main acts: The Submission: The request enters the system. The Preparation: The system decides what to do. This is the critical decision point. The Execution: The system performs the action, in this case, a direct RAG stream. The Delivery: The streaming answer reaches the user.">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/docs/narratives/rag_stream_pt2/'>
 <meta property='og:site_name' content='Agentic Chatbot Documentation'>
-<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
-<meta name="twitter:title" content="">
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="RAG Stream Part 2">
 <meta name="twitter:description" content="Let&rsquo;s trace the journey of the query &ldquo;how to register in tuntun?&rdquo; from the moment the user hits &ldquo;send&rdquo; to the final word appearing on their screen. This story unfolds in four main acts: The Submission: The request enters the system. The Preparation: The system decides what to do. This is the critical decision point. The Execution: The system performs the action, in this case, a direct RAG stream. The Delivery: The streaming answer reaches the user.">
     <link rel="shortcut icon" href="/favicon.png" />
 
@@ -149,7 +149,7 @@
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/agentic/docs/docs/narratives/rag_stream_pt2/"></a>
+            <a href="/agentic/docs/docs/narratives/rag_stream_pt2/">RAG Stream Part 2</a>
         </h2>
     
         
@@ -160,6 +160,19 @@
     
     
     <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 02, 2025</time>
+            </div>
         
 
         
@@ -281,25 +294,27 @@
 <h3 id="how-the-direct-rag-streaming-channels-work">How the Direct RAG Streaming Channels Work
 </h3><p>This is the core of your second question. The process involves a chain of channels, like a bucket brigade, ensuring a direct, cancellable path from the RAG API to the user&rsquo;s screen.</p>
 <p>Here is a visual representation of the channel flow:</p>
-<pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">graph LR
+<div class="mermaid">
+
+graph LR
     %% Define Subgraphs for architectural layers
-    subgraph Client_Tier [&#34;Client Tier&#34;]
+    subgraph Client_Tier ["Client Tier"]
         Client[Client Application]
     end
 
-    subgraph Application_Backend [&#34;Application Backend&#34;]
-        subgraph Request_Lifecycle [&#34;Request Lifecycle Management&#34;]
-            Manager[&#34;Request Manager&lt;br/&gt;Manages state for req_f4a12&#34;]
+    subgraph Application_Backend ["Application Backend"]
+        subgraph Request_Lifecycle ["Request Lifecycle Management"]
+            Manager["Request Manager<br/>Manages state for req_f4a12"]
         end
 
-        subgraph Execution_Engine [&#34;Execution Engine (Direct RAG Path)&#34;]
-            Streamer[&#34;Response Streamer&lt;br/&gt;Orchestrates the streaming process&#34;]
-            ToolExecutor[&#34;RAG Tool Executor&lt;br/&gt;(e.g., StreamTencentFrequentlyAsked)&#34;]
+        subgraph Execution_Engine ["Execution Engine (Direct RAG Path)"]
+            Streamer["Response Streamer<br/>Orchestrates the streaming process"]
+            ToolExecutor["RAG Tool Executor<br/>(e.g., StreamTencentFrequentlyAsked)"]
         end
     end
 
-    subgraph External_Services [&#34;External Services&#34;]
-        RAG_API[&#34;External RAG Service&lt;br/&gt;(Server-Sent Events Endpoint)&#34;]
+    subgraph External_Services ["External Services"]
+        RAG_API["External RAG Service<br/>(Server-Sent Events Endpoint)"]
     end
 
     %% Define Styles for clarity and elegance
@@ -314,17 +329,24 @@
     class RAG_API external
 
     %% Control Flow: Establishes the connection
-    Client -.-&gt;|&#34;1. Polls with request ID&lt;br/&gt;(GetRequestResultStream)&#34;| Manager
-    Manager -.-&gt;|&#34;2. Provides client with&lt;br/&gt;mainStreamChan for results&#34;| Client
+    Client -.->|"1. Polls with request ID<br/>(GetRequestResultStream)"| Manager
+    Manager -.->|"2. Provides client with<br/>mainStreamChan for results"| Client
 
-    %% Execution &amp; Data Flow: The main pipeline
-    Manager --&gt;|&#34;3. Dispatches Prepared Request&#34;| Streamer
-    Streamer --&gt;|&#34;4. Invokes Tool with a new&lt;br/&gt;internalStreamChan &amp; context&#34;| ToolExecutor
-    ToolExecutor --&gt;|&#34;5. HTTP Stream Request&#34;| RAG_API
-    RAG_API --&gt;|&#34;6. SSE Data Chunks&#34;| ToolExecutor
-    ToolExecutor --&gt;|&#34;7. Writes tooltypes.StreamEvent&lt;br/&gt;to internalStreamChan&#34;| Streamer
-    Streamer --&gt;|&#34;8. Relays events from internal to&lt;br/&gt;mainStreamChan&#34;| Client
-</code></pre><p><strong>The Handoffs Explained:</strong></p>
+    %% Execution & Data Flow: The main pipeline
+    Manager -->|"3. Dispatches Prepared Request"| Streamer
+    Streamer -->|"4. Invokes Tool with a new<br/>internalStreamChan & context"| ToolExecutor
+    ToolExecutor -->|"5. HTTP Stream Request"| RAG_API
+    RAG_API -->|"6. SSE Data Chunks"| ToolExecutor
+    ToolExecutor -->|"7. Writes tooltypes.StreamEvent<br/>to internalStreamChan"| Streamer
+    Streamer -->|"8. Relays events from internal to<br/>mainStreamChan"| Client
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true });
+</script>
+
+<p><strong>The Handoffs Explained:</strong></p>
 <ol>
 <li>
 <p><strong>Handoff 1 (The Pipe Delivery):</strong> The <code>streamWorkerManager</code> creates the primary channel (<code>streamChan</code>) that the client will eventually read. It places this channel <em>inside</em> another channel (<code>holder.Stream</code>), essentially delivering the pipe to a known location. <code>GetRequestResultStream</code> is waiting at that location to pick it up.</p>

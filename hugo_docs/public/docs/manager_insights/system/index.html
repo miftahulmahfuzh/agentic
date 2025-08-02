@@ -2,16 +2,16 @@
 <html lang="en-us" dir="ltr">
     <head><script src="/agentic/docs/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/docs/livereload" data-no-instant defer></script><meta charset='utf-8'>
 <meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="System Architecture Overview I. Executive Summary This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering.">
-<title></title>
+<title>System</title>
 
 <link rel='canonical' href='http://localhost:1313/agentic/docs/docs/manager_insights/system/'>
 
-<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="">
+<link rel="stylesheet" href="/agentic/docs/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="System">
 <meta property='og:description' content="System Architecture Overview I. Executive Summary This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering.">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/docs/manager_insights/system/'>
 <meta property='og:site_name' content='Agentic Chatbot Documentation'>
-<meta property='og:type' content='article'><meta property='article:section' content='Docs' />
-<meta name="twitter:title" content="">
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="System">
 <meta name="twitter:description" content="System Architecture Overview I. Executive Summary This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering.">
     <link rel="shortcut icon" href="/favicon.png" />
 
@@ -149,7 +149,7 @@
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/agentic/docs/docs/manager_insights/system/"></a>
+            <a href="/agentic/docs/docs/manager_insights/system/">System</a>
         </h2>
     
         
@@ -160,6 +160,19 @@
     
     
     <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 02, 2025</time>
+            </div>
         
 
         
@@ -263,61 +276,94 @@
 <hr>
 <h4 id="iii-system-workflow--data-flow"><strong>III. System Workflow &amp; Data Flow</strong>
 </h4><p>The following sequence diagram describes the end-to-end data flow with detailed terminology.</p>
-<pre tabindex="0"><code class="language-mermaid" data-lang="mermaid">flowchart TB
+<div class="mermaid">
+
+flowchart TB
     %% Client Layer
-    Client[&#34;🖥️ Client Interface&lt;br/&gt;&lt;i&gt;frontend/app.js&lt;/i&gt;&lt;br/&gt;ChatApp Class&#34;]
-    
+    Client["Client Interface
+    frontend/app.js
+    ChatApp Class"]
+
     %% Gateway Layer
-    subgraph Gateway [&#34;🌐 Gateway Layer&#34;]
+    subgraph Gateway ["Gateway Layer"]
         direction TB
-        APIGateway[&#34;HTTP Gateway&lt;br/&gt;&lt;i&gt;main.go&lt;/i&gt;&lt;br/&gt;• Authentication&lt;br/&gt;• Request Validation&lt;br/&gt;• Response Streaming&#34;]
+        APIGateway["HTTP Gateway
+        main.go
+        • Authentication
+        • Request Validation
+        • Response Streaming"]
     end
-    
+
     %% Core Processing Engine
-    subgraph CoreEngine [&#34;⚙️ Core Processing Engine&#34;]
+    subgraph CoreEngine ["Core Processing Engine"]
         direction TB
-        
-        subgraph RequestFlow [&#34;Request Flow Pipeline&#34;]
+        subgraph RequestFlow ["Request Flow Pipeline"]
             direction LR
-            RequestQueue[(&#34;📥 Request&lt;br/&gt;Queue&#34;)]
-            PreparedQueue[(&#34;📦 Prepared&lt;br/&gt;Queue&#34;)]
+            RequestQueue[("Request
+            Queue")]
+            PreparedQueue[("Prepared
+            Queue")]
         end
-        
-        subgraph WorkerPools [&#34;Worker Pool Architecture&#34;]
+        subgraph WorkerPools ["Worker Pool Architecture"]
             direction TB
-            PrepPool[&#34;🔧 Preparation Pool&lt;br/&gt;&lt;i&gt;chatbot/preparer.go&lt;/i&gt;&lt;br/&gt;• History Formatting&lt;br/&gt;• Cache Lookup&lt;br/&gt;• Tool Selection&lt;br/&gt;• Prompt Assembly&lt;br/&gt;&lt;br/&gt;Semaphore: High Concurrency&#34;]
-            StreamPool[&#34;🚀 Streaming Pool&lt;br/&gt;&lt;i&gt;chatbot/streamer.go&lt;/i&gt;&lt;br/&gt;• LLM Generation&lt;br/&gt;• Event Streaming&lt;br/&gt;• Response Caching&lt;br/&gt;• Transaction Logging&lt;br/&gt;&lt;br/&gt;Semaphore: Controlled Access&#34;]
+            PrepPool["Preparation Pool
+            chatbot/preparer.go
+            • History Formatting
+            • Cache Lookup
+            • Tool Selection
+            • Prompt Assembly
+
+            Semaphore: High Concurrency"]
+            StreamPool["Streaming Pool
+            chatbot/streamer.go
+            • LLM Generation
+            • Event Streaming
+            • Response Caching
+            • Transaction Logging
+
+            Semaphore: Controlled Access"]
         end
-        
-        Manager[&#34;🎯 Manager&lt;br/&gt;&lt;i&gt;chatbot/manager.go&lt;/i&gt;&lt;br/&gt;• Request Orchestration&lt;br/&gt;• State Management&lt;br/&gt;• Lifecycle Control&lt;br/&gt;• Resource Coordination&#34;]
+        Manager["Manager
+        chatbot/manager.go
+        • Request Orchestration
+        • State Management
+        • Lifecycle Control
+        • Resource Coordination"]
     end
-    
+
     %% External Services
-    subgraph ExternalServices [&#34;🔌 External Services&#34;]
+    subgraph ExternalServices ["External Services"]
         direction TB
-        LLM[&#34;🤖 LLM Service&lt;br/&gt;Token Generation&#34;]
-        Redis[&#34;⚡ Redis Cache&lt;br/&gt;Response Storage&#34;]
-        ArangoDB[&#34;🗄️ ArangoDB&lt;br/&gt;Transaction Logs&#34;]
+        LLM["LLM Service
+        Token Generation"]
+        Redis["Redis Cache
+        Response Storage"]
+        ArangoDB["ArangoDB
+        Transaction Logs"]
     end
-    
+
     %% Flow Connections
-    Client ---|&#34;1. POST /chat/submit&lt;br/&gt;Query + Context&#34;| APIGateway
-    APIGateway ---|&#34;2. manager.SubmitRequest()&lt;br/&gt;Generate request_id&#34;| Manager
-    Manager ---|&#34;3. Enqueue Request&#34;| RequestQueue
-    RequestQueue ---|&#34;4a. Dequeue &amp; Process&#34;| PrepPool
-    PrepPool ---|&#34;4b. Cache Check &amp; Tools&#34;| Redis
-    PrepPool ---|&#34;5. Enqueue Prepared Data&#34;| PreparedQueue
-    PreparedQueue ---|&#34;6. Dequeue &amp; Stream&#34;| StreamPool
-    StreamPool ---|&#34;7a. Generate Response&#34;| LLM
-    StreamPool ---|&#34;7b. Cache Result&#34;| Redis
-    StreamPool ---|&#34;7c. Log Transaction&#34;| ArangoDB
-    StreamPool ---|&#34;8. Stream Events&#34;| Manager
-    Manager ---|&#34;9. Relay Events&#34;| APIGateway
-    APIGateway ---|&#34;10. SSE /chat/stream/:id&lt;br/&gt;Real-time Streaming&#34;| Client
-    
+    Client ---|"1. POST /chat/submit
+    Query + Context"| APIGateway
+    APIGateway ---|"2. manager.SubmitRequest()
+    Generate request_id"| Manager
+    Manager ---|"3. Enqueue Request"| RequestQueue
+    RequestQueue ---|"4a. Dequeue & Process"| PrepPool
+    PrepPool ---|"4b. Cache Check & Tools"| Redis
+    PrepPool ---|"5. Enqueue Prepared Data"| PreparedQueue
+    PreparedQueue ---|"6. Dequeue & Stream"| StreamPool
+    StreamPool ---|"7a. Generate Response"| LLM
+    StreamPool ---|"7b. Cache Result"| Redis
+    StreamPool ---|"7c. Log Transaction"| ArangoDB
+    StreamPool ---|"8. Stream Events"| Manager
+    Manager ---|"9. Relay Events"| APIGateway
+    APIGateway ---|"10. SSE /chat/stream/:id
+    Real-time Streaming"| Client
+
     %% Real-time Connection
-    Client -.-|&#34;EventSource Connection&lt;br/&gt;Persistent Stream&#34;| APIGateway
-    
+    Client -.-|"EventSource Connection
+    Persistent Stream"| APIGateway
+
     %% Styling
     classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
     classDef gatewayStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
@@ -326,7 +372,7 @@
     classDef streamStyle fill:#fff8e1,stroke:#fbc02d,stroke-width:2px,color:#000
     classDef queueStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
     classDef serviceStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
-    
+
     class Client clientStyle
     class APIGateway gatewayStyle
     class Manager managerStyle
@@ -334,7 +380,14 @@
     class StreamPool streamStyle
     class RequestQueue,PreparedQueue queueStyle
     class LLM,Redis,ArangoDB serviceStyle
-</code></pre><ol>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true });
+</script>
+
+<ol>
 <li>The <strong>Client</strong> submits a user query via a <code>POST</code> request to <code>/chat/submit</code>.</li>
 <li>The <strong>Gateway</strong> handler receives the request, authenticates it, and invokes <code>chatbot.Manager.SubmitRequest</code>.</li>
 <li>The <strong>Manager</strong> enqueues the request arguments into <code>requestQueue</code>. The client receives a <code>request_id</code> and immediately opens an <code>EventSource</code> connection.</li>

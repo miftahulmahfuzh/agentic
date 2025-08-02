@@ -71,44 +71,73 @@ The following sequence diagram describes the end-to-end data flow with detailed 
 {{< mermaid >}}
 flowchart TB
     %% Client Layer
-    Client["🖥️ Client Interface<br/><i>frontend/app.js</i><br/>ChatApp Class"]
+    Client["Client Interface
+    frontend/app.js
+    ChatApp Class"]
 
     %% Gateway Layer
-    subgraph Gateway ["🌐 Gateway Layer"]
+    subgraph Gateway ["Gateway Layer"]
         direction TB
-        APIGateway["HTTP Gateway<br/><i>main.go</i><br/>• Authentication<br/>• Request Validation<br/>• Response Streaming"]
+        APIGateway["HTTP Gateway
+        main.go
+        • Authentication
+        • Request Validation
+        • Response Streaming"]
     end
 
     %% Core Processing Engine
-    subgraph CoreEngine ["⚙️ Core Processing Engine"]
+    subgraph CoreEngine ["Core Processing Engine"]
         direction TB
-
         subgraph RequestFlow ["Request Flow Pipeline"]
             direction LR
-            RequestQueue[("📥 Request<br/>Queue")]
-            PreparedQueue[("📦 Prepared<br/>Queue")]
+            RequestQueue[("Request
+            Queue")]
+            PreparedQueue[("Prepared
+            Queue")]
         end
-
         subgraph WorkerPools ["Worker Pool Architecture"]
             direction TB
-            PrepPool["🔧 Preparation Pool<br/><i>chatbot/preparer.go</i><br/>• History Formatting<br/>• Cache Lookup<br/>• Tool Selection<br/>• Prompt Assembly<br/><br/>Semaphore: High Concurrency"]
-            StreamPool["🚀 Streaming Pool<br/><i>chatbot/streamer.go</i><br/>• LLM Generation<br/>• Event Streaming<br/>• Response Caching<br/>• Transaction Logging<br/><br/>Semaphore: Controlled Access"]
-        end
+            PrepPool["Preparation Pool
+            chatbot/preparer.go
+            • History Formatting
+            • Cache Lookup
+            • Tool Selection
+            • Prompt Assembly
 
-        Manager["🎯 Manager<br/><i>chatbot/manager.go</i><br/>• Request Orchestration<br/>• State Management<br/>• Lifecycle Control<br/>• Resource Coordination"]
+            Semaphore: High Concurrency"]
+            StreamPool["Streaming Pool
+            chatbot/streamer.go
+            • LLM Generation
+            • Event Streaming
+            • Response Caching
+            • Transaction Logging
+
+            Semaphore: Controlled Access"]
+        end
+        Manager["Manager
+        chatbot/manager.go
+        • Request Orchestration
+        • State Management
+        • Lifecycle Control
+        • Resource Coordination"]
     end
 
     %% External Services
-    subgraph ExternalServices ["🔌 External Services"]
+    subgraph ExternalServices ["External Services"]
         direction TB
-        LLM["🤖 LLM Service<br/>Token Generation"]
-        Redis["⚡ Redis Cache<br/>Response Storage"]
-        ArangoDB["🗄️ ArangoDB<br/>Transaction Logs"]
+        LLM["LLM Service
+        Token Generation"]
+        Redis["Redis Cache
+        Response Storage"]
+        ArangoDB["ArangoDB
+        Transaction Logs"]
     end
 
     %% Flow Connections
-    Client ---|"1. POST /chat/submit<br/>Query + Context"| APIGateway
-    APIGateway ---|"2. manager.SubmitRequest()<br/>Generate request_id"| Manager
+    Client ---|"1. POST /chat/submit
+    Query + Context"| APIGateway
+    APIGateway ---|"2. manager.SubmitRequest()
+    Generate request_id"| Manager
     Manager ---|"3. Enqueue Request"| RequestQueue
     RequestQueue ---|"4a. Dequeue & Process"| PrepPool
     PrepPool ---|"4b. Cache Check & Tools"| Redis
@@ -119,10 +148,12 @@ flowchart TB
     StreamPool ---|"7c. Log Transaction"| ArangoDB
     StreamPool ---|"8. Stream Events"| Manager
     Manager ---|"9. Relay Events"| APIGateway
-    APIGateway ---|"10. SSE /chat/stream/:id<br/>Real-time Streaming"| Client
+    APIGateway ---|"10. SSE /chat/stream/:id
+    Real-time Streaming"| Client
 
     %% Real-time Connection
-    Client -.-|"EventSource Connection<br/>Persistent Stream"| APIGateway
+    Client -.-|"EventSource Connection
+    Persistent Stream"| APIGateway
 
     %% Styling
     classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000

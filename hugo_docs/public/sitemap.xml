@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>http://localhost:1313/agentic/docs/docs/narratives/baba_yaga/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/general_go/busy_wait_loops/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/manager_insights/concurrent_and_parallel/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/docs/caller_insights/concurrent_caller/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
@@ -17,6 +26,12 @@
     <loc>http://localhost:1313/agentic/docs/docs/frequently_asked/qa_pt1/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/general_go/go_arrow/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/general_go/goroutines/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/docs/architectures/jsonless/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
@@ -29,10 +44,28 @@
     <loc>http://localhost:1313/agentic/docs/docs/architectures/prestream_deadlock/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/python_stuff/python_vs_go/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/python_stuff/python_workers/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/docs/caller_insights/rag_stream/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/narratives/rag_stream_pt2/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/general_go/request_lock/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/docs/architectures/frozen_concurrency/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/general_go/superior_event_driven/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/docs/manager_insights/system/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/categories/</loc>
