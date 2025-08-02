@@ -70,107 +70,23 @@ The following sequence diagram describes the end-to-end data flow with detailed 
 
 {{< mermaid >}}
 flowchart TB
-    %% Client Layer
-    Client["Client Interface
-    frontend/app.js
-    ChatApp Class"]
+    Client[Client Interface]
+    Gateway[HTTP Gateway]
+    Manager[Request Manager]
+    PrepPool[Preparation Pool]
+    StreamPool[Streaming Pool]
+    LLM[LLM Service]
+    Redis[Redis Cache]
 
-    %% Gateway Layer
-    subgraph Gateway ["Gateway Layer"]
-        direction TB
-        APIGateway["HTTP Gateway
-        main.go
-        • Authentication
-        • Request Validation
-        • Response Streaming"]
-    end
-
-    %% Core Processing Engine
-    subgraph CoreEngine ["Core Processing Engine"]
-        direction TB
-        subgraph RequestFlow ["Request Flow Pipeline"]
-            direction LR
-            RequestQueue[("Request
-            Queue")]
-            PreparedQueue[("Prepared
-            Queue")]
-        end
-        subgraph WorkerPools ["Worker Pool Architecture"]
-            direction TB
-            PrepPool["Preparation Pool
-            chatbot/preparer.go
-            • History Formatting
-            • Cache Lookup
-            • Tool Selection
-            • Prompt Assembly
-
-            Semaphore: High Concurrency"]
-            StreamPool["Streaming Pool
-            chatbot/streamer.go
-            • LLM Generation
-            • Event Streaming
-            • Response Caching
-            • Transaction Logging
-
-            Semaphore: Controlled Access"]
-        end
-        Manager["Manager
-        chatbot/manager.go
-        • Request Orchestration
-        • State Management
-        • Lifecycle Control
-        • Resource Coordination"]
-    end
-
-    %% External Services
-    subgraph ExternalServices ["External Services"]
-        direction TB
-        LLM["LLM Service
-        Token Generation"]
-        Redis["Redis Cache
-        Response Storage"]
-        ArangoDB["ArangoDB
-        Transaction Logs"]
-    end
-
-    %% Flow Connections
-    Client ---|"1. POST /chat/submit
-    Query + Context"| APIGateway
-    APIGateway ---|"2. manager.SubmitRequest()
-    Generate request_id"| Manager
-    Manager ---|"3. Enqueue Request"| RequestQueue
-    RequestQueue ---|"4a. Dequeue & Process"| PrepPool
-    PrepPool ---|"4b. Cache Check & Tools"| Redis
-    PrepPool ---|"5. Enqueue Prepared Data"| PreparedQueue
-    PreparedQueue ---|"6. Dequeue & Stream"| StreamPool
-    StreamPool ---|"7a. Generate Response"| LLM
-    StreamPool ---|"7b. Cache Result"| Redis
-    StreamPool ---|"7c. Log Transaction"| ArangoDB
-    StreamPool ---|"8. Stream Events"| Manager
-    Manager ---|"9. Relay Events"| APIGateway
-    APIGateway ---|"10. SSE /chat/stream/:id
-    Real-time Streaming"| Client
-
-    %% Real-time Connection
-    Client -.-|"EventSource Connection
-    Persistent Stream"| APIGateway
-
-    %% Styling
-    classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
-    classDef gatewayStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef managerStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
-    classDef prepStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
-    classDef streamStyle fill:#fff8e1,stroke:#fbc02d,stroke-width:2px,color:#000
-    classDef queueStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    classDef serviceStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
-
-    class Client clientStyle
-    class APIGateway gatewayStyle
-    class Manager managerStyle
-    class PrepPool prepStyle
-    class StreamPool streamStyle
-    class RequestQueue,PreparedQueue queueStyle
-    class LLM,Redis,ArangoDB serviceStyle
+    Client --> Gateway
+    Gateway --> Manager
+    Manager --> PrepPool
+    PrepPool --> StreamPool
+    StreamPool --> LLM
+    StreamPool --> Redis
+    StreamPool --> Manager
+    Manager --> Gateway
+    Gateway --> Client
 {{< /mermaid >}}
 
 1.  The **Client** submits a user query via a `POST` request to `/chat/submit`.

@@ -2051,107 +2051,23 @@ graph LR
 &lt;div class=&#34;mermaid&#34;&gt;
 
 flowchart TB
-    %% Client Layer
-    Client[&#34;Client Interface
-    frontend/app.js
-    ChatApp Class&#34;]
+    Client[Client Interface]
+    Gateway[HTTP Gateway]
+    Manager[Request Manager]
+    PrepPool[Preparation Pool]
+    StreamPool[Streaming Pool]
+    LLM[LLM Service]
+    Redis[Redis Cache]
 
-    %% Gateway Layer
-    subgraph Gateway [&#34;Gateway Layer&#34;]
-        direction TB
-        APIGateway[&#34;HTTP Gateway
-        main.go
-        • Authentication
-        • Request Validation
-        • Response Streaming&#34;]
-    end
-
-    %% Core Processing Engine
-    subgraph CoreEngine [&#34;Core Processing Engine&#34;]
-        direction TB
-        subgraph RequestFlow [&#34;Request Flow Pipeline&#34;]
-            direction LR
-            RequestQueue[(&#34;Request
-            Queue&#34;)]
-            PreparedQueue[(&#34;Prepared
-            Queue&#34;)]
-        end
-        subgraph WorkerPools [&#34;Worker Pool Architecture&#34;]
-            direction TB
-            PrepPool[&#34;Preparation Pool
-            chatbot/preparer.go
-            • History Formatting
-            • Cache Lookup
-            • Tool Selection
-            • Prompt Assembly
-
-            Semaphore: High Concurrency&#34;]
-            StreamPool[&#34;Streaming Pool
-            chatbot/streamer.go
-            • LLM Generation
-            • Event Streaming
-            • Response Caching
-            • Transaction Logging
-
-            Semaphore: Controlled Access&#34;]
-        end
-        Manager[&#34;Manager
-        chatbot/manager.go
-        • Request Orchestration
-        • State Management
-        • Lifecycle Control
-        • Resource Coordination&#34;]
-    end
-
-    %% External Services
-    subgraph ExternalServices [&#34;External Services&#34;]
-        direction TB
-        LLM[&#34;LLM Service
-        Token Generation&#34;]
-        Redis[&#34;Redis Cache
-        Response Storage&#34;]
-        ArangoDB[&#34;ArangoDB
-        Transaction Logs&#34;]
-    end
-
-    %% Flow Connections
-    Client ---|&#34;1. POST /chat/submit
-    Query + Context&#34;| APIGateway
-    APIGateway ---|&#34;2. manager.SubmitRequest()
-    Generate request_id&#34;| Manager
-    Manager ---|&#34;3. Enqueue Request&#34;| RequestQueue
-    RequestQueue ---|&#34;4a. Dequeue &amp; Process&#34;| PrepPool
-    PrepPool ---|&#34;4b. Cache Check &amp; Tools&#34;| Redis
-    PrepPool ---|&#34;5. Enqueue Prepared Data&#34;| PreparedQueue
-    PreparedQueue ---|&#34;6. Dequeue &amp; Stream&#34;| StreamPool
-    StreamPool ---|&#34;7a. Generate Response&#34;| LLM
-    StreamPool ---|&#34;7b. Cache Result&#34;| Redis
-    StreamPool ---|&#34;7c. Log Transaction&#34;| ArangoDB
-    StreamPool ---|&#34;8. Stream Events&#34;| Manager
-    Manager ---|&#34;9. Relay Events&#34;| APIGateway
-    APIGateway ---|&#34;10. SSE /chat/stream/:id
-    Real-time Streaming&#34;| Client
-
-    %% Real-time Connection
-    Client -.-|&#34;EventSource Connection
-    Persistent Stream&#34;| APIGateway
-
-    %% Styling
-    classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
-    classDef gatewayStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
-    classDef managerStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
-    classDef prepStyle fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
-    classDef streamStyle fill:#fff8e1,stroke:#fbc02d,stroke-width:2px,color:#000
-    classDef queueStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
-    classDef serviceStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px,color:#000
-
-    class Client clientStyle
-    class APIGateway gatewayStyle
-    class Manager managerStyle
-    class PrepPool prepStyle
-    class StreamPool streamStyle
-    class RequestQueue,PreparedQueue queueStyle
-    class LLM,Redis,ArangoDB serviceStyle
+    Client --&gt; Gateway
+    Gateway --&gt; Manager
+    Manager --&gt; PrepPool
+    PrepPool --&gt; StreamPool
+    StreamPool --&gt; LLM
+    StreamPool --&gt; Redis
+    StreamPool --&gt; Manager
+    Manager --&gt; Gateway
+    Gateway --&gt; Client
 
 &lt;/div&gt;
 &lt;script src=&#34;https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js&#34;&gt;&lt;/script&gt;
