@@ -2,14 +2,14 @@
 baseURL = "https://miftahulmahfuzh.github.io/agentic/"
 # baseURL = "http://localhost:1313/"
 languageCode = "en-us"
-title = "Agentic Chatbot Documentation"
+title = "Go Chatbot"
 theme = "hugo-theme-stack"
 
 [params]
     mainSections = ["docs"]
     featuredImageField = "image"
     rssFullContent = true
-    favicon = "/img/penguin.png"
+    favicon = "favicon.png"
 
     [params.footer]
         since = 2024
@@ -17,7 +17,7 @@ theme = "hugo-theme-stack"
 
     [params.sidebar]
         emoji = "🤖"
-        subtitle = "Deep Dives & Architecture"
+        subtitle = "Documentation"
         [params.sidebar.avatar]
             enabled = true
             local = true

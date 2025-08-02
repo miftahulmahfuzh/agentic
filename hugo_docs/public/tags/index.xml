@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-        <title>Tags on Agentic Chatbot Documentation</title>
+        <title>Tags on Go Chatbot</title>
         <link>http://localhost:1313/agentic/tags/</link>
-        <description>Recent content in Tags on Agentic Chatbot Documentation</description>
+        <description>Recent content in Tags on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language><atom:link href="http://localhost:1313/agentic/tags/index.xml" rel="self" type="application/rss+xml" />
     </channel>

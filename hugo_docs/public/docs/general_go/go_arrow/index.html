@@ -9,11 +9,11 @@
 <link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Go Arrow">
 <meta property='og:description' content="Question I don&rsquo;t understand the declaration of one way arrow in streamHolder: type RequestStream struct { Stream chan (&lt;-chan tooltypes.StreamEvent) Err chan error ClientConnected chan struct{} State RequestState LastStateChange time.Time } I understand StreamEvent is spesifically used not for concurrency weapon, but just as a &lsquo;pipe&rsquo; for tooltypes.StreamEvent to flow through. What happen if we declare it as: Stream chan (chan tooltypes.StreamEvent) or as: Stream chan (chan tooltypes.StreamEvent&lt;-) Look at this snippet in chatbot/streamer.">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/general_go/go_arrow/'>
-<meta property='og:site_name' content='Agentic Chatbot Documentation'>
+<meta property='og:site_name' content='Go Chatbot'>
 <meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
 <meta name="twitter:title" content="Go Arrow">
 <meta name="twitter:description" content="Question I don&rsquo;t understand the declaration of one way arrow in streamHolder: type RequestStream struct { Stream chan (&lt;-chan tooltypes.StreamEvent) Err chan error ClientConnected chan struct{} State RequestState LastStateChange time.Time } I understand StreamEvent is spesifically used not for concurrency weapon, but just as a &lsquo;pipe&rsquo; for tooltypes.StreamEvent to flow through. What happen if we declare it as: Stream chan (chan tooltypes.StreamEvent) or as: Stream chan (chan tooltypes.StreamEvent&lt;-) Look at this snippet in chatbot/streamer.">
-    <link rel="shortcut icon" href="/img/penguin.png" />
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
 
     </head>
     <body class="
@@ -71,8 +71,8 @@
         
         
         <div class="site-meta">
-            <h1 class="site-name"><a href="/agentic">Agentic Chatbot Documentation</a></h1>
-            <h2 class="site-description">Deep Dives &amp; Architecture</h2>
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
         </div>
     </header><ol class="menu-social">
             
@@ -439,7 +439,7 @@ You can only receive from this channel: <code>value := &lt;-recvOnlyChan</code>.
         
             2024 - 
         
-        2025 Agentic Chatbot Documentation
+        2025 Go Chatbot
     </section>
     
     <section class="powerby">
