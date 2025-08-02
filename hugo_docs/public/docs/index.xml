@@ -1352,20 +1352,20 @@ graph TD
     end
 
     subgraph DecisionLayer [&#34;Routing &amp; Decision Layer&#34;]
-        LLMRouter[&#34;LLM-based Router&lt;br/&gt;Tool Selection &amp; Path Determination&lt;br/&gt;(in `SelectAndPrepareTools`)&#34;]
+        LLMRouter[&#34;LLM-based Router&lt;br/&gt;Tool Selection &amp; Path Determination&#34;]
     end
 
     subgraph ProcessingPathways [&#34;Processing Pathways&#34;]
         subgraph AgenticPathway [&#34;Path 1: Agentic Synthesis Pathway&#34;]
             direction TB
-            ToolExecution[&#34;Concurrent Tool Execution&lt;br/&gt;Standard `Call()` Invocation&#34;]
+            ToolExecution[&#34;Concurrent Tool Execution&lt;br/&gt;Standard_Call() Invocation&#34;]
             LLMSynthesis[&#34;LLM-based Synthesis&lt;br/&gt;Consolidates Tool Outputs into a Final Response&#34;]
             ToolExecution --&gt; LLMSynthesis
         end
 
         subgraph DirectPathway [&#34;Path 2: Direct Stream Pathway&#34;]
             direction TB
-            DirectToolStream[&#34;Direct Tool Stream&lt;br/&gt;Streaming `Stream()` Invocation&lt;br/&gt;Bypasses Synthesis Stage&#34;]
+            DirectToolStream[&#34;Direct Tool Stream&lt;br/&gt;Special_Stream() Invocation&lt;br/&gt;Bypasses Synthesis Stage&#34;]
         end
     end
 
