@@ -1,5 +1,6 @@
 # hugo_docs/hugo.toml
-baseURL = "http://localhost:1313/"
+baseURL = "https://miftahulmahfuzh.github.io/agentic/docs/"
+# baseURL = "http://localhost:1313/"
 languageCode = "en-us"
 title = "Agentic Chatbot Documentation"
 theme = "hugo-theme-stack"
