@@ -303,11 +303,11 @@ graph LR
     end
 
     subgraph Application_Backend ["Application Backend"]
-        subgraph Request_Lifecycle ["Request Lifecycle Management"]
-            Manager["Request Manager<br/>Manages state for req_f4a12"]
+        subgraph Request_Lifecycle ["The Manager"]
+            Manager["Manages state for req_f4a12"]
         end
 
-        subgraph Execution_Engine ["Execution Engine (Direct RAG Path)"]
+        subgraph Execution_Engine ["Execution Engine"]
             Streamer["Response Streamer<br/>Orchestrates the streaming process"]
             ToolExecutor["RAG Tool Executor<br/>(e.g., StreamTencentFrequentlyAsked)"]
         end
@@ -329,16 +329,16 @@ graph LR
     class RAG_API external
 
     %% Control Flow: Establishes the connection
-    Client -.->|"1. Polls with request ID<br/>(GetRequestResultStream)"| Manager
-    Manager -.->|"2. Provides client with<br/>mainStreamChan for results"| Client
+    Client -.->|"Poll Request"| Manager
+    Manager -.->|"Provide Channel"| Client
 
     %% Execution & Data Flow: The main pipeline
-    Manager -->|"3. Dispatches Prepared Request"| Streamer
-    Streamer -->|"4. Invokes Tool with a new<br/>internalStreamChan & context"| ToolExecutor
-    ToolExecutor -->|"5. HTTP Stream Request"| RAG_API
-    RAG_API -->|"6. SSE Data Chunks"| ToolExecutor
-    ToolExecutor -->|"7. Writes tooltypes.StreamEvent<br/>to internalStreamChan"| Streamer
-    Streamer -->|"8. Relays events from internal to<br/>mainStreamChan"| Client
+    Manager -->|"Dispatch Request"| Streamer
+    Streamer -->|"Invoke Tool"| ToolExecutor
+    ToolExecutor -->|"HTTP Stream"| RAG_API
+    RAG_API -->|"SSE Data"| ToolExecutor
+    ToolExecutor -->|"Stream Events"| Streamer
+    Streamer -->|"Relay Events"| Client
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
