@@ -635,6 +635,7 @@ tuntun-go-chatbot/
             popupContent = `
                         <h2>🔄 Two-Stage Pipeline</h2>
                         <p>Decouples fast data-prep workers from slow LLM-streaming workers using two independent, semaphore-limited worker pools (<code>prepare</code> -> <code>stream</code>). This prevents slow LLM API calls from blocking new incoming requests, maximizing throughput.</p>
+                        <hr>
                         <p><strong>Benefits:</strong></p>
                         <ul>
                             <li>New requests don't wait for slow LLM calls</li>
@@ -649,8 +650,11 @@ tuntun-go-chatbot/
             popupContent = `
                         <h2>🚀 Direct Stream RAG</h2>
                         <p>For designated <code>NATURAL_ANSWER_TOOLS</code> like knowledge base queries, the system activates a special RAG path. This bypasses the final LLM synthesis step, streaming the response from the knowledge tool directly to the user.</p>
+                        <hr>
                         <p><strong>Standard Flow:</strong> User Query → LLM Selects Tools → Execute Tools → LLM Synthesizes Answer from Tool Output</p>
+                        <hr>
                         <p><strong>Direct Stream Flow:</strong> User Query → LLM Selects RAG Tool → Execute RAG Tool → Stream Tool Output Directly to User</p>
+                        <hr>
                         <p><strong>Benefits:</strong></p>
                         <ul>
                             <li><strong>Lower Latency:</strong> Skips an entire LLM round-trip.</li>
@@ -706,6 +710,7 @@ graph TD
     class Normal,Dep1,Req1 normal; class FailureDetection,Dep2,Req2,Req3 failing; class CircuitOpen,CB_Open,Req5 open; class HalfOpen,CB_Half,Dep3,Req7 halfopen;
                         </div>
                         <p>When a dependency fails repeatedly, the circuit "opens," causing subsequent calls to fail instantly without tying up resources. After a cooldown, it enters a "half-open" state to test for recovery.</p>
+                        <hr>
                         <p><strong>Benefits:</strong></p>
                         <ul>
                             <li>Prevents worker pool exhaustion during outages.</li>
@@ -756,6 +761,7 @@ graph TD
     class TotalS,TotalP totalStyle
                 </div>
                 <p>This is implemented in <code>toolutils.ExecuteToolsInParallel</code> using a <code>sync.WaitGroup</code> to manage the goroutines.</p>
+                <hr>
                 <p><strong>Benefit:</strong> Drastically reduces data-gathering latency. The total wait time is determined by the <strong>slowest single tool</strong>, not the sum of all tool execution times.</p>
             `;
             break;
@@ -770,6 +776,7 @@ graph TD
 Assistant: The market cap for AAPL is $2.8T.
 Human: What about for GOOGL?
 Assistant: The market cap for GOOGL is $1.7T.</code></pre>
+                <hr>
                 <p><strong>Benefit:</strong> Enables natural, multi-turn dialogues and a more intelligent, human-like user experience.</p>
             `;
             break;
@@ -819,6 +826,7 @@ graph TD
     class API,API2 apiStyle
                 </div>
                 <p>All other identical requests simply wait and share the result from the first one. This is visible in the logs via the message: <code>"Shared result from in-flight request"</code>.</p>
+                <hr>
                 <p><strong>Benefits:</strong></p>
                 <ul>
                     <li>Prevents self-inflicted DDoS attacks.</li>
@@ -838,6 +846,7 @@ graph TD
                     <li><strong><code>StateProcessing</code>:</strong> A shorter timeout (<code>PROCESSING_TIMEOUT</code>, e.g., 10m) kills jobs that are genuinely stuck in execution, likely due to an unhandled error or a deadlocked dependency.</li>
                 </ul>
                 <p>This is implemented in the <code>janitor</code> function in <code>chatbot/manager.go</code>.</p>
+                <hr>
                 <p><strong>Benefit:</strong> Guarantees system stability and prevents resource leaks from orphaned requests without prematurely killing valid, waiting jobs.</p>
             `;
             break;
@@ -891,6 +900,7 @@ graph TD
     class P extStyle
                 </div>
                 <p>This signal travels from the API handler down to the specific worker goroutine, terminating database queries, tool calls, and LLM streams immediately. The worker regularly checks <code>ctx.Done()</code> to see if it should abort its work.</p>
+                <hr>
                 <p><strong>Benefits:</strong></p>
                 <ul>
                     <li>Frees up system resources (worker slots, memory) instantly.</li>
@@ -906,6 +916,7 @@ graph TD
                 <p>When the combined output from all tools exceeds the LLM's context window (<code>MAX_TOTAL_TOOL_OUTPUT_TOKENS</code>), a naive system might truncate everything, losing valuable data. This system intelligently truncates only the output from tools designated as verbose in the <code>.env</code> file (via <code>LONG_TEXT_TOOLS</code>).</p>
                 <p><strong>Example:</strong> A request needs a stock price (short, critical) and a news summary (long, less critical). If the total output is too long, the system will shorten the news summary while leaving the stock price intact.</p>
                 <p>This logic resides in <code>toolutils.TruncateToolOutputs</code>.</p>
+                <hr>
                 <p><strong>Benefit:</strong> Preserves the full, precise output of critical data tools while summarizing less critical, long-form text. This leads to higher-quality inputs and more accurate final answers from the LLM.</p>
             `;
             break;
@@ -916,6 +927,7 @@ graph TD
                 <p>The system uses Redis to cache the final results of expensive operations. However, caching everything can lead to stale data (e.g., serving yesterday's stock price).</p>
                 <p>The caching is "context-aware" because it is automatically bypassed if the request involves any tool designated as time-sensitive in the <code>.env</code> file (<code>TIMEBOUND_TOOLS=realtime_market,...</code>).</p>
                 <p>The <code>RequestPreparer</code> checks if any selected tool is in this list. If so, it prevents the final result from being cached in Redis, ensuring the user always gets live data for that query.</p>
+                <hr>
                 <p><strong>Benefit:</strong> Achieves the perfect balance between performance (for static queries) and data freshness (for dynamic, time-sensitive queries).</p>
             `;
             break;
@@ -934,6 +946,7 @@ graph TD
   "message": "Tool executed successfully"
 }</code></pre>
                 <p>This is the foundation of the entire observability stack. It allows logs to be treated like a database, enabling precise filtering, searching, and alerting.</p>
+                <hr>
                 <p><strong>Benefit:</strong> Transforms debugging from an archaeological dig into a surgical strike. You can instantly trace a single request's entire lifecycle or find all errors related to a specific tool.</p>
             `;
             break;
@@ -964,7 +977,8 @@ graph TD
                             <li><strong>Aggregation (Loki):</strong> Central log database with intelligent indexing.</li>
                             <li><strong>Visualization (Grafana):</strong> Real-time dashboards and alerting.</li>
                         </ul>
-                        <p>This stack provides end-to-end visibility, allowing operators to trace a single request by its <code>request_id</code> across all services, filter by error level, and monitor real-time metrics.</p>
+                        <hr>
+                        <p><strong>Benefit:</strong> This stack provides end-to-end visibility, allowing operators to trace a single request by its <code>request_id</code> across all services, filter by error level, and monitor real-time metrics.</p>
                     `;
             break;
 
