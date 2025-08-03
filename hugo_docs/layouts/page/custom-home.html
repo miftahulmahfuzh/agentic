@@ -502,7 +502,7 @@ go run ./cmd/test_single_flight -n 10</code></pre>
               <h4>Running Endpoint Health Checks</h4>
               <p>To diagnose external API connections without running the full test suite:</p>
               <pre><code>chmod +x run_health_checks.sh
-./run_health_checks.sh tools/tooltest/extapi/<tool>.go</code></pre>
+./run_health_checks.sh tools/tooltest/extapi/&lt;tool&gt;.go</code></pre>
               <p>For example, for testing the valuation tool external apis:</p>
               <pre><code>./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
               <p>All Go files inside <code>tools/tooltest/extapi</code> correlates to each tool files (inside <code>toolbe</code> and <code>toolnonbe</code> dir) and can be used for healthcheck.</p>
@@ -522,15 +522,15 @@ go run ./cmd/test_single_flight -n 10</code></pre>
               <h4>Project Structure</h4>
               <pre><code>
 tuntun-go-chatbot/
-├── chatbot/                # Core agentic logic (manager, worker pool, janitor, prompts)
+├── chatbot/                # Core agentic logic (manager, preparer, streamer)
 ├── cmd/                    # Standalone utility commands
 ├── config/                 # Environment variable loading & validation
 ├── core/                   # LLM model & core services initialization
 ├── db/                     # Database clients (ArangoDB, Redis)
 ├── frontend/               # Demo UI
 ├── tools/                  # All tool definitions and implementations
-│   ├── toolbe/             # Backend-dependent tool implementations
-│   ├── toolnonbe/          # Self-contained tool implementations (e.g., RAG streamer)
+│   ├── toolbe/             # Tuntun Backend-dependent tool implementations
+│   ├── toolnonbe/          # Non-Tuntun Backend-dependent tool implementations
 │   ├── toolcore/           # Core logic for tool registration and invocation
 │   │   ├── caller.go       # Orchestrates concurrent tool execution & direct stream path
 │   │   ├── definitions.go  # Single source of truth for all tool definitions
@@ -541,10 +541,10 @@ tuntun-go-chatbot/
 │   ├── tooltypes/          # Shared Go structs for tool arguments and responses
 │   └── toolutils/          # Reusable helper functions for tools
 ├── types/                  # Core application-wide data structures
-├── .env                    # Local environment variables (uncommitted)
+├── .env                    # Environment variables customization
 ├── go.mod                  # Go module definitions
 ├── main.go                 # Application entry point and Gin server setup
-├── docker-compose.yml      # Orchestrates all services for production & dev
+├── docker-compose.yml      # Orchestrates all services for production
 └── README.md
               </code></pre>
               <h4>Adding a New Tool</h4>
