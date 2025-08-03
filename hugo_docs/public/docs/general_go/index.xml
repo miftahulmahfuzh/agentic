@@ -1,0 +1,646 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>General Go on Go Chatbot</title>
+        <link>http://localhost:1313/agentic/docs/general_go/</link>
+        <description>Recent content in General Go on Go Chatbot</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>en-us</language>
+        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/general_go/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Busy Wait Loops</title>
+        <link>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</guid>
+        <description>&lt;h1 id=&#34;what-are-busy-wait-loops-and-why-are-they-terrible&#34;&gt;What Are Busy-Wait Loops and Why Are They Terrible?
+&lt;/h1&gt;&lt;p&gt;Yes, the polling system from your old &lt;code&gt;manager.go&lt;/code&gt; is a classic example of a busy-wait loop, or more accurately, a &amp;ldquo;busy-wait with naps.&amp;rdquo; The statement in the README is entirely correct.&lt;/p&gt;
+&lt;h3 id=&#34;what-is-a-busy-wait-loop&#34;&gt;What is a Busy-Wait Loop?
+&lt;/h3&gt;&lt;p&gt;A busy-wait loop, or &amp;ldquo;spinning,&amp;rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// DO NOT EVER DO THIS
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#50fa7b&#34;&gt;while&lt;/span&gt; (door_is_closed) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// do nothing but loop
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;A process running this code will consume 100% of a CPU core, doing absolutely nothing useful. It&amp;rsquo;s the software equivalent of flooring the accelerator of a car that&amp;rsquo;s in neutral. You&amp;rsquo;re burning fuel, making a lot of noise, and going nowhere. The CPU is &amp;ldquo;busy&amp;rdquo; while it &amp;ldquo;waits.&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;The harm is obvious:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Wasted CPU Cycles:&lt;/strong&gt; You are paying for computation that achieves nothing.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Resource Starvation:&lt;/strong&gt; Other processes or goroutines that need the CPU can&amp;rsquo;t get it.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Increased Power Consumption &amp;amp; Heat:&lt;/strong&gt; It&amp;rsquo;s physically inefficient.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;your-old-code-a-more-civilized-but-still-flawed-busy-wait&#34;&gt;Your Old Code: A More Civilized, But Still Flawed, Busy-Wait
+&lt;/h3&gt;&lt;p&gt;Your old code wasn&amp;rsquo;t as barbaric as a raw &lt;code&gt;while(true){}&lt;/code&gt; loop, but it followed the same flawed principle.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// old manager.go&amp;#39;s GetRequestResultStream
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;ticker &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; time.&lt;span style=&#34;color:#50fa7b&#34;&gt;NewTicker&lt;/span&gt;(&lt;span style=&#34;color:#bd93f9&#34;&gt;100&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt; time.Millisecond)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;for&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ... check condition ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;ticker.C:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#ff79c6&#34;&gt;continue&lt;/span&gt; &lt;span style=&#34;color:#6272a4&#34;&gt;// Loop again after a short nap
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is a &amp;ldquo;busy-wait with naps.&amp;rdquo; Instead of spinning constantly, it spins, takes a 100ms nap, and then spins again. It&amp;rsquo;s like a security guard told to watch a door. Instead of waiting for an alarm (an event), he walks to the door, checks the handle, walks back, sits down for a minute, and then repeats the process all night. It&amp;rsquo;s pointless, repetitive work.&lt;/p&gt;
+&lt;p&gt;Each time the &lt;code&gt;ticker&lt;/code&gt; fires, the Go runtime has to:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Wake the goroutine.&lt;/li&gt;
+&lt;li&gt;Schedule it to run on a CPU.&lt;/li&gt;
+&lt;li&gt;The goroutine runs, acquires a lock, checks a map, releases the lock.&lt;/li&gt;
+&lt;li&gt;The goroutine goes back to sleep.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;For a request that takes 5 seconds to prepare, this pointless ritual happens 50 times. It&amp;rsquo;s death by a thousand cuts.&lt;/p&gt;
+&lt;h3 id=&#34;channels-the-antidote-to-busy-waiting&#34;&gt;Channels: The Antidote to Busy-Waiting
+&lt;/h3&gt;&lt;p&gt;The reason the new event-driven architecture is so much better is that it leverages the Go runtime&amp;rsquo;s scheduler. When a goroutine blocks on a channel read (&lt;code&gt;&amp;lt;-myChan&lt;/code&gt;), it&amp;rsquo;s not busy-waiting. The scheduler performs a &amp;ldquo;context switch&amp;rdquo;:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;The goroutine&amp;rsquo;s state is saved.&lt;/li&gt;
+&lt;li&gt;It is removed from the list of runnable goroutines.&lt;/li&gt;
+&lt;li&gt;Another, different goroutine is scheduled to run on that CPU core.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The waiting goroutine now consumes &lt;strong&gt;zero CPU resources&lt;/strong&gt;. It is effectively frozen in time until another goroutine sends data to that specific channel (&lt;code&gt;myChan &amp;lt;- data&lt;/code&gt;). When that send event occurs, the scheduler is notified, and it moves the waiting goroutine &lt;em&gt;back&lt;/em&gt; into the runnable queue.&lt;/p&gt;
+&lt;p&gt;This is the fundamental difference:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Busy-Wait:&lt;/strong&gt; You use the CPU to check for an event.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Channel Wait:&lt;/strong&gt; You tell the scheduler &amp;ldquo;wake me up when this event happens,&amp;rdquo; and the CPU goes off to do other useful work.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Your README is correct. The new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Go Arrow</title>
+        <link>http://localhost:1313/agentic/docs/general_go/go_arrow/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/general_go/go_arrow/</guid>
+        <description>&lt;h2 id=&#34;question&#34;&gt;Question
+&lt;/h2&gt;&lt;p&gt;I don&amp;rsquo;t understand the declaration of one way arrow in streamHolder:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;type&lt;/span&gt; RequestStream &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Stream          &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; (&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; tooltypes.StreamEvent)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    Err             &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    ClientConnected &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt;{}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    State           RequestState
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    LastStateChange time.Time
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;I understand StreamEvent is spesifically used not for concurrency weapon, but just as a &amp;lsquo;pipe&amp;rsquo; for tooltypes.StreamEvent to flow through.
+What happen if we declare it as:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stream &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; (&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; tooltypes.StreamEvent)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;or as:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Stream &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; (&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; tooltypes.StreamEvent&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Look at this snippet in chatbot/streamer.go:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;isFirstToken &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;for&lt;/span&gt; event &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;range&lt;/span&gt; internalStreamChan {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; isFirstToken &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;amp;&amp;amp;&lt;/span&gt; event.Type &lt;span style=&#34;color:#ff79c6&#34;&gt;==&lt;/span&gt; tooltypes.StreamEventToken {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        duration &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; time.&lt;span style=&#34;color:#50fa7b&#34;&gt;Since&lt;/span&gt;(logData.UserQueryTimestamp)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        logData.TimeToFirstToken = duration.&lt;span style=&#34;color:#50fa7b&#34;&gt;Seconds&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        infoEvent &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; tooltypes.StreamEvent{Type: tooltypes.StreamEventInfo, Payload: &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;map&lt;/span&gt;[&lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;]any{&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;timeToFirstToken&amp;#34;&lt;/span&gt;: duration.&lt;span style=&#34;color:#50fa7b&#34;&gt;Seconds&lt;/span&gt;(), &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;source&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;rag_tool&amp;#34;&lt;/span&gt;}}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; infoEvent
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        isFirstToken = &lt;span style=&#34;color:#ff79c6&#34;&gt;false&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; event.Type &lt;span style=&#34;color:#ff79c6&#34;&gt;==&lt;/span&gt; tooltypes.StreamEventToken {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; str, ok &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; event.Payload.(&lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;); ok {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            fullResponseBuilder.&lt;span style=&#34;color:#50fa7b&#34;&gt;WriteString&lt;/span&gt;(str)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; event
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;in there we clearly &amp;lsquo;put&amp;rsquo; something inside streamChan:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; infoEvent
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;So why bother declaring it as &amp;rsquo;left only&amp;rsquo; arrow?&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;answer&#34;&gt;Answer
+&lt;/h2&gt;&lt;p&gt;You are fundamentally misunderstanding Go&amp;rsquo;s channel type declarations. Your confusion stems from conflating the type of the channel &lt;em&gt;itself&lt;/em&gt; with the type of the &lt;em&gt;items it carries&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s dissect this. Pay attention.&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;Stream: chan (&amp;lt;-chan tooltypes.StreamEvent)&lt;/code&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;chan (...)&lt;/code&gt;&lt;/strong&gt;: This part declares that &lt;code&gt;Stream&lt;/code&gt; is a channel. Its job is to transport things.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;(&amp;lt;-chan tooltypes.StreamEvent)&lt;/code&gt;&lt;/strong&gt;: This is the type of &lt;em&gt;thing&lt;/em&gt; that the &lt;code&gt;Stream&lt;/code&gt; channel transports. It&amp;rsquo;s not a property of &lt;code&gt;Stream&lt;/code&gt;; it&amp;rsquo;s the type definition of the &amp;ldquo;letter&amp;rdquo; you put in the &amp;ldquo;mailbox.&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;So, &lt;code&gt;Stream&lt;/code&gt; is a channel that carries &lt;strong&gt;other channels&lt;/strong&gt;. Specifically, it carries channels that are &lt;strong&gt;receive-only&lt;/strong&gt; (&lt;code&gt;&amp;lt;-chan&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;This is a design pattern for handing off responsibility. The &lt;code&gt;streamWorkerManager&lt;/code&gt; creates a pipeline and needs to give it to the &lt;code&gt;GetRequestResultStream&lt;/code&gt; function. It does this by putting the pipeline (a channel) inside another channel (&lt;code&gt;Stream&lt;/code&gt;). By specifying the type as &lt;code&gt;&amp;lt;-chan&lt;/code&gt;, you are creating a contract. The contract says: &amp;ldquo;Whoever receives the channel I am sending you will only be able to &lt;em&gt;read&lt;/em&gt; from it.&amp;rdquo;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;what-happens-with-your-proposed-changes&#34;&gt;What happens with your proposed changes?
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;Stream: chan (chan tooltypes.StreamEvent)&lt;/code&gt;&lt;/strong&gt; (A channel of bi-directional channels)&lt;/p&gt;
+&lt;p&gt;This is a security risk and bad design. If you declare it this way, the &lt;code&gt;GetRequestResultStream&lt;/code&gt; function receives a fully bi-directional channel. This means the client code, which should only be a consumer, could accidentally write data back into the stream (&lt;code&gt;clientStream &amp;lt;- someEvent&lt;/code&gt;). This is a &amp;ldquo;Don&amp;rsquo;t cross the streams&amp;rdquo; situation from &lt;em&gt;Ghostbusters&lt;/em&gt;. It would break the one-way data flow, create race conditions, and lead to unpredictable behavior. You are giving the client write access when it should have none. Bad idea.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;Stream: chan (chan tooltypes.StreamEvent&amp;lt;-)&lt;/code&gt;&lt;/strong&gt; (A channel of send-only channels)&lt;/p&gt;
+&lt;p&gt;This is a complete logic error. You would be sending a &lt;em&gt;send-only&lt;/em&gt; channel to &lt;code&gt;GetRequestResultStream&lt;/code&gt;. The client code would receive this channel and then try to read from it (&lt;code&gt;for event := range clientStream&lt;/code&gt;). This is a compile-time error. You cannot receive from a send-only channel. It&amp;rsquo;s like giving someone a phone that can only make calls but has no earpiece. It&amp;rsquo;s useless for its intended purpose.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The declaration &lt;code&gt;chan (&amp;lt;-chan tooltypes.StreamEvent)&lt;/code&gt; is correct because it enforces the principle of least privilege. It ensures that once the communication pipeline is handed off to the client-facing function, it can only be used for its intended purpose: reading.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;your-snippet-contradiction-explained&#34;&gt;Your Snippet Contradiction Explained
+&lt;/h3&gt;&lt;p&gt;You are confusing two different variables that happen to be named similarly in different contexts.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;in here we clearly &amp;lsquo;put&amp;rsquo; something inside streamChan
+&lt;code&gt;streamChan &amp;lt;- infoEvent&lt;/code&gt;
+so why bother declaring it as &amp;rsquo;left only&amp;rsquo; arrow?&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;The &lt;code&gt;streamChan&lt;/code&gt; variable inside the &lt;code&gt;ResponseStreamer.Stream&lt;/code&gt; method is a &lt;strong&gt;function parameter&lt;/strong&gt;. Look at its signature:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// in chatbot/streamer.go
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; (s &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;ResponseStreamer) &lt;span style=&#34;color:#50fa7b&#34;&gt;Stream&lt;/span&gt;(streamChan &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; tooltypes.StreamEvent, &lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Here, &lt;code&gt;streamChan&lt;/code&gt; is explicitly typed as &lt;strong&gt;send-only&lt;/strong&gt; (&lt;code&gt;chan&amp;lt;-&lt;/code&gt;). This is correct because the &lt;em&gt;only&lt;/em&gt; thing the &lt;code&gt;ResponseStreamer&lt;/code&gt; should do with this channel is send events &lt;em&gt;into&lt;/em&gt; it. It enforces the role of the streamer.&lt;/p&gt;
+&lt;p&gt;Now, let&amp;rsquo;s trace where that channel came from. It was created in &lt;code&gt;streamWorkerManager&lt;/code&gt;:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// in chatbot/manager.go
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;go&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(pd types.PreparedRequestData) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;make&lt;/span&gt;(&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; tooltypes.StreamEvent, m.config.StreamTokenBuffer)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    holder.Stream &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; streamChan &lt;span style=&#34;color:#6272a4&#34;&gt;// Handoff #1
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    m.streamer.&lt;span style=&#34;color:#50fa7b&#34;&gt;Stream&lt;/span&gt;(streamChan, pd, logCtx) &lt;span style=&#34;color:#6272a4&#34;&gt;// Handoff #2
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}(preparedData)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;A &lt;strong&gt;bi-directional&lt;/strong&gt; channel is created: &lt;code&gt;streamChan := make(...)&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It&amp;rsquo;s passed to &lt;code&gt;m.streamer.Stream&lt;/code&gt;. The Go compiler sees that &lt;code&gt;Stream&lt;/code&gt;&amp;rsquo;s signature requires a &lt;code&gt;chan&amp;lt;-&lt;/code&gt;, and since a bi-directional channel satisfies this, the call is valid. The &lt;code&gt;streamer&lt;/code&gt; receives a handle that only allows it to send.&lt;/li&gt;
+&lt;li&gt;That &lt;em&gt;same&lt;/em&gt; bi-directional channel is sent into &lt;code&gt;holder.Stream&lt;/code&gt;. The &lt;code&gt;holder.Stream&lt;/code&gt; is of type &lt;code&gt;chan (&amp;lt;-chan tooltypes.StreamEvent)&lt;/code&gt;. The Go compiler converts the bi-directional channel &lt;code&gt;streamChan&lt;/code&gt; into a &lt;code&gt;&amp;lt;-chan&lt;/code&gt; (receive-only) handle for the purpose of this send operation.&lt;/li&gt;
+&lt;li&gt;Later, &lt;code&gt;GetRequestResultStream&lt;/code&gt; reads from &lt;code&gt;holder.Stream&lt;/code&gt; and gets the receive-only handle to the channel, which it returns to the client.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;One channel, multiple handles, each with different permissions depending on the function&amp;rsquo;s role. It&amp;rsquo;s like Nick Fury giving one agent the launch codes (send-only access) and another agent satellite surveillance (receive-only access) to the same nuclear missile. The underlying asset is the same, but the access level is role-dependent. This is not a contradiction; it is precise, type-safe design.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;using-arrow-in-channel&#34;&gt;Using Arrow in Channel
+&lt;/h3&gt;&lt;p&gt;You&amp;rsquo;re a Python programmer. Forget everything you think you know about queues. Channels are not just queues; they are a typed, synchronized communication mechanism. The &lt;code&gt;&amp;lt;-&lt;/code&gt; operator is your weapon. Use it correctly.&lt;/p&gt;
+&lt;h3 id=&#34;1-sending-and-receiving-the-basics&#34;&gt;1. Sending and Receiving: The Basics
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Sending:&lt;/strong&gt; &lt;code&gt;channel &amp;lt;- value&lt;/code&gt;
+This shoves &lt;code&gt;value&lt;/code&gt; into the &lt;code&gt;channel&lt;/code&gt;. It&amp;rsquo;s a blocking operation. Your code will stop dead in its tracks until another goroutine is ready to receive it. Think of it as a mandatory, synchronized handoff, not just dropping a letter in a mailbox. The arrow shows the direction of data flow: from &lt;code&gt;value&lt;/code&gt; into &lt;code&gt;channel&lt;/code&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Receiving:&lt;/strong&gt; &lt;code&gt;value := &amp;lt;-channel&lt;/code&gt;
+This pulls a &lt;code&gt;value&lt;/code&gt; out of the &lt;code&gt;channel&lt;/code&gt;. This also blocks until a sender provides a value. The data flows out of the &lt;code&gt;channel&lt;/code&gt; and into your &lt;code&gt;value&lt;/code&gt; variable.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Example from &lt;code&gt;chatbot/manager.go&lt;/code&gt;:&lt;/strong&gt; A request is taken from the queue. This is a classic producer-consumer pattern.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// from prepareWorkerManager
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; req &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;m.requestQueue: &lt;span style=&#34;color:#6272a4&#34;&gt;// RECEIVING from the queue
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    m.prepareSemaphore &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt;{}{} &lt;span style=&#34;color:#6272a4&#34;&gt;// SENDING a token to acquire a slot
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;go&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(r types.SubmitRequestArgs) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    }(req)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;2-directional-channels-enforcing-roles&#34;&gt;2. Directional Channels: Enforcing Roles
+&lt;/h3&gt;&lt;p&gt;This is what you misunderstood. You can declare channels to be send-only or receive-only. This is a compile-time contract that prevents you from doing something stupid.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Send-only:&lt;/strong&gt; &lt;code&gt;var sendOnlyChan chan&amp;lt;- MyType&lt;/code&gt;
+You can only send to this channel: &lt;code&gt;sendOnlyChan &amp;lt;- myValue&lt;/code&gt;. Trying to receive from it (&lt;code&gt;&amp;lt;-sendOnlyChan&lt;/code&gt;) is a compile-time error.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Receive-only:&lt;/strong&gt; &lt;code&gt;var recvOnlyChan &amp;lt;-chan MyType&lt;/code&gt;
+You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyChan&lt;/code&gt;. Trying to send to it is a compile-time error.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Example from your code:&lt;/strong&gt; The system enforces roles perfectly.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// The streamer&amp;#39;s job is to PRODUCE events. It gets a send-only channel.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// from chatbot/streamer.go
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; (s &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;ResponseStreamer) &lt;span style=&#34;color:#50fa7b&#34;&gt;Stream&lt;/span&gt;(streamChan &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; tooltypes.StreamEvent, &lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; tooltypes.StreamEvent{&lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;} &lt;span style=&#34;color:#6272a4&#34;&gt;// This is legal.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// data := &amp;lt;-streamChan // This would be a compile-time error.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// The client&amp;#39;s job is to CONSUME events. It gets a receive-only channel.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// from chatbot/manager.go
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; (m &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;Manager) &lt;span style=&#34;color:#50fa7b&#34;&gt;GetRequestResultStream&lt;/span&gt;(&lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;) (&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; tooltypes.StreamEvent, &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; stream, &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt; &lt;span style=&#34;color:#6272a4&#34;&gt;// `stream` is of type &amp;lt;-chan tooltypes.StreamEvent
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;A bi-directional channel (&lt;code&gt;chan MyType&lt;/code&gt;) can be passed to any function expecting a directional channel of the same type. The compiler restricts the function&amp;rsquo;s access based on its signature. This is how you build safe, concurrent systems.&lt;/p&gt;
+&lt;h3 id=&#34;3-the-select-statement-juggling-operations&#34;&gt;3. The &lt;code&gt;select&lt;/code&gt; Statement: Juggling Operations
+&lt;/h3&gt;&lt;p&gt;A &lt;code&gt;select&lt;/code&gt; statement is like &lt;code&gt;12 Angry Men&lt;/code&gt; in a jury room. It waits for the first channel operation to become available and executes that case. If multiple are ready, it picks one at random to prevent starvation. It&amp;rsquo;s your primary tool for handling multiple asynchronous events.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Example from &lt;code&gt;chatbot/manager.go&lt;/code&gt;:&lt;/strong&gt; This is far more complex and useful than a simple timer. It&amp;rsquo;s a state machine for retrieving a result.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// from GetRequestResultStream
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; stream &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;streamHolder.Stream: &lt;span style=&#34;color:#6272a4&#34;&gt;// Case 1: The result pipeline is ready.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    logCtx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Info&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Stream retrieved by client.&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; stream, &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; err &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;streamHolder.Err: &lt;span style=&#34;color:#6272a4&#34;&gt;// Case 2: A fatal error or cancellation occurred.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ... handle different types of errors
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;, err
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;time.&lt;span style=&#34;color:#50fa7b&#34;&gt;After&lt;/span&gt;(m.config.ProcessingTimeout): &lt;span style=&#34;color:#6272a4&#34;&gt;// Case 3: We timed out waiting.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    m.&lt;span style=&#34;color:#50fa7b&#34;&gt;cleanupRequest&lt;/span&gt;(requestID, logCtx)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;, fmt.&lt;span style=&#34;color:#50fa7b&#34;&gt;Errorf&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;timed out waiting...&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Done&lt;/span&gt;(): &lt;span style=&#34;color:#6272a4&#34;&gt;// Case 4: The client gave up and disconnected.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    m.&lt;span style=&#34;color:#50fa7b&#34;&gt;cleanupRequest&lt;/span&gt;(requestID, logCtx)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;, ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Err&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This &lt;code&gt;select&lt;/code&gt; block is waiting for one of four things to happen: the stream is ready, an error is sent, a timeout occurs, or the client hangs up. The first one to happen wins.&lt;/p&gt;
+&lt;h3 id=&#34;4-channels-of-channels-handing-off-pipelines&#34;&gt;4. Channels of Channels: Handing Off Pipelines
+&lt;/h3&gt;&lt;p&gt;Sometimes you don&amp;rsquo;t want to send just data; you want to send the entire communication pipeline. This is what &lt;code&gt;chan (&amp;lt;-chan T)&lt;/code&gt; is for.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Declaration:&lt;/strong&gt; &lt;code&gt;Stream chan (&amp;lt;-chan tooltypes.StreamEvent)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Meaning:&lt;/strong&gt; A channel named &lt;code&gt;Stream&lt;/code&gt; that is used to transport &lt;em&gt;other channels&lt;/em&gt;. The channels it transports are themselves receive-only.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Use Case:&lt;/strong&gt; A worker goroutine (&lt;code&gt;streamWorkerManager&lt;/code&gt;) prepares a result stream. When it&amp;rsquo;s ready, it sends the result stream channel &lt;em&gt;through&lt;/em&gt; the &lt;code&gt;Stream&lt;/code&gt; channel to the waiting &lt;code&gt;GetRequestResultStream&lt;/code&gt; function. This is how you hand off ownership of a data stream from one part of the system to another.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;summary-for-a-python-programmer&#34;&gt;Summary for a Python Programmer
+&lt;/h3&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Go (&lt;code&gt;&amp;lt;-&lt;/code&gt; and channel types)&lt;/th&gt;
+&lt;th&gt;Python Analogy&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Sending:&lt;/strong&gt; &lt;code&gt;myChan &amp;lt;- data&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;my_queue.put(data)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Places data into the channel. Blocks until a receiver is ready. It&amp;rsquo;s a synchronized handoff.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Receiving:&lt;/strong&gt; &lt;code&gt;data := &amp;lt;-myChan&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;data = my_queue.get()&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Takes data from the channel. Blocks until a sender provides data.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Send-only:&lt;/strong&gt; &lt;code&gt;chan&amp;lt;- T&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;A custom class with only a &lt;code&gt;put&lt;/code&gt; method.&lt;/td&gt;
+&lt;td&gt;A compile-time contract. Guarantees this handle can only be used for sending.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Receive-only:&lt;/strong&gt; &lt;code&gt;&amp;lt;-chan T&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;A custom class with only a &lt;code&gt;get&lt;/code&gt; method.&lt;/td&gt;
+&lt;td&gt;A compile-time contract. Guarantees this handle can only be used for receiving. Prevents consumers from writing to the stream.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;&lt;code&gt;select&lt;/code&gt; statement&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;asyncio.wait(..., return_when=asyncio.FIRST_COMPLETED)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Waits for the first available operation among multiple channels, allowing for timeouts, cancellations, and complex state management.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Draining:&lt;/strong&gt; &lt;code&gt;for item := range ch&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;&lt;code&gt;while True: item = q.get(); ...&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;The canonical way to consume all values from a channel until it&amp;rsquo;s closed by the sender.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Channel of Channels:&lt;/strong&gt; &lt;code&gt;chan (&amp;lt;-chan T)&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;A queue where you put other queues.&lt;/td&gt;
+&lt;td&gt;A powerful pattern for dynamically creating and passing around communication pipelines between different parts of a concurrent system.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</description>
+        </item>
+        <item>
+        <title>Goroutines</title>
+        <link>http://localhost:1313/agentic/docs/general_go/goroutines/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/general_go/goroutines/</guid>
+        <description>&lt;p&gt;Goroutines get to the very heart of what makes Go so powerful for concurrent programming. As a Python programmer, you&amp;rsquo;re used to concepts like threads, &lt;code&gt;asyncio&lt;/code&gt;, and &lt;code&gt;multiprocessing&lt;/code&gt;, and understanding how goroutines relate to them is key.&lt;/p&gt;
+&lt;h3 id=&#34;what-are-goroutines-an-analogy-for-python-programmers&#34;&gt;What are Goroutines? (An Analogy for Python Programmers)
+&lt;/h3&gt;&lt;p&gt;Imagine you&amp;rsquo;re managing an office.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Python &lt;code&gt;threading&lt;/code&gt;:&lt;/strong&gt; You hire a few very qualified (but heavyweight) employees (OS Threads). However, a strict office rule (the Global Interpreter Lock or GIL) says only one employee can use the main office equipment (the Python interpreter) at a time for CPU-intensive tasks. They can wait for phone calls (I/O) simultaneously, but they can&amp;rsquo;t do two calculations at once.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Python &lt;code&gt;multiprocessing&lt;/code&gt;:&lt;/strong&gt; To get around the GIL, you build entirely separate, identical office buildings (Processes). Each has its own equipment and staff. They can all work in parallel, but they are very expensive to build (high memory usage), and getting them to talk to each other requires a formal, slow courier service (inter-process communication).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Python &lt;code&gt;asyncio&lt;/code&gt;:&lt;/strong&gt; You have one, extremely disciplined employee (a single thread). You give them a long list of tasks. They work on one task until they have to wait for something (like a file to download). Instead of just waiting, they &lt;em&gt;immediately&lt;/em&gt; put that task aside and pick up the next one on the list. They only come back to the first task when the file is ready. It&amp;rsquo;s very efficient, but the employee has to be explicitly told when to switch tasks (using &lt;code&gt;await&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Go Goroutines:&lt;/strong&gt; You hire a huge team of incredibly cheap, lightweight interns (&lt;strong&gt;goroutines&lt;/strong&gt;). They each only need a tiny desk and a notepad (a few KB of stack memory). You also have a brilliant office manager (&lt;strong&gt;Go&amp;rsquo;s Runtime Scheduler&lt;/strong&gt;) who supervises a small number of your best employees (OS Threads). The manager is constantly and automatically assigning interns to the employees. If an intern has to wait for a phone call (I/O), the manager instantly pulls them off the employee&amp;rsquo;s desk and assigns a different intern who is ready to work. The manager can have multiple employees working on different interns in parallel on different CPU cores.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;In summary, Goroutines are:&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Lightweight:&lt;/strong&gt; They start with a tiny amount of memory and can grow if needed, unlike OS threads which have a large, fixed stack size. You can easily have hundreds of thousands or even millions of goroutines running.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Managed by Go, Not the OS:&lt;/strong&gt; The Go runtime scheduler multiplexes (schedules) many goroutines onto a small number of OS threads. This is much more efficient than having a 1:1 mapping of goroutines to OS threads.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Concurrent AND Parallel:&lt;/strong&gt; Because the scheduler can assign goroutines to different OS threads running on different CPU cores, your Go program can achieve true parallelism, unlike Python&amp;rsquo;s GIL-limited threads.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;They are &lt;strong&gt;NOT&lt;/strong&gt; the same as Python workers. They are a much more fundamental, efficient, and integrated concurrency primitive. They feel a bit like &lt;code&gt;asyncio&lt;/code&gt; tasks in their lightness but behave more like true threads in their ability to run in parallel, without the developer needing to manually &lt;code&gt;await&lt;/code&gt; everywhere.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h1 id=&#34;goroutines-in-the-assembly-line-architecture-managergo&#34;&gt;Goroutines in the Assembly Line Architecture (&lt;code&gt;manager.go&lt;/code&gt;)
+&lt;/h1&gt;&lt;p&gt;Goroutines are the heart of Go&amp;rsquo;s concurrency model. They are extremely lightweight threads managed by the Go runtime, not the OS. This allows you to run hundreds of thousands of them concurrently, making them perfect for I/O-bound and parallel tasks.&lt;/p&gt;
+&lt;p&gt;Your &lt;code&gt;manager.go&lt;/code&gt; has evolved from a simple worker pool into a more sophisticated, two-stage &lt;strong&gt;assembly line pipeline&lt;/strong&gt;. This design explicitly recognizes that request processing has two phases with different resource requirements: a fast, cheap &amp;ldquo;preparation&amp;rdquo; phase and a slow, expensive &amp;ldquo;streaming&amp;rdquo; phase. The architecture uses distinct goroutine pools for each, preventing the slow phase from blocking the fast one. This maximizes throughput and resource utilization.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s break down the roles of the goroutines in this superior architecture.&lt;/p&gt;
+&lt;h3 id=&#34;1-the-singleton-manager-goroutines-the-foremen&#34;&gt;1. The Singleton &amp;ldquo;Manager&amp;rdquo; Goroutines (The Foremen)
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Where they are started:&lt;/strong&gt; In &lt;code&gt;Init()&lt;/code&gt;, with &lt;code&gt;go prepareWorkerManager(ctx)&lt;/code&gt; and &lt;code&gt;go streamWorkerManager(ctx)&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;How many:&lt;/strong&gt; Exactly &lt;strong&gt;two&lt;/strong&gt; manager goroutines for the entire application lifetime.
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;prepareWorkerManager&lt;/code&gt;: The &amp;ldquo;Prep Foreman.&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;streamWorkerManager&lt;/code&gt;: The &amp;ldquo;Baking Foreman.&amp;rdquo;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; These are the master coordinators for each stage of the assembly line. They are simple, non-blocking loops.
+&lt;ul&gt;
+&lt;li&gt;The &lt;strong&gt;Prep Foreman&lt;/strong&gt;&amp;rsquo;s only job is to listen on the initial &lt;code&gt;requestQueue&lt;/code&gt;. When a request arrives, it acquires a &amp;ldquo;prep station&amp;rdquo; slot from &lt;code&gt;prepareSemaphore&lt;/code&gt; and immediately spawns a &amp;ldquo;Preparation Worker&amp;rdquo; goroutine to handle that task.&lt;/li&gt;
+&lt;li&gt;The &lt;strong&gt;Streaming Foreman&lt;/strong&gt;&amp;rsquo;s only job is to listen on the &lt;code&gt;preparedQueue&lt;/code&gt;. When a &amp;ldquo;prepared&amp;rdquo; request arrives, it acquires an expensive &amp;ldquo;oven&amp;rdquo; slot from &lt;code&gt;llmStreamSemaphore&lt;/code&gt; and immediately spawns a &amp;ldquo;Streaming Worker&amp;rdquo; goroutine.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;By delegating the actual work, these foremen remain free to manage the flow of tasks into their respective stages without ever getting blocked.&lt;/p&gt;
+&lt;h3 id=&#34;2-the-preparation-worker-goroutine-pool-the-apprentices&#34;&gt;2. The &amp;ldquo;Preparation Worker&amp;rdquo; Goroutine Pool (The Apprentices)
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Where it&amp;rsquo;s started:&lt;/strong&gt; Inside &lt;code&gt;prepareWorkerManager&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;How many:&lt;/strong&gt; A pool of up to &lt;code&gt;config.AppSettings.MaxConcurrentRequests&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; This is the &amp;ldquo;first stage&amp;rdquo; worker, the cook&amp;rsquo;s apprentice. Its job is to perform all the fast, non-streaming preparation for a single request. This is a well-defined, bounded set of tasks:
+&lt;ol&gt;
+&lt;li&gt;Transition the request&amp;rsquo;s state in the central &lt;code&gt;activeRequests&lt;/code&gt; map from &lt;code&gt;Queued&lt;/code&gt; to &lt;code&gt;Processing&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Fetch chat history from the database.&lt;/li&gt;
+&lt;li&gt;Check Redis for a cached response.&lt;/li&gt;
+&lt;li&gt;Execute the first LLM call for tool selection (&lt;code&gt;toolcore.ProcessTools&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;Assemble the final prompt.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Key Behavior &amp;amp; Handoff:&lt;/strong&gt; Once preparation is complete, its job is done. It packages all its work into a &lt;code&gt;PreparedRequestData&lt;/code&gt; struct and places it onto the &lt;code&gt;preparedQueue&lt;/code&gt;. Then, crucially, &lt;strong&gt;it immediately releases its &lt;code&gt;prepareSemaphore&lt;/code&gt; slot and exits&lt;/strong&gt;. It does &lt;strong&gt;not&lt;/strong&gt; wait for the streaming to start. This frees up the &amp;ldquo;prep station&amp;rdquo; for the next request.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;3-the-streaming-worker-goroutine-pool-the-senior-cooks&#34;&gt;3. The &amp;ldquo;Streaming Worker&amp;rdquo; Goroutine Pool (The Senior Cooks)
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Where it&amp;rsquo;s started:&lt;/strong&gt; Inside &lt;code&gt;streamWorkerManager&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;How many:&lt;/strong&gt; A smaller, more exclusive pool of up to &lt;code&gt;config.AppSettings.MaxConcurrentLLMStreams&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; This is the &amp;ldquo;second stage&amp;rdquo; worker, the senior cook with access to the expensive ovens. It picks up a fully prepared request from the &lt;code&gt;preparedQueue&lt;/code&gt; and performs the final, blocking, resource-intensive work:
+&lt;ol&gt;
+&lt;li&gt;Check for a cached response (a final check in case the request was for a common, already-cached item that didn&amp;rsquo;t need tools).&lt;/li&gt;
+&lt;li&gt;Call the main LLM with the final prompt (&lt;code&gt;llms.GenerateFromSinglePrompt&lt;/code&gt;). This is the slow, expensive part.&lt;/li&gt;
+&lt;li&gt;Stream the LLM&amp;rsquo;s token responses back to the client via the &lt;code&gt;streamChan&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Perform final logging to the database.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Perform final cleanup.&lt;/strong&gt; This worker is responsible for removing the completed request from the central &lt;code&gt;activeRequests&lt;/code&gt; and &lt;code&gt;cancellableStreams&lt;/code&gt; maps.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Lifespan:&lt;/strong&gt; This goroutine lives for the duration of the LLM stream. It releases its &lt;code&gt;llmStreamSemaphore&lt;/code&gt; slot only when it is completely finished.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;visualizing-the-handoff-a-requests-journey&#34;&gt;Visualizing the Handoff: A Request&amp;rsquo;s Journey
+&lt;/h3&gt;&lt;p&gt;This architecture creates a clean, efficient flow, communicating through channels and a shared map.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Client -&amp;gt; &lt;code&gt;SubmitRequest&lt;/code&gt;:&lt;/strong&gt; A request is born. A &lt;code&gt;RequestStream&lt;/code&gt; holder is created and placed in the central &lt;code&gt;activeRequests&lt;/code&gt; map with &lt;code&gt;State: StateQueued&lt;/code&gt;. A &lt;code&gt;SubmitRequestArgs&lt;/code&gt; struct is put on the &lt;strong&gt;&lt;code&gt;requestQueue&lt;/code&gt; channel&lt;/strong&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;requestQueue&lt;/code&gt; -&amp;gt; &lt;code&gt;prepareWorkerManager&lt;/code&gt; (Prep Foreman):&lt;/strong&gt; The foreman sees the new task. It acquires a slot from &lt;code&gt;prepareSemaphore&lt;/code&gt; and spins up a &lt;strong&gt;Preparation Worker&lt;/strong&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Preparation Worker:&lt;/strong&gt; This goroutine executes. It locks the &lt;code&gt;requestsLock&lt;/code&gt;, finds its request in &lt;code&gt;activeRequests&lt;/code&gt;, and updates its state to &lt;code&gt;StateProcessing&lt;/code&gt;. It then does its work (history, tools, etc.). After creating the &lt;code&gt;PreparedRequestData&lt;/code&gt; struct, its last act is to send this struct to the &lt;strong&gt;&lt;code&gt;preparedQueue&lt;/code&gt; channel&lt;/strong&gt;. The worker then exits, releasing its &lt;code&gt;prepareSemaphore&lt;/code&gt; slot.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;preparedQueue&lt;/code&gt; -&amp;gt; &lt;code&gt;streamWorkerManager&lt;/code&gt; (Streaming Foreman):&lt;/strong&gt; This foreman sees the prepared data. It acquires a slot from &lt;code&gt;llmStreamSemaphore&lt;/code&gt; and spins up a &lt;strong&gt;Streaming Worker&lt;/strong&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Streaming Worker:&lt;/strong&gt; This goroutine executes. It finds its &lt;code&gt;RequestStream&lt;/code&gt; holder in &lt;code&gt;activeRequests&lt;/code&gt; to get the &lt;code&gt;Stream&lt;/code&gt; and &lt;code&gt;Err&lt;/code&gt; channels. It sends the real &lt;code&gt;streamChan&lt;/code&gt; to the holder, waking up the client-facing &lt;code&gt;GetRequestResultStream&lt;/code&gt; function. It then performs the LLM call and streams tokens. Finally, it cleans up the &lt;code&gt;activeRequests&lt;/code&gt; and &lt;code&gt;cancellableStreams&lt;/code&gt; maps and exits, releasing its &lt;code&gt;llmStreamSemaphore&lt;/code&gt; slot.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;GetRequestResultStream&lt;/code&gt; -&amp;gt; Client:&lt;/strong&gt; This function, called by the client, simply waits on the channels inside the &lt;code&gt;RequestStream&lt;/code&gt; holder. It is a passive observer. When the Streaming Worker sends the &lt;code&gt;streamChan&lt;/code&gt;, it receives it and begins forwarding tokens to the client.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This is a true pipeline. The fast &amp;ldquo;preparation&amp;rdquo; workers are never held hostage by the slow &amp;ldquo;streaming&amp;rdquo; workers, allowing the system to process a high volume of incoming requests efficiently, even when the final LLM calls are slow.&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Request Lock</title>
+        <link>http://localhost:1313/agentic/docs/general_go/request_lock/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/general_go/request_lock/</guid>
+        <description>&lt;h1 id=&#34;concurrency-and-lock-strategy&#34;&gt;Concurrency and Lock Strategy
+&lt;/h1&gt;&lt;h2 id=&#34;1-overview-the-need-for-speed-and-safety&#34;&gt;1. Overview: The Need for Speed and Safety
+&lt;/h2&gt;&lt;p&gt;The chatbot manager is a highly concurrent system. Multiple requests are processed in parallel across different stages (preparation, streaming), while background tasks like the &lt;code&gt;janitor&lt;/code&gt; perform system-wide maintenance. This is not &lt;em&gt;12 Angry Men&lt;/em&gt; where everyone waits their turn to speak; this is the trading floor from &lt;em&gt;The Wolf of Wall Street&lt;/em&gt;—chaotic, fast, and every action must be precise.&lt;/p&gt;
+&lt;p&gt;To prevent race conditions where multiple goroutines corrupt shared data (like maps, which are not intrinsically thread-safe), we use locks. However, using a single, global lock would create a massive performance bottleneck. Instead, the manager employs a &lt;strong&gt;fine-grained locking strategy&lt;/strong&gt; with two distinct mutexes, each with a specific responsibility. This minimizes lock contention and maximizes throughput.&lt;/p&gt;
+&lt;h2 id=&#34;2-the-two-lock-strategy-why-not-just-one&#34;&gt;2. The Two-Lock Strategy: Why Not Just One?
+&lt;/h2&gt;&lt;p&gt;Using a single lock for all shared resources is a critical design flaw. It creates a single point of contention where unrelated operations block each other. For example, a fast check on cache coordination should not be blocked by a slow, system-wide cleanup task.&lt;/p&gt;
+&lt;p&gt;Our strategy is based on the principle of &lt;strong&gt;lock granularity&lt;/strong&gt;: separate, unrelated resources are protected by separate locks. Think of it like a heist crew: you have one lock on the main vault (&lt;code&gt;requestsLock&lt;/code&gt;) and a separate, simpler lock on the communications equipment (&lt;code&gt;cachingRequestsLock&lt;/code&gt;). Cracking one doesn&amp;rsquo;t require waiting for the other.&lt;/p&gt;
+&lt;p&gt;This separation ensures that locks are held for the shortest possible duration and only block other operations that truly conflict.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;3-lock-1-requestslock&#34;&gt;3. Lock #1: &lt;code&gt;requestsLock&lt;/code&gt;
+&lt;/h2&gt;&lt;h3 id=&#34;purpose-and-scope&#34;&gt;Purpose and Scope
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Type&lt;/strong&gt;: &lt;code&gt;sync.RWMutex&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Responsibility&lt;/strong&gt;: The &amp;ldquo;Vault Lock.&amp;rdquo; It guards the core state and lifecycle of every active request in the system.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Protected Data&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;activeRequests (map[string]*types.RequestStream)&lt;/code&gt;: The central registry of all requests currently being processed or queued.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;cancellableStreams (map[string]context.CancelFunc)&lt;/code&gt;: The map of cancellation functions for stopping active requests.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This lock is the primary guardian of a request&amp;rsquo;s journey through the system, from submission to cleanup.&lt;/p&gt;
+&lt;h3 id=&#34;usage-breakdown&#34;&gt;Usage Breakdown
+&lt;/h3&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Function / Goroutine&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Operation&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Lock Type Used&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Rationale&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;SubmitRequest&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Adds a new request to &lt;code&gt;activeRequests&lt;/code&gt;.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Write Lock (&lt;code&gt;.Lock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Modifies the map. Exclusive access is required.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;prepareWorker&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Updates a request&amp;rsquo;s state and adds its &lt;code&gt;cancelFunc&lt;/code&gt;.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Write Lock (&lt;code&gt;.Lock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Modifies data in both maps. Exclusive access is mandatory.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;streamWorker&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Reads &lt;code&gt;activeRequests&lt;/code&gt; to see if the request still exists.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Read Lock (&lt;code&gt;.RLock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Read-only check. Allows multiple stream workers to proceed concurrently.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;cleanupRequest&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Deletes a request from &lt;code&gt;activeRequests&lt;/code&gt; and &lt;code&gt;cancellableStreams&lt;/code&gt;.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Write Lock (&lt;code&gt;.Lock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Modifies both maps. This is the final write operation in a request&amp;rsquo;s lifecycle.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;janitor&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Reads &lt;code&gt;activeRequests&lt;/code&gt; to find timed-out requests.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Read Lock (&lt;code&gt;.RLock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Iterating over the map is a read operation.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;janitor&lt;/code&gt; (Cleanup Phase)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Calls &lt;code&gt;cleanupRequest&lt;/code&gt; which acquires a write lock.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Write Lock (&lt;code&gt;.Lock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;The cleanup itself is a write operation requiring an exclusive lock.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;GetRequestResultStream&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Reads &lt;code&gt;activeRequests&lt;/code&gt; to find the request&amp;rsquo;s stream channels.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Read Lock (&lt;code&gt;.RLock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Read-only check. Allows multiple clients to poll for their results simultaneously.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;CancelStream&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Reads &lt;code&gt;cancellableStreams&lt;/code&gt; to find the cancel function.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Read Lock (&lt;code&gt;.RLock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;A read-only lookup. After retrieval, the function is called outside the lock.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;4-lock-2-cachingrequestslock&#34;&gt;4. Lock #2: &lt;code&gt;cachingRequestsLock&lt;/code&gt;
+&lt;/h2&gt;&lt;h3 id=&#34;purpose-and-scope-1&#34;&gt;Purpose and Scope
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Type&lt;/strong&gt;: &lt;code&gt;sync.RWMutex&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Responsibility&lt;/strong&gt;: The &amp;ldquo;Coordinator Lock.&amp;rdquo; Its sole purpose is to manage cache-write coordination.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Protected Data&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cachingRequestsMap (map[string]string)&lt;/code&gt;: A map that assigns one specific request ID the responsibility of writing to the Redis cache when multiple identical requests are processed simultaneously.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This lock prevents a &amp;ldquo;cache stampede&amp;rdquo; where dozens of identical requests all try to write the same key-value pair to Redis. It ensures only the designated &amp;ldquo;primary worker&amp;rdquo; performs the cache write.&lt;/p&gt;
+&lt;h3 id=&#34;usage-breakdown-1&#34;&gt;Usage Breakdown
+&lt;/h3&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Function / Goroutine&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Operation&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Lock Type Used&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Rationale&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;prepareRequest&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Checks &lt;code&gt;cachingRequestsMap&lt;/code&gt; and potentially adds an entry.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Write Lock (&lt;code&gt;.Lock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;A short, atomic check-and-set operation to determine if the current worker is the primary for a given cache key. A write lock guarantees atomicity.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;cleanupRequest&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Removes the entry from &lt;code&gt;cachingRequestsMap&lt;/code&gt; if this request was the primary worker.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Write Lock (&lt;code&gt;.Lock()&lt;/code&gt;)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;A short, surgical write operation to release the caching responsibility.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;5-summary-and-guidelines&#34;&gt;5. Summary and Guidelines
+&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Lock Name&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Analogy&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Protected Data&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Scope / Contention&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;requestsLock&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;The Bank Vault&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Request lifecycle state (&lt;code&gt;activeRequests&lt;/code&gt;, &lt;code&gt;cancellableStreams&lt;/code&gt;)&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;High-traffic, broader scope. Protects the core existence of requests.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;&lt;code&gt;cachingRequestsLock&lt;/code&gt;&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;The Getaway Car Keys&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Cache write coordination (&lt;code&gt;cachingRequestsMap&lt;/code&gt;)&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Low-traffic, surgical scope. Protects a specific, short-lived coordination task.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id=&#34;rules-for-development&#34;&gt;Rules for Development
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Know Which Lock to Use&lt;/strong&gt;: Understand if you are interacting with the request lifecycle (&lt;code&gt;requestsLock&lt;/code&gt;) or cache coordination (&lt;code&gt;cachingRequestsLock&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Use the Correct Lock Type&lt;/strong&gt;: Use &lt;code&gt;RLock&lt;/code&gt; for reads, &lt;code&gt;Lock&lt;/code&gt; for writes.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Keep Lock Duration Minimal&lt;/strong&gt;: Never perform slow operations (I/O, database calls, LLM calls) while holding a lock. Acquire the lock, access the map, and release it.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Use &lt;code&gt;defer&lt;/code&gt;&lt;/strong&gt;: Always &lt;code&gt;defer&lt;/code&gt; the &lt;code&gt;Unlock()&lt;/code&gt; call immediately after acquiring a lock to prevent deadlocks.&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
+        <title>Superior Event-Driven</title>
+        <link>http://localhost:1313/agentic/docs/general_go/superior_event_driven/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/general_go/superior_event_driven/</guid>
+        <description>&lt;h1 id=&#34;the-flaw-of-polling-vs-the-power-of-event-driven-design&#34;&gt;The Flaw of Polling vs. The Power of Event-Driven Design
+&lt;/h1&gt;&lt;p&gt;You might look at the new &lt;code&gt;manager.go&lt;/code&gt; and wonder why it’s structured with a channel inside a struct (&lt;code&gt;RequestStream.Stream&lt;/code&gt;) which itself is passed between functions before finally being used. It might seem complex.&lt;/p&gt;
+&lt;p&gt;The reason is simple: this architecture is fundamentally more intelligent, efficient, and scalable than the common alternative—a polling loop. The alternative is the architectural equivalent of a security guard repeatedly running to the front gate every 10 seconds to see if a package has arrived. Our way is letting the guard sleep soundly at their desk until the delivery driver rings the bell.&lt;/p&gt;
+&lt;h3 id=&#34;the-old-way-inefficient-polling-are-we-there-yet&#34;&gt;The Old Way: Inefficient Polling (&amp;ldquo;Are We There Yet?&amp;rdquo;)
+&lt;/h3&gt;&lt;p&gt;Let&amp;rsquo;s imagine for a moment we had designed &lt;code&gt;GetRequestResultStream&lt;/code&gt; using a naive polling strategy. It would be a disaster. The client would call the function, and to get the result, it would have to constantly check if the workers were done yet.&lt;/p&gt;
+&lt;p&gt;It would look something like this &lt;strong&gt;(this is a hypothetical bad example, not our actual code)&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// A HYPOTHETICAL, INEFFICIENT POLLING IMPLEMENTATION
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;GetRequestResultStream_BAD&lt;/span&gt;(ctx context.Context, requestID &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;) (&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; types.StreamEvent, &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	ticker &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; time.&lt;span style=&#34;color:#50fa7b&#34;&gt;NewTicker&lt;/span&gt;(&lt;span style=&#34;color:#bd93f9&#34;&gt;100&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt; time.Millisecond) &lt;span style=&#34;color:#6272a4&#34;&gt;// Check every 100ms
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;defer&lt;/span&gt; ticker.&lt;span style=&#34;color:#50fa7b&#34;&gt;Stop&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	timeout &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; time.&lt;span style=&#34;color:#50fa7b&#34;&gt;After&lt;/span&gt;(config.AppSettings.ProcessingTimeout)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;for&lt;/span&gt; { &lt;span style=&#34;color:#6272a4&#34;&gt;// &amp;lt;-- THIS IS THE PROBLEM
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;		requestsLock.&lt;span style=&#34;color:#50fa7b&#34;&gt;RLock&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		streamHolder, ok &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; activeRequests[requestID]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		requestsLock.&lt;span style=&#34;color:#50fa7b&#34;&gt;RUnlock&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; ok {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;            &lt;span style=&#34;color:#6272a4&#34;&gt;// How do we know it&amp;#39;s ready? We can&amp;#39;t peek into a channel.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;            &lt;span style=&#34;color:#6272a4&#34;&gt;// So we&amp;#39;d have to check the State. Let&amp;#39;s pretend we update
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;            &lt;span style=&#34;color:#6272a4&#34;&gt;// the state to &amp;#39;Ready&amp;#39; right before we start the stream.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;			&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; streamHolder.State &lt;span style=&#34;color:#ff79c6&#34;&gt;==&lt;/span&gt; types.StateReadyToStream { &lt;span style=&#34;color:#6272a4&#34;&gt;// A FAKE STATE
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;				&lt;span style=&#34;color:#6272a4&#34;&gt;// Now we can try to grab the stream...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;                &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; streamHolder.Stream, &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt; &lt;span style=&#34;color:#6272a4&#34;&gt;// Hope it&amp;#39;s there!
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;			}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#6272a4&#34;&gt;// ... error handling for not found ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;ticker.C:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			&lt;span style=&#34;color:#ff79c6&#34;&gt;continue&lt;/span&gt; &lt;span style=&#34;color:#6272a4&#34;&gt;// WAKE UP, LOCK, CHECK, UNLOCK, SLEEP. REPEAT.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;timeout:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;, fmt.&lt;span style=&#34;color:#50fa7b&#34;&gt;Errorf&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;timed out waiting for stream&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Done&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;, ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Err&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is fundamentally wasteful. For the entire duration that the request is being prepared by the &lt;code&gt;prepareWorker&lt;/code&gt; and waiting in the &lt;code&gt;preparedQueue&lt;/code&gt;, this goroutine would be in a frantic cycle of:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Waking up.&lt;/li&gt;
+&lt;li&gt;Acquiring a global read lock.&lt;/li&gt;
+&lt;li&gt;Checking a map for a value.&lt;/li&gt;
+&lt;li&gt;Releasing the lock.&lt;/li&gt;
+&lt;li&gt;Going back to sleep.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This burns CPU cycles for no reason, creates unnecessary lock contention on the critical &lt;code&gt;activeRequests&lt;/code&gt; map, and adds latency. It&amp;rsquo;s a headless chicken running around a barn, hoping to stumble upon some corn.&lt;/p&gt;
+&lt;h3 id=&#34;the-new-way-event-driven-the-rendezvous&#34;&gt;The New Way: Event-Driven (&amp;ldquo;The Rendezvous&amp;rdquo;)
+&lt;/h3&gt;&lt;p&gt;Our new code is intelligent. It doesn&amp;rsquo;t ask &amp;ldquo;is it ready?&amp;rdquo;. It says, &amp;ldquo;I am going to wait right here. Notify me when it&amp;rsquo;s ready,&amp;rdquo; and then goes to sleep. It’s a rendezvous. The goroutine arrives at the meeting point and waits, consuming zero resources until the other party arrives with the goods.&lt;/p&gt;
+&lt;p&gt;Look at the new flow:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;SubmitRequest&lt;/code&gt;:&lt;/strong&gt; It creates a &lt;code&gt;RequestStream&lt;/code&gt; holder. Think of this as a briefcase or a secure drop-box. It contains two channels: one for the eventual result stream (&lt;code&gt;Stream&lt;/code&gt;) and one for an error (&lt;code&gt;Err&lt;/code&gt;). This drop-box is immediately placed in the global &lt;code&gt;activeRequests&lt;/code&gt; map.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;streamHolder &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;amp;&lt;/span&gt;types.RequestStream{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	Stream:          &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;make&lt;/span&gt;(&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; (&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; types.StreamEvent), &lt;span style=&#34;color:#bd93f9&#34;&gt;1&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	Err:             &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;make&lt;/span&gt;(&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;1&lt;/span&gt;),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	ClientConnected: &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;make&lt;/span&gt;(&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt;{}),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	State:           types.StateQueued,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	LastStateChange: time.&lt;span style=&#34;color:#50fa7b&#34;&gt;Now&lt;/span&gt;(),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;GetRequestResultStream&lt;/code&gt;:&lt;/strong&gt; The client calls this function. It finds the drop-box for its &lt;code&gt;requestID&lt;/code&gt; and immediately does this:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; stream &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;streamHolder.Stream: &lt;span style=&#34;color:#6272a4&#34;&gt;// &amp;lt;-- WAITING HERE
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	log.&lt;span style=&#34;color:#50fa7b&#34;&gt;Printf&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;[GetStream - %s] Stream is ready. Returning to client.&amp;#34;&lt;/span&gt;, requestID)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; stream, &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; err &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;streamHolder.Err:      &lt;span style=&#34;color:#6272a4&#34;&gt;// &amp;lt;-- OR WAITING HERE FOR AN ERROR
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	log.&lt;span style=&#34;color:#50fa7b&#34;&gt;Printf&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;[GetStream - %s] An error occurred: %v&amp;#34;&lt;/span&gt;, requestID, err)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;, err
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// ... timeout cases ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The key is &lt;code&gt;&amp;lt;-streamHolder.Stream&lt;/code&gt;. This is a &lt;strong&gt;blocking read on a channel&lt;/strong&gt;. The goroutine stops dead. It is descheduled by the Go runtime. It consumes &lt;strong&gt;ZERO CPU&lt;/strong&gt;. It is completely asleep, waiting for something to be put into that channel.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;streamWorkerManager&lt;/code&gt;:&lt;/strong&gt; Meanwhile, in a completely separate part of the application, a worker has picked the request from the &lt;code&gt;preparedQueue&lt;/code&gt;. It&amp;rsquo;s ready to start the expensive LLM call. It gets the same &lt;code&gt;streamHolder&lt;/code&gt; drop-box and performs the rendezvous:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;make&lt;/span&gt;(&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; types.StreamEvent, config.AppSettings.StreamTokenBuffer)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;holder.Stream &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; streamChan &lt;span style=&#34;color:#6272a4&#34;&gt;// &amp;lt;-- THE ACTIVATION SIGNAL. THE PACKAGE IS DROPPED.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This single line is the &amp;ldquo;event&amp;rdquo;. The worker creates the &lt;em&gt;actual&lt;/em&gt; channel that the LLM tokens will flow through (&lt;code&gt;streamChan&lt;/code&gt;) and places it inside the &lt;code&gt;holder.Stream&lt;/code&gt; channel.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Payoff:&lt;/strong&gt; The moment &lt;code&gt;holder.Stream &amp;lt;- streamChan&lt;/code&gt; executes, the sleeping &lt;code&gt;GetRequestResultStream&lt;/code&gt; goroutine, which has been patiently and efficiently waiting on &lt;code&gt;&amp;lt;-streamHolder.Stream&lt;/code&gt;, instantly wakes up. It receives the &lt;code&gt;streamChan&lt;/code&gt;, returns it to the client, and the streaming of data begins.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;conclusion&#34;&gt;Conclusion
+&lt;/h3&gt;&lt;p&gt;The new architecture is superior because it replaces an active, wasteful polling loop with a passive, efficient, channel-based waiting mechanism.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Flawed Way:&lt;/strong&gt; CPU is busy checking a condition repeatedly. Wastes energy, causes lock contention, doesn&amp;rsquo;t scale.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Superior Way:&lt;/strong&gt; CPU is free. The goroutine sleeps until the Go runtime, notified by a channel event, wakes it up to perform work. It&amp;rsquo;s efficient, clean, and highly scalable.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This is the essence of modern concurrent design. You don&amp;rsquo;t look for work; the work comes to you. It&amp;rsquo;s the difference between being a mindless drone and a trained assassin.&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

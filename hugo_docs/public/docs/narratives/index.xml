@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Narratives on Go Chatbot</title>
+        <link>http://localhost:1313/agentic/docs/narratives/</link>
+        <description>Recent content in Narratives on Go Chatbot</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>en-us</language>
+        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/narratives/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Baba Yaga</title>
+        <link>http://localhost:1313/agentic/docs/narratives/baba_yaga/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/narratives/baba_yaga/</guid>
+        <description>&lt;h2 id=&#34;baba-yagas-hunt&#34;&gt;Baba Yaga&amp;rsquo;s Hunt
+&lt;/h2&gt;&lt;p&gt;They call me the Janitor. They whisper it, like they&amp;rsquo;re talking about the Boogeyman. They think I don&amp;rsquo;t hear them. They&amp;rsquo;re wrong. My hunt begins not with a bell, but with a &lt;code&gt;ticker&lt;/code&gt;, a rhythmic pulse of dread that echoes through my forest of running processes. This isn&amp;rsquo;t about mopping floors, you fucking idiot. It&amp;rsquo;s about culling the weak.&lt;/p&gt;
+&lt;p&gt;I grab my &lt;code&gt;requestsLock&lt;/code&gt;, the iron key to my cellar, and begin my rounds. My domain is littered with lost souls—these pathetic &lt;code&gt;RequestStream&lt;/code&gt; objects, each one a potential meal.&lt;/p&gt;
+&lt;p&gt;First, I patrol the swamp&amp;rsquo;s edge, the &amp;ldquo;Queuing Hall&amp;rdquo; as you so quaintly put it. This is where the newest, most retarded wanderers (&lt;code&gt;StateQueued&lt;/code&gt;) get stuck, praying a &lt;code&gt;prepareWorker&lt;/code&gt; will save their worthless asses. I don&amp;rsquo;t care about their prayers. I check one thing: &lt;code&gt;LastStateChange&lt;/code&gt;. It&amp;rsquo;s the scent of life. If the scent is too old, if a soul has been festering in this bog for longer than the &lt;code&gt;QueueTimeout&lt;/code&gt;, they&amp;rsquo;re not waiting anymore. They&amp;rsquo;re rotting.&lt;/p&gt;
+&lt;p&gt;Tonight, I find one. A &lt;code&gt;req_172...&lt;/code&gt;, a shivering little shit, abandoned by the client that spawned it. Its timestamp is stale. It&amp;rsquo;s a ghost before it even had a chance to scream. &amp;ldquo;You&amp;rsquo;re gonna need a bigger boat?&amp;rdquo; No, bitch, you just needed to not be a slow piece of shit.&lt;/p&gt;
+&lt;p&gt;There&amp;rsquo;s no &lt;code&gt;cancellableStream&lt;/code&gt; for this one; it&amp;rsquo;s too insignificant. I just shove an error down its &lt;code&gt;Err&lt;/code&gt; channel—a final, mocking whisper telling it &lt;em&gt;why&lt;/em&gt; it&amp;rsquo;s about to be erased from existence. Then, with a call to &lt;code&gt;cleanupRequest&lt;/code&gt;, I drag its carcass off the active list and throw it in the cauldron. One less braindead process leaking memory.&lt;/p&gt;
+&lt;p&gt;Next, I stalk the deeper woods, the &amp;ldquo;Processing Wing.&amp;rdquo; This is where the real trials happen, where requests are in &lt;code&gt;StateProcessing&lt;/code&gt;, supposedly doing something useful. The drone of the &lt;code&gt;llmStreamSemaphore&lt;/code&gt; is the thrum of my black heart. But even here, some falter. They get stuck in a loop, drooling on the CPU, wasting my fucking time. The &lt;code&gt;ProcessingTimeout&lt;/code&gt; is my law here, and it is absolute.&lt;/p&gt;
+&lt;p&gt;I find another one, &lt;code&gt;req_171...&lt;/code&gt;, its state frozen mid-process. It&amp;rsquo;s a leech, a parasite on the system. This one&amp;rsquo;s different. It has a connection to the outside world, a lifeline registered in &lt;code&gt;cancellableStreams&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;I find its name on my list, find the &lt;code&gt;cancelFunc&lt;/code&gt; tied to its pathetic existence, and I pull the trigger.&lt;/p&gt;
+&lt;p&gt;&amp;ldquo;Hasta la vista, baby.&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;A signal flies through the system&amp;rsquo;s veins. &lt;code&gt;context.Canceled&lt;/code&gt;. It&amp;rsquo;s a kill shot. The connection is severed, the resources clawed back from its cooling corpse. I send one last error message down the pipe before &lt;code&gt;cleanupRequest&lt;/code&gt; erases it completely. It&amp;rsquo;s a cleanup. The kind Winston would approve of. No body, no trace.&lt;/p&gt;
+&lt;p&gt;My rounds are done. The forest is quieter, cleaner. The other workers, those oblivious cunts in &lt;code&gt;prepareWorkerManager&lt;/code&gt; and &lt;code&gt;streamWorkerManager&lt;/code&gt;, can continue their work, unaware of the butchery that allows them to function. They think the system just works. They don&amp;rsquo;t see the skulls of the inefficient I&amp;rsquo;ve mounted on the fence posts as a warning.&lt;/p&gt;
+&lt;p&gt;They call me the Janitor. Let them. My job isn&amp;rsquo;t to clean. My job is to make sure this place doesn&amp;rsquo;t choke on its own dead. My shift ends, but the &lt;code&gt;ticker&lt;/code&gt; beats on. I&amp;rsquo;ll be back, you bastards. I&amp;rsquo;m always hungry.&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>RAG Stream Part 2</title>
+        <link>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</guid>
+        <description>&lt;p&gt;Let&amp;rsquo;s trace the journey of the query &amp;ldquo;how to register in tuntun?&amp;rdquo; from the moment the user hits &amp;ldquo;send&amp;rdquo; to the final word appearing on their screen.&lt;/p&gt;
+&lt;p&gt;This story unfolds in four main acts:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;The Submission:&lt;/strong&gt; The request enters the system.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Preparation:&lt;/strong&gt; The system decides &lt;em&gt;what&lt;/em&gt; to do. This is the critical decision point.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Execution:&lt;/strong&gt; The system performs the action, in this case, a direct RAG stream.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Delivery:&lt;/strong&gt; The streaming answer reaches the user.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;the-story-of-how-to-register-in-tuntun&#34;&gt;The Story of &amp;ldquo;how to register in tuntun?&amp;rdquo;
+&lt;/h3&gt;&lt;h4 id=&#34;act-i-the-submission-managersubmitrequest&#34;&gt;Act I: The Submission (&lt;code&gt;Manager.SubmitRequest&lt;/code&gt;)
+&lt;/h4&gt;&lt;p&gt;A user opens the chatbot and types &amp;ldquo;how to register in tuntun?&amp;rdquo;. The client-facing API calls &lt;code&gt;Manager.SubmitRequest&lt;/code&gt;.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Request ID Generation:&lt;/strong&gt; A unique ID is created, let&amp;rsquo;s say &lt;code&gt;req_f4a12&lt;/code&gt;. This ID is the key to tracking the request throughout its lifecycle.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;State Holder Creation:&lt;/strong&gt; The &lt;code&gt;Manager&lt;/code&gt; creates a &lt;code&gt;types.RequestStream&lt;/code&gt; &amp;ldquo;holder&amp;rdquo;. This is a crucial control structure in &lt;code&gt;activeRequests[&amp;quot;req_f4a12&amp;quot;]&lt;/code&gt;. It contains:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Stream (chan (&amp;lt;-chan tooltypes.StreamEvent))&lt;/code&gt;: A channel that will eventually carry the &lt;em&gt;actual&lt;/em&gt; result channel. Think of it as a mailbox waiting for a letter that is, itself, a pipeline.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Err (chan error)&lt;/code&gt;: A channel to send fatal errors or cancellation signals.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ClientConnected (chan struct{})&lt;/code&gt;: A signal to indicate the client is ready to receive the stream.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;State&lt;/code&gt;: Set to &lt;code&gt;types.StateQueued&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Enqueueing:&lt;/strong&gt; The request details (ID, question, user) are wrapped in &lt;code&gt;types.SubmitRequestArgs&lt;/code&gt; and placed into the &lt;code&gt;requestQueue&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Immediate Return:&lt;/strong&gt; The function immediately returns the &lt;code&gt;requestID&lt;/code&gt; (&amp;ldquo;req_f4a12&amp;rdquo;) to the client. The client now holds this ID and will use it to ask for the results.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The request is now waiting in a line, like a customer at a bank teller.&lt;/p&gt;
+&lt;h4 id=&#34;act-ii-the-preparation-prepareworkermanager--requestpreparer&#34;&gt;Act II: The Preparation (&lt;code&gt;prepareWorkerManager&lt;/code&gt; &amp;amp; &lt;code&gt;RequestPreparer&lt;/code&gt;)
+&lt;/h4&gt;&lt;p&gt;This is where the system&amp;rsquo;s &amp;ldquo;brain&amp;rdquo; makes its decision.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Dequeueing:&lt;/strong&gt; A &lt;code&gt;prepareWorker&lt;/code&gt; goroutine, managed by &lt;code&gt;prepareWorkerManager&lt;/code&gt;, picks up &lt;code&gt;req_f4a12&lt;/code&gt; from the &lt;code&gt;requestQueue&lt;/code&gt;. It acquires a slot from the &lt;code&gt;prepareSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;State Update:&lt;/strong&gt; The request&amp;rsquo;s state is updated from &lt;code&gt;StateQueued&lt;/code&gt; to &lt;code&gt;StateProcessing&lt;/code&gt;. A cancellable context is created and its &lt;code&gt;cancelFunc&lt;/code&gt; is stored in &lt;code&gt;cancellableStreams[&amp;quot;req_f4a12&amp;quot;]&lt;/code&gt;, linking the request ID to a &amp;ldquo;stop&amp;rdquo; button.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Calling the Preparer:&lt;/strong&gt; The worker calls &lt;code&gt;preparer.Prepare(..., req_f4a12, ...)&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Inside the Preparer (&lt;code&gt;doExpensivePreparation&lt;/code&gt;)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;It checks for a Redis cache entry based on the conversation history and question. It&amp;rsquo;s a &lt;code&gt;miss&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It calls &lt;code&gt;toolcore.SelectAndPrepareTools&lt;/code&gt;. This is the pivotal moment.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Critical Decision (&lt;code&gt;SelectAndPrepareTools&lt;/code&gt;)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;The function assembles a prompt for the LLM that includes the tool descriptions and the user&amp;rsquo;s question.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;frequently_asked&lt;/code&gt; tool has a very specific description: &lt;code&gt;This is the primary tool for answering all user questions that seek knowledge, definitions, explanations, or guidance... Use this tool for any of the following: ... How-to guides for using Tuntun Sekuritas products.&lt;/code&gt; It even has an instruction to translate informal queries into formal ones.&lt;/li&gt;
+&lt;li&gt;The LLM analyzes &amp;ldquo;how to register in tuntun?&amp;rdquo; and sees a perfect match. It decides to call the &lt;code&gt;frequently_asked&lt;/code&gt; tool. It also formalizes the query.&lt;/li&gt;
+&lt;li&gt;The LLM&amp;rsquo;s response is a single tool call: &lt;code&gt;frequently_asked(query=&amp;quot;how to register on the Tuntun application&amp;quot;)&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;The code in &lt;code&gt;SelectAndPrepareTools&lt;/code&gt; checks this result. It sees:
+&lt;ul&gt;
+&lt;li&gt;There is only one tool call.&lt;/li&gt;
+&lt;li&gt;The tool&amp;rsquo;s name, &lt;code&gt;frequently_asked&lt;/code&gt;, is listed in the &lt;code&gt;config.AppSettings.NaturalAnswerTools&lt;/code&gt; array.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Flag is Set:&lt;/strong&gt; Because both conditions are met, it returns a &lt;code&gt;tooltypes.ToolPreparationResult&lt;/code&gt; with &lt;code&gt;IsDirectStream: true&lt;/code&gt;. It does &lt;em&gt;not&lt;/em&gt; execute the tool here. It simply flags this request for the direct streaming path.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Back to the Manager:&lt;/strong&gt; The &lt;code&gt;prepareWorker&lt;/code&gt; receives the &lt;code&gt;PreparedRequestData&lt;/code&gt; with &lt;code&gt;IsDirectStream: true&lt;/code&gt;. It puts this prepared data onto the &lt;code&gt;preparedQueue&lt;/code&gt;, ready for the next stage.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The system has now decided: &amp;ldquo;This doesn&amp;rsquo;t need complex reasoning. I will connect the user directly to the knowledge base.&amp;rdquo;&lt;/p&gt;
+&lt;h4 id=&#34;act-iii-the-execution-streamworkermanager--responsestreamer&#34;&gt;Act III: The Execution (&lt;code&gt;streamWorkerManager&lt;/code&gt; &amp;amp; &lt;code&gt;ResponseStreamer&lt;/code&gt;)
+&lt;/h4&gt;&lt;p&gt;This is where the direct RAG streaming path is executed and where the channels play their intricate dance.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Dequeueing for Streaming:&lt;/strong&gt; A &lt;code&gt;streamWorker&lt;/code&gt; goroutine picks up the prepared data for &lt;code&gt;req_f4a12&lt;/code&gt; from the &lt;code&gt;preparedQueue&lt;/code&gt;. It acquires a slot from the &lt;code&gt;llmStreamSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Locating the Holder:&lt;/strong&gt; It finds the original &lt;code&gt;RequestStream&lt;/code&gt; holder using the &lt;code&gt;requestID&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Calling the Streamer:&lt;/strong&gt; It calls &lt;code&gt;s.streamer.Stream(streamChan, preparedData, ...)&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Inside the Streamer (&lt;code&gt;runDirectToolStream&lt;/code&gt;)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;The &lt;code&gt;Stream&lt;/code&gt; method sees &lt;code&gt;IsDirectStream&lt;/code&gt; is true and immediately calls &lt;code&gt;runDirectToolStream&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It finds the &lt;code&gt;frequently_asked&lt;/code&gt; tool&amp;rsquo;s definition in &lt;code&gt;availableTools&lt;/code&gt;. This &lt;code&gt;DynamicTool&lt;/code&gt; struct contains a &lt;code&gt;StreamExecutor&lt;/code&gt; field pointing to &lt;code&gt;toolnonbe.StreamTencentFrequentlyAsked&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Tool is Called:&lt;/strong&gt; It invokes the tool&amp;rsquo;s &lt;code&gt;Stream&lt;/code&gt; method, passing it the request&amp;rsquo;s cancellable context, arguments, logger, and a &lt;em&gt;newly created internal channel&lt;/em&gt; (&lt;code&gt;internalStreamChan&lt;/code&gt;).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Inside the Tool (&lt;code&gt;StreamTencentFrequentlyAsked&lt;/code&gt;)&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;This function is now active. It makes an HTTP POST request to the Tencent RAG API, which is a Server-Sent Events (SSE) endpoint.&lt;/li&gt;
+&lt;li&gt;It starts reading the streaming response body from Tencent line-by-line.&lt;/li&gt;
+&lt;li&gt;As it receives data chunks (e.g., &lt;code&gt;data: {&amp;quot;payload&amp;quot;: {&amp;quot;content&amp;quot;: &amp;quot;To register,&amp;quot;}}&lt;/code&gt;, &lt;code&gt;data: {&amp;quot;payload&amp;quot;: {&amp;quot;content&amp;quot;: &amp;quot;To register, you must first&amp;quot;}}&lt;/code&gt;, etc.), it calculates the new text (&lt;code&gt;delta&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;For each &lt;code&gt;delta&lt;/code&gt;, it creates a &lt;code&gt;tooltypes.StreamEvent&lt;/code&gt; and &lt;strong&gt;sends it into the channel it was given (&lt;code&gt;internalStreamChan&lt;/code&gt;)&lt;/strong&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Forwarding the Stream:&lt;/strong&gt; Simultaneously, back in &lt;code&gt;runDirectToolStream&lt;/code&gt;, a &lt;code&gt;for range&lt;/code&gt; loop is listening on that same &lt;code&gt;internalStreamChan&lt;/code&gt;. As it receives events from the tool, it &lt;strong&gt;immediately forwards them to &lt;code&gt;streamChan&lt;/code&gt;&lt;/strong&gt; (the channel it received from the &lt;code&gt;streamWorkerManager&lt;/code&gt;). This acts as a simple relay.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;act-iv-the-delivery-getrequestresultstream&#34;&gt;Act IV: The Delivery (&lt;code&gt;GetRequestResultStream&lt;/code&gt;)
+&lt;/h4&gt;&lt;p&gt;While all of this is happening, the user&amp;rsquo;s client has been waiting.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Client Polls for Result:&lt;/strong&gt; The client code calls &lt;code&gt;Manager.GetRequestResultStream(&amp;quot;req_f4a12&amp;quot;)&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Waiting for the Pipe:&lt;/strong&gt; The function finds the &lt;code&gt;RequestStream&lt;/code&gt; holder for &lt;code&gt;req_f4a12&lt;/code&gt;. It blocks on the &lt;code&gt;select&lt;/code&gt; statement, specifically on &lt;code&gt;stream := &amp;lt;-streamHolder.Stream&lt;/code&gt;. It&amp;rsquo;s waiting for the &amp;ldquo;pipeline&amp;rdquo; to be delivered to its &amp;ldquo;mailbox&amp;rdquo;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Handoff:&lt;/strong&gt; In Act III, the &lt;code&gt;streamWorkerManager&lt;/code&gt; put the main &lt;code&gt;streamChan&lt;/code&gt; into the holder&amp;rsquo;s &lt;code&gt;Stream&lt;/code&gt; channel. This action unblocks &lt;code&gt;GetRequestResultStream&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Connection Complete:&lt;/strong&gt; &lt;code&gt;GetRequestResultStream&lt;/code&gt; now has the &lt;code&gt;streamChan&lt;/code&gt;—the very same one the &lt;code&gt;ResponseStreamer&lt;/code&gt; is feeding events into—and returns it to the client.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Receiving Tokens:&lt;/strong&gt; The client now has a direct line to the output. It runs a &lt;code&gt;for event := range streamChan&lt;/code&gt; loop. As the &lt;code&gt;StreamTencentFrequentlyAsked&lt;/code&gt; tool sends tokens to the &lt;code&gt;ResponseStreamer&lt;/code&gt;, which forwards them to the &lt;code&gt;streamChan&lt;/code&gt;, the client receives them in near real-time and displays them to the user.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The user sees the answer &amp;ldquo;To register, you must first download the Tuntun application from&amp;hellip;&amp;rdquo; appearing on their screen word by word.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;how-the-direct-rag-streaming-channels-work&#34;&gt;How the Direct RAG Streaming Channels Work
+&lt;/h3&gt;&lt;p&gt;This is the core of your second question. The process involves a chain of channels, like a bucket brigade, ensuring a direct, cancellable path from the RAG API to the user&amp;rsquo;s screen.&lt;/p&gt;
+&lt;p&gt;Here is a visual representation of the channel flow:&lt;/p&gt;
+&lt;div class=&#34;mermaid&#34;&gt;
+
+graph LR
+    %% Define Subgraphs for architectural layers
+    subgraph Client_Tier [&#34;Client Tier&#34;]
+        Client[Client Application]
+    end
+
+    subgraph Application_Backend [&#34;Application Backend&#34;]
+        subgraph Request_Lifecycle [&#34;The Manager&#34;]
+            Manager[&#34;Manages state for req_f4a12&#34;]
+        end
+
+        subgraph Execution_Engine [&#34;Execution Engine&#34;]
+            Streamer[&#34;Response Streamer&lt;br/&gt;Orchestrates the streaming process&#34;]
+            ToolExecutor[&#34;RAG Tool Executor&lt;br/&gt;(e.g., StreamTencentFrequentlyAsked)&#34;]
+        end
+    end
+
+    subgraph External_Services [&#34;External Services&#34;]
+        RAG_API[&#34;External RAG Service&lt;br/&gt;(Server-Sent Events Endpoint)&#34;]
+    end
+
+    %% Define Styles for clarity and elegance
+    classDef client fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px
+    classDef manager fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef executor fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px
+
+    class Client client
+    class Manager manager
+    class Streamer,ToolExecutor executor
+    class RAG_API external
+
+    %% Control Flow: Establishes the connection
+    Client -.-&gt;|&#34;1-Polls with request ID&lt;br/&gt;(GetRequestResultStream)&#34;| Manager
+    Manager -.-&gt;|&#34;2-Provides client with&lt;br/&gt;mainStreamChan for results&#34;| Client
+
+    %% Execution &amp; Data Flow: The main pipeline
+    Manager --&gt;|&#34;3-Dispatches Prepared Request&#34;| Streamer
+    Streamer --&gt;|&#34;4-Invokes Tool with a new&lt;br/&gt;internalStreamChan &amp; context&#34;| ToolExecutor
+    ToolExecutor --&gt;|&#34;5-HTTP Stream Request&#34;| RAG_API
+    RAG_API --&gt;|&#34;6-SSE Data Chunks&#34;| ToolExecutor
+    ToolExecutor --&gt;|&#34;7-Writes tooltypes.StreamEvent&lt;br/&gt;to internalStreamChan&#34;| Streamer
+    Streamer --&gt;|&#34;8-Relays events from internal to&lt;br/&gt;mainStreamChan&#34;| Client
+
+&lt;/div&gt;
+&lt;script src=&#34;https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js&#34;&gt;&lt;/script&gt;
+&lt;script&gt;
+  mermaid.initialize({ startOnLoad: true });
+&lt;/script&gt;
+
+&lt;p&gt;&lt;strong&gt;The Handoffs Explained:&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Handoff 1 (The Pipe Delivery):&lt;/strong&gt; The &lt;code&gt;streamWorkerManager&lt;/code&gt; creates the primary channel (&lt;code&gt;streamChan&lt;/code&gt;) that the client will eventually read. It places this channel &lt;em&gt;inside&lt;/em&gt; another channel (&lt;code&gt;holder.Stream&lt;/code&gt;), essentially delivering the pipe to a known location. &lt;code&gt;GetRequestResultStream&lt;/code&gt; is waiting at that location to pick it up.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Handoff 2 (The Tool Connection):&lt;/strong&gt; The &lt;code&gt;ResponseStreamer&lt;/code&gt; acts as an adapter. It can&amp;rsquo;t give &lt;code&gt;streamChan&lt;/code&gt; directly to the tool because it might need to intercept or modify events (e.g., add a &amp;ldquo;Time to First Token&amp;rdquo; event). So it creates its own &lt;code&gt;internalStreamChan&lt;/code&gt;, passes &lt;em&gt;that&lt;/em&gt; to the tool, and starts a goroutine to relay messages from &lt;code&gt;internalStreamChan&lt;/code&gt; to &lt;code&gt;streamChan&lt;/code&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Source:&lt;/strong&gt; The &lt;code&gt;StreamTencentFrequentlyAsked&lt;/code&gt; function is the ultimate source of the data. It&amp;rsquo;s blissfully unaware of the client or the manager; its only job is to read from an HTTP stream and write the parsed events into the channel it was given (&lt;code&gt;internalStreamChan&lt;/code&gt;).&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This separation of concerns makes the system robust:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The &lt;strong&gt;Manager&lt;/strong&gt; handles request lifecycle and state.&lt;/li&gt;
+&lt;li&gt;The &lt;strong&gt;Streamer&lt;/strong&gt; orchestrates &lt;em&gt;how&lt;/em&gt; a response is generated (cache, tool, or LLM).&lt;/li&gt;
+&lt;li&gt;The &lt;strong&gt;Tool&lt;/strong&gt; is an expert in one thing: getting data from its specific source and streaming it.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This layered channel approach creates a direct, efficient, and fully managed data pipeline from the external RAG service straight to the end-user.&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>

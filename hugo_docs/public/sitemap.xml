@@ -2,10 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>http://localhost:1313/agentic/docs/architectures/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/narratives/baba_yaga/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/caller_insights/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</loc>
@@ -20,7 +26,13 @@
     <loc>http://localhost:1313/agentic/docs/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/frequently_asked/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/general_go/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/general_go/go_arrow/</loc>
@@ -32,6 +44,12 @@
     <loc>http://localhost:1313/agentic/docs/architectures/jsonless/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/manager_insights/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/narratives/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/architectures/persistent_queue/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
@@ -39,6 +57,9 @@
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/architectures/prestream_deadlock/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/python_stuff/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</loc>

@@ -283,7 +283,7 @@
 <h4 id="how-to-add-a-new-tool-the-right-way">How to Add a New Tool (The Right Way)
 </h4><ol>
 <li><strong>Implement the Logic:</strong> Write the executor function, for example, a new <code>GetCompanyCompetitors</code> function in <code>toolbe</code>.</li>
-<li><strong>Define the Schema:</strong> Create the JSON schema for its arguments in <code>definitions.go</code>.</li>
+<li><strong>Define the Schema:</strong> Create the JSON schema for its arguments in <code>toolcore/schemas.go</code>.</li>
 <li><strong>Add to the Manifest:</strong> Add a new <code>DynamicTool{...}</code> struct to the <code>allTools</code> slice in <code>toolcore/definitions.go</code>, wiring up the name, description, schema, and executor function.</li>
 </ol>
 <p>That&rsquo;s it. You have extended the system&rsquo;s functionality without modifying a single line of the core engine&rsquo;s code.</p>

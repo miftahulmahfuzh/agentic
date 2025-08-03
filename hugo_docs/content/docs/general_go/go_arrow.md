@@ -132,7 +132,7 @@ One channel, multiple handles, each with different permissions depending on the 
 
 ---
 
-### Rewritten `go_arrow.md`
+### Using Arrow in Channel
 
 You're a Python programmer. Forget everything you think you know about queues. Channels are not just queues; they are a typed, synchronized communication mechanism. The `<-` operator is your weapon. Use it correctly.
 

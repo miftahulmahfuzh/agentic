@@ -309,7 +309,7 @@
 &lt;h4 id=&#34;how-to-add-a-new-tool-the-right-way&#34;&gt;How to Add a New Tool (The Right Way)
 &lt;/h4&gt;&lt;ol&gt;
 &lt;li&gt;&lt;strong&gt;Implement the Logic:&lt;/strong&gt; Write the executor function, for example, a new &lt;code&gt;GetCompanyCompetitors&lt;/code&gt; function in &lt;code&gt;toolbe&lt;/code&gt;.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Define the Schema:&lt;/strong&gt; Create the JSON schema for its arguments in &lt;code&gt;definitions.go&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Define the Schema:&lt;/strong&gt; Create the JSON schema for its arguments in &lt;code&gt;toolcore/schemas.go&lt;/code&gt;.&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;Add to the Manifest:&lt;/strong&gt; Add a new &lt;code&gt;DynamicTool{...}&lt;/code&gt; struct to the &lt;code&gt;allTools&lt;/code&gt; slice in &lt;code&gt;toolcore/definitions.go&lt;/code&gt;, wiring up the name, description, schema, and executor function.&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;That&amp;rsquo;s it. You have extended the system&amp;rsquo;s functionality without modifying a single line of the core engine&amp;rsquo;s code.&lt;/p&gt;
@@ -511,7 +511,7 @@ so why bother declaring it as &amp;rsquo;left only&amp;rsquo; arrow?&lt;/p&gt;
 &lt;/ol&gt;
 &lt;p&gt;One channel, multiple handles, each with different permissions depending on the function&amp;rsquo;s role. It&amp;rsquo;s like Nick Fury giving one agent the launch codes (send-only access) and another agent satellite surveillance (receive-only access) to the same nuclear missile. The underlying asset is the same, but the access level is role-dependent. This is not a contradiction; it is precise, type-safe design.&lt;/p&gt;
 &lt;hr&gt;
-&lt;h3 id=&#34;rewritten-go_arrowmd&#34;&gt;Rewritten &lt;code&gt;go_arrow.md&lt;/code&gt;
+&lt;h3 id=&#34;using-arrow-in-channel&#34;&gt;Using Arrow in Channel
 &lt;/h3&gt;&lt;p&gt;You&amp;rsquo;re a Python programmer. Forget everything you think you know about queues. Channels are not just queues; they are a typed, synchronized communication mechanism. The &lt;code&gt;&amp;lt;-&lt;/code&gt; operator is your weapon. Use it correctly.&lt;/p&gt;
 &lt;h3 id=&#34;1-sending-and-receiving-the-basics&#34;&gt;1. Sending and Receiving: The Basics
 &lt;/h3&gt;&lt;ul&gt;

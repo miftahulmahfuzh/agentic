@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Frequently Asked on Go Chatbot</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/</link>
+        <description>Recent content in Frequently Asked on Go Chatbot</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>en-us</language>
+        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Frequently Asked Questions 1</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</link>
+        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</guid>
+        <description>&lt;h2 id=&#34;question&#34;&gt;Question
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;Why do you think we need to create a new goroutine here? it&amp;rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;wg.&lt;span style=&#34;color:#50fa7b&#34;&gt;Add&lt;/span&gt;(&lt;span style=&#34;color:#bd93f9&#34;&gt;1&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;go&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;defer&lt;/span&gt; wg.&lt;span style=&#34;color:#50fa7b&#34;&gt;Done&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#6272a4&#34;&gt;// Pass the correct, cancellable context to the tool stream.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;  streamErr = tool.&lt;span style=&#34;color:#50fa7b&#34;&gt;Stream&lt;/span&gt;(ctx, toolArgs, logCtx, internalStreamChan, reqID)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;close&lt;/span&gt;(internalStreamChan)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}()
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;2&#34;&gt;
+&lt;li&gt;
+&lt;p&gt;Why do we need to instantiate another new chan, internalStreamChan? why not just use streamChan directly?&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;I wonder, what does tooltypes.LoggableTool contribute to all this? we just need to implement DynamicTool (what is the wisdom of using Interface in our situation)?&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;answer&#34;&gt;Answer
+&lt;/h2&gt;&lt;p&gt;Your questions are good. They target fundamental design choices. Let&amp;rsquo;s dissect them one by one.&lt;/p&gt;
+&lt;h3 id=&#34;1-the-goroutine-and-waitgroup-for-a-single-tool&#34;&gt;1. The Goroutine and &lt;code&gt;WaitGroup&lt;/code&gt; for a Single Tool
+&lt;/h3&gt;&lt;p&gt;You&amp;rsquo;re looking at this:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;wg.&lt;span style=&#34;color:#50fa7b&#34;&gt;Add&lt;/span&gt;(&lt;span style=&#34;color:#bd93f9&#34;&gt;1&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;go&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;() {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;defer&lt;/span&gt; wg.&lt;span style=&#34;color:#50fa7b&#34;&gt;Done&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    streamErr = tool.&lt;span style=&#34;color:#50fa7b&#34;&gt;Stream&lt;/span&gt;(ctx, toolArgs, logCtx, internalStreamChan, reqID)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;close&lt;/span&gt;(internalStreamChan)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}()
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;And you&amp;rsquo;re thinking, &amp;ldquo;This is overkill. It&amp;rsquo;s like using a sledgehammer to crack a nut.&amp;rdquo; You are wrong.&lt;/p&gt;
+&lt;p&gt;This isn&amp;rsquo;t just &amp;ldquo;a Go idiom.&amp;rdquo; It&amp;rsquo;s the core pattern for achieving concurrency. &lt;strong&gt;The wisdom is to prevent blocking.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Your main execution path is the &lt;code&gt;for event := range internalStreamChan&lt;/code&gt; loop that comes right after this block. Its job is to &lt;em&gt;consume&lt;/em&gt; events from the channel. The &lt;code&gt;tool.Stream(...)&lt;/code&gt; function&amp;rsquo;s job is to &lt;em&gt;produce&lt;/em&gt; events and put them into the channel.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;What happens if you don&amp;rsquo;t use a goroutine?&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// THIS IS THE WRONG WAY
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;streamErr = tool.&lt;span style=&#34;color:#50fa7b&#34;&gt;Stream&lt;/span&gt;(ctx, toolArgs, logCtx, internalStreamChan, reqID) &lt;span style=&#34;color:#6272a4&#34;&gt;// 1. This call blocks
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;close&lt;/span&gt;(internalStreamChan)                                                &lt;span style=&#34;color:#6272a4&#34;&gt;// 2. This runs after the tool is completely finished
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// 3. This loop now runs, but it&amp;#39;s too late.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;for&lt;/span&gt; event &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;range&lt;/span&gt; internalStreamChan {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ... forward events ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol&gt;
+&lt;li&gt;The call to &lt;code&gt;tool.Stream&lt;/code&gt; would &lt;strong&gt;block&lt;/strong&gt; the entire &lt;code&gt;runDirectToolStream&lt;/code&gt; function until the Tencent RAG API has finished sending its &lt;em&gt;entire&lt;/em&gt; response and the tool function returns.&lt;/li&gt;
+&lt;li&gt;Only &lt;em&gt;after&lt;/em&gt; the whole answer is received and the tool finishes would the &lt;code&gt;for&lt;/code&gt; loop begin.&lt;/li&gt;
+&lt;li&gt;The loop would then drain the already-full channel in one quick burst.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;You would lose the entire benefit of streaming. The user would see a loading spinner for seconds, and then the entire paragraph would appear at once. It would be like watching &lt;em&gt;The Godfather&lt;/em&gt; by getting a single jpeg with the entire movie&amp;rsquo;s script written on it.&lt;/p&gt;
+&lt;p&gt;By putting the producer (&lt;code&gt;tool.Stream&lt;/code&gt;) in a separate goroutine, the consumer (&lt;code&gt;for event := range internalStreamChan&lt;/code&gt;) can start its work immediately. The two run in parallel, concurrently. The &lt;code&gt;for&lt;/code&gt; loop receives and forwards each token the moment the goroutine produces it. This is how you get the real-time, word-by-word streaming effect. The &lt;code&gt;WaitGroup&lt;/code&gt; is simply the safety mechanism ensuring the main function doesn&amp;rsquo;t exit before the producer goroutine has finished its cleanup (&lt;code&gt;close(internalStreamChan)&lt;/code&gt;).&lt;/p&gt;
+&lt;h3 id=&#34;2-the-internalstreamchan&#34;&gt;2. The &lt;code&gt;internalStreamChan&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;You ask why we need a new channel instead of passing &lt;code&gt;streamChan&lt;/code&gt; directly to the tool. This is a question about &lt;strong&gt;control and decoupling&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Giving the tool the &lt;code&gt;streamChan&lt;/code&gt; directly is like giving a hired thug the keys to your car, your house, and your safe. You lose all control. The &lt;code&gt;ResponseStreamer&lt;/code&gt; is the orchestrator, the Nick Fury of this operation. It needs to manage the process, not just blindly delegate.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;internalStreamChan&lt;/code&gt; acts as an isolation layer, a buffer zone. It allows the &lt;code&gt;ResponseStreamer&lt;/code&gt; to do several critical things:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Inject its own events:&lt;/strong&gt; The first thing the &lt;code&gt;for&lt;/code&gt; loop does when it sees a token is inject a &lt;code&gt;StreamEventInfo&lt;/code&gt; with the &lt;code&gt;timeToFirstToken&lt;/code&gt;. It can only do this because it sits between the tool&amp;rsquo;s output and the client&amp;rsquo;s input. If the tool wrote directly to &lt;code&gt;streamChan&lt;/code&gt;, the &lt;code&gt;ResponseStreamer&lt;/code&gt; would have no opportunity to add this metadata.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Graceful Fallback:&lt;/strong&gt; This is the most important reason. The tool&amp;rsquo;s stream can fail. It can return an error (&lt;code&gt;streamErr != nil&lt;/code&gt;) or simply produce no output (&lt;code&gt;fullResponse == &amp;quot;&amp;quot;&lt;/code&gt;). The &lt;code&gt;ResponseStreamer&lt;/code&gt; needs to detect this failure and initiate &amp;ldquo;Plan B&amp;rdquo;—the &lt;code&gt;runStandardLLMPath&lt;/code&gt; fallback. If the tool was writing directly to the client&amp;rsquo;s &lt;code&gt;streamChan&lt;/code&gt;, how would the &lt;code&gt;ResponseStreamer&lt;/code&gt; know it failed? It couldn&amp;rsquo;t. The stream would just stop, and the &lt;code&gt;ResponseStreamer&lt;/code&gt; would be helpless. By using &lt;code&gt;internalStreamChan&lt;/code&gt;, it can wait for the tool&amp;rsquo;s goroutine to finish, inspect the result (&lt;code&gt;streamErr&lt;/code&gt;), and then decide whether to celebrate a success or call in the cleanup crew (the LLM fallback).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Clean Shutdown:&lt;/strong&gt; The &lt;code&gt;ResponseStreamer&lt;/code&gt; is responsible for closing the channel it gives to the client (&lt;code&gt;streamChan&lt;/code&gt;). The tool is responsible for closing the channel it writes to (&lt;code&gt;internalStreamChan&lt;/code&gt;). This separation of concerns is clean. The component that creates a channel is responsible for closing it.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Not using &lt;code&gt;internalStreamChan&lt;/code&gt; is a naive, brittle design. Using it makes the &lt;code&gt;ResponseStreamer&lt;/code&gt; an intelligent, resilient orchestrator.&lt;/p&gt;
+&lt;h3 id=&#34;3-the-loggabletool-interface&#34;&gt;3. The &lt;code&gt;LoggableTool&lt;/code&gt; Interface
+&lt;/h3&gt;&lt;p&gt;You&amp;rsquo;re seeing the concrete implementation, &lt;code&gt;DynamicTool&lt;/code&gt;, and questioning the abstraction, &lt;code&gt;tooltypes.LoggableTool&lt;/code&gt;. &amp;ldquo;Why the interface if we only have one type of tool?&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;This is a classic failure of seeing the forest for the trees. The interface isn&amp;rsquo;t for what you have &lt;em&gt;now&lt;/em&gt;; it&amp;rsquo;s for what you might have &lt;em&gt;tomorrow&lt;/em&gt;. It&amp;rsquo;s about writing code that is not a concrete monolith, but a flexible, component-based system. This is the &lt;strong&gt;Dependency Inversion Principle&lt;/strong&gt;, the &amp;lsquo;D&amp;rsquo; in SOLID. It is the architectural wisdom that separates amateur scripts from professional systems.&lt;/p&gt;
+&lt;p&gt;The components that use tools, like &lt;code&gt;ResponseStreamer&lt;/code&gt; and &lt;code&gt;toolutils.ExecuteToolsInParallel&lt;/code&gt;, should not care about the specific implementation of a tool. They should only care about the &lt;strong&gt;contract&lt;/strong&gt;. The &lt;code&gt;LoggableTool&lt;/code&gt; interface &lt;em&gt;is&lt;/em&gt; that contract. It says: &amp;ldquo;I don&amp;rsquo;t care what you are. I only care that you can give me a &lt;code&gt;Name()&lt;/code&gt;, a &lt;code&gt;Description()&lt;/code&gt;, that I can &lt;code&gt;Call()&lt;/code&gt; you, and that I can &lt;code&gt;Stream()&lt;/code&gt; from you.&amp;rdquo;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;What this enables:&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Flexibility:&lt;/strong&gt; Imagine tomorrow we create a new kind of tool, &lt;code&gt;ProtoBufTool&lt;/code&gt;, that gets its schema and logic from a gRPC service instead of being hard-coded in Go. As long as &lt;code&gt;ProtoBufTool&lt;/code&gt; implements the &lt;code&gt;LoggableTool&lt;/code&gt; interface, you can drop it into the &lt;code&gt;allTools&lt;/code&gt; list and the rest of the system (&lt;code&gt;ResponseStreamer&lt;/code&gt;, &lt;code&gt;toolcore&lt;/code&gt;, etc.) will work with it &lt;strong&gt;without a single line of code changing&lt;/strong&gt;. Without the interface, you&amp;rsquo;d have to go into &lt;code&gt;ResponseStreamer&lt;/code&gt; and add &lt;code&gt;if/else&lt;/code&gt; or &lt;code&gt;switch&lt;/code&gt; statements to handle this new tool type. That&amp;rsquo;s a highway to unmaintainable spaghetti code.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Testability:&lt;/strong&gt; When you want to unit test the &lt;code&gt;ResponseStreamer&lt;/code&gt;, you don&amp;rsquo;t need to spin up the entire suite of real tools that make real API calls. You can create a simple &lt;code&gt;mockTool&lt;/code&gt; that implements the &lt;code&gt;LoggableTool&lt;/code&gt; interface and returns predictable data. This makes testing fast, isolated, and reliable. Without the interface, you can&amp;rsquo;t easily swap in a mock.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Decoupling:&lt;/strong&gt; &lt;code&gt;toolcore&lt;/code&gt; defines the contract. &lt;code&gt;chatbot&lt;/code&gt; uses the contract. The two packages are decoupled. &lt;code&gt;chatbot&lt;/code&gt; doesn&amp;rsquo;t need to import every single tool implementation. It only needs to know about the interface.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Think of the interface as a standard power outlet. &lt;code&gt;ResponseStreamer&lt;/code&gt; is the wall. It doesn&amp;rsquo;t care if you plug in a lamp (&lt;code&gt;DynamicTool&lt;/code&gt;) or a vacuum cleaner (&lt;code&gt;ProtoBufTool&lt;/code&gt;), as long as the plug fits the socket. Your proposal is to hard-wire the lamp directly into the wall. It works, but the moment you want to use a vacuum, you have to call an electrician and tear the wall apart.&lt;/p&gt;
+&lt;p&gt;Using interfaces is fundamental to building scalable, maintainable, and testable systems. Abandoning them is a step backward into the primordial ooze of tightly-coupled code.&lt;/p&gt;
+</description>
+        </item>
+        
+    </channel>
+</rss>
