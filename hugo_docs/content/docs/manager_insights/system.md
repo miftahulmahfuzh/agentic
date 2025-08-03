@@ -14,7 +14,7 @@ This document outlines the architecture of a high-throughput, asynchronous Large
 
 #### **II. Component Breakdown**
 
-##### **A. Gateway & Web Layer (`main.go`)**
+#### **II.A. Gateway & Web Layer (`main.go`)**
 
 The `main.go` file serves as the system's entry point and primary interface to the outside world. It is not merely a server; it is the gatekeeper.
 
@@ -23,7 +23,7 @@ The `main.go` file serves as the system's entry point and primary interface to t
     *   **API Routing (Gin):** Establishes all HTTP endpoints. It intelligently segregates public endpoints (e.g., `/chat/stream/:request_id` for Server-Sent Events) from protected endpoints (`/chat/*`) which require API key authentication via middleware.
     *   **Request Handling:** Contains the HTTP handler functions that act as a liaison between raw network requests and the core engine. These handlers are responsible for request validation, data binding, and invoking the appropriate methods on the `chatbot.Manager`. They are the bouncers at the club door, checking IDs before letting anyone into the main room.
 
-##### **B. Core Processing Engine (`chatbot/manager.go`, `chatbot/preparer.go`, `chatbot/streamer.go`)**
+#### **II.B. Core Processing Engine (`chatbot/manager.go`, `chatbot/preparer.go`, `chatbot/streamer.go`)**
 
 This is the system's engine room and central nervous system, architected as a non-blocking pipeline. The `Manager` is the director, the `Preparer` is the logistics officer, and the `Streamer` is the special operations unit. It's the Nick Fury of this operation, assembling the team but not throwing every punch.
 
@@ -52,7 +52,7 @@ This is the system's engine room and central nervous system, architected as a no
         3.  **Response Caching:** Upon successful generation, it populates the Redis cache (unless the query involved time-sensitive tools).
         4.  **Logging:** Persists the final transaction record to the database (`ArangoDB`).
 
-##### **C. Client-Side Interface (`frontend/app.js`)**
+#### **II.C. Client-Side Interface (`frontend/app.js`)**
 
 The `ChatApp` class within `app.js` encapsulates all client-side logic. It is a stateful application responsible for interacting with the backend API and rendering a dynamic user experience.
 

@@ -105,8 +105,8 @@
 &lt;/h4&gt;&lt;p&gt;This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering. This architecture explicitly separates inexpensive preparation tasks from resource-intensive LLM generation, enabling concurrent handling of numerous requests while strictly governing access to the LLM.&lt;/p&gt;
 &lt;hr&gt;
 &lt;h4 id=&#34;ii-component-breakdown&#34;&gt;&lt;strong&gt;II. Component Breakdown&lt;/strong&gt;
-&lt;/h4&gt;&lt;h5 id=&#34;a-gateway--web-layer-maingo&#34;&gt;&lt;strong&gt;A. Gateway &amp;amp; Web Layer (&lt;code&gt;main.go&lt;/code&gt;)&lt;/strong&gt;
-&lt;/h5&gt;&lt;p&gt;The &lt;code&gt;main.go&lt;/code&gt; file serves as the system&amp;rsquo;s entry point and primary interface to the outside world. It is not merely a server; it is the gatekeeper.&lt;/p&gt;
+&lt;/h4&gt;&lt;h4 id=&#34;iia-gateway--web-layer-maingo&#34;&gt;&lt;strong&gt;II.A. Gateway &amp;amp; Web Layer (&lt;code&gt;main.go&lt;/code&gt;)&lt;/strong&gt;
+&lt;/h4&gt;&lt;p&gt;The &lt;code&gt;main.go&lt;/code&gt; file serves as the system&amp;rsquo;s entry point and primary interface to the outside world. It is not merely a server; it is the gatekeeper.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Responsibilities:&lt;/strong&gt;
 &lt;ul&gt;
@@ -116,8 +116,8 @@
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;h5 id=&#34;b-core-processing-engine-chatbotmanagergo-chatbotpreparergo-chatbotstreamergo&#34;&gt;&lt;strong&gt;B. Core Processing Engine (&lt;code&gt;chatbot/manager.go&lt;/code&gt;, &lt;code&gt;chatbot/preparer.go&lt;/code&gt;, &lt;code&gt;chatbot/streamer.go&lt;/code&gt;)&lt;/strong&gt;
-&lt;/h5&gt;&lt;p&gt;This is the system&amp;rsquo;s engine room and central nervous system, architected as a non-blocking pipeline. The &lt;code&gt;Manager&lt;/code&gt; is the director, the &lt;code&gt;Preparer&lt;/code&gt; is the logistics officer, and the &lt;code&gt;Streamer&lt;/code&gt; is the special operations unit. It&amp;rsquo;s the Nick Fury of this operation, assembling the team but not throwing every punch.&lt;/p&gt;
+&lt;h4 id=&#34;iib-core-processing-engine-chatbotmanagergo-chatbotpreparergo-chatbotstreamergo&#34;&gt;&lt;strong&gt;II.B. Core Processing Engine (&lt;code&gt;chatbot/manager.go&lt;/code&gt;, &lt;code&gt;chatbot/preparer.go&lt;/code&gt;, &lt;code&gt;chatbot/streamer.go&lt;/code&gt;)&lt;/strong&gt;
+&lt;/h4&gt;&lt;p&gt;This is the system&amp;rsquo;s engine room and central nervous system, architected as a non-blocking pipeline. The &lt;code&gt;Manager&lt;/code&gt; is the director, the &lt;code&gt;Preparer&lt;/code&gt; is the logistics officer, and the &lt;code&gt;Streamer&lt;/code&gt; is the special operations unit. It&amp;rsquo;s the Nick Fury of this operation, assembling the team but not throwing every punch.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;&lt;code&gt;Manager&lt;/code&gt;:&lt;/strong&gt; The central orchestrator.&lt;/p&gt;
@@ -160,8 +160,8 @@
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;h5 id=&#34;c-client-side-interface-frontendappjs&#34;&gt;&lt;strong&gt;C. Client-Side Interface (&lt;code&gt;frontend/app.js&lt;/code&gt;)&lt;/strong&gt;
-&lt;/h5&gt;&lt;p&gt;The &lt;code&gt;ChatApp&lt;/code&gt; class within &lt;code&gt;app.js&lt;/code&gt; encapsulates all client-side logic. It is a stateful application responsible for interacting with the backend API and rendering a dynamic user experience.&lt;/p&gt;
+&lt;h4 id=&#34;iic-client-side-interface-frontendappjs&#34;&gt;&lt;strong&gt;II.C. Client-Side Interface (&lt;code&gt;frontend/app.js&lt;/code&gt;)&lt;/strong&gt;
+&lt;/h4&gt;&lt;p&gt;The &lt;code&gt;ChatApp&lt;/code&gt; class within &lt;code&gt;app.js&lt;/code&gt; encapsulates all client-side logic. It is a stateful application responsible for interacting with the backend API and rendering a dynamic user experience.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Responsibilities:&lt;/strong&gt;
 &lt;ul&gt;

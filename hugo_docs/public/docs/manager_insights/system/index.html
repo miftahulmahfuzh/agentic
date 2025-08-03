@@ -206,8 +206,8 @@
 </h4><p>This document outlines the architecture of a high-throughput, asynchronous Large Language Model (LLM) chatbot system. The core design is a decoupled, two-stage processing pipeline engineered to maximize resource utilization, ensure system stability under load, and maintain a responsive user experience. The system comprises three primary components: a web gateway for API and client interaction, a sophisticated core processing engine for managing the request lifecycle, and a dynamic client-side interface for user interaction and real-time data rendering. This architecture explicitly separates inexpensive preparation tasks from resource-intensive LLM generation, enabling concurrent handling of numerous requests while strictly governing access to the LLM.</p>
 <hr>
 <h4 id="ii-component-breakdown"><strong>II. Component Breakdown</strong>
-</h4><h5 id="a-gateway--web-layer-maingo"><strong>A. Gateway &amp; Web Layer (<code>main.go</code>)</strong>
-</h5><p>The <code>main.go</code> file serves as the system&rsquo;s entry point and primary interface to the outside world. It is not merely a server; it is the gatekeeper.</p>
+</h4><h4 id="iia-gateway--web-layer-maingo"><strong>II.A. Gateway &amp; Web Layer (<code>main.go</code>)</strong>
+</h4><p>The <code>main.go</code> file serves as the system&rsquo;s entry point and primary interface to the outside world. It is not merely a server; it is the gatekeeper.</p>
 <ul>
 <li><strong>Responsibilities:</strong>
 <ul>
@@ -217,8 +217,8 @@
 </ul>
 </li>
 </ul>
-<h5 id="b-core-processing-engine-chatbotmanagergo-chatbotpreparergo-chatbotstreamergo"><strong>B. Core Processing Engine (<code>chatbot/manager.go</code>, <code>chatbot/preparer.go</code>, <code>chatbot/streamer.go</code>)</strong>
-</h5><p>This is the system&rsquo;s engine room and central nervous system, architected as a non-blocking pipeline. The <code>Manager</code> is the director, the <code>Preparer</code> is the logistics officer, and the <code>Streamer</code> is the special operations unit. It&rsquo;s the Nick Fury of this operation, assembling the team but not throwing every punch.</p>
+<h4 id="iib-core-processing-engine-chatbotmanagergo-chatbotpreparergo-chatbotstreamergo"><strong>II.B. Core Processing Engine (<code>chatbot/manager.go</code>, <code>chatbot/preparer.go</code>, <code>chatbot/streamer.go</code>)</strong>
+</h4><p>This is the system&rsquo;s engine room and central nervous system, architected as a non-blocking pipeline. The <code>Manager</code> is the director, the <code>Preparer</code> is the logistics officer, and the <code>Streamer</code> is the special operations unit. It&rsquo;s the Nick Fury of this operation, assembling the team but not throwing every punch.</p>
 <ul>
 <li>
 <p><strong><code>Manager</code>:</strong> The central orchestrator.</p>
@@ -261,8 +261,8 @@
 </ul>
 </li>
 </ul>
-<h5 id="c-client-side-interface-frontendappjs"><strong>C. Client-Side Interface (<code>frontend/app.js</code>)</strong>
-</h5><p>The <code>ChatApp</code> class within <code>app.js</code> encapsulates all client-side logic. It is a stateful application responsible for interacting with the backend API and rendering a dynamic user experience.</p>
+<h4 id="iic-client-side-interface-frontendappjs"><strong>II.C. Client-Side Interface (<code>frontend/app.js</code>)</strong>
+</h4><p>The <code>ChatApp</code> class within <code>app.js</code> encapsulates all client-side logic. It is a stateful application responsible for interacting with the backend API and rendering a dynamic user experience.</p>
 <ul>
 <li><strong>Responsibilities:</strong>
 <ul>
