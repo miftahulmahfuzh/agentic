@@ -443,7 +443,6 @@ TENCENT_RAG_BOT_APP_KEY=...
         </div>
       </section>
 
-      <!-- START: Updated Section -->
       <section id="usage">
         <div class="expandable-section">
           <div class="section-header" onclick="toggleSection(this)">
@@ -458,10 +457,12 @@ TENCENT_RAG_BOT_APP_KEY=...
                 The server starts on the configured host and port (default <code>http://localhost:8080</code>).
               </p>
 
+              <hr>
+
               <h4>Advanced Concurrency Testing</h4>
               <p>These scripts in the <code>cmd/</code> directory allow you to validate the system's core concurrency and resilience models.</p>
 
-              <h5>1. Testing General Throughput (<code>test_concurrency</code>)</h5>
+              <h4>1. Testing General Throughput (<code>test_concurrency</code>)</h5>
               <p>This script validates that the server can handle many <em>different</em> requests in parallel, testing the capacity of the worker pools.</p>
               <ol>
                 <li>
@@ -474,7 +475,7 @@ go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
                 </li>
               </ol>
 
-              <h5>2. Testing Single-Flight Protection (<code>test_single_flight</code>)</h5>
+              <h4>2. Testing Single-Flight Protection (<code>test_single_flight</code>)</h5>
               <p>This script validates the "thundering herd" protection by sending many <em>identical</em> requests simultaneously.</p>
               <ol>
                 <li>
@@ -490,9 +491,13 @@ go run ./cmd/test_single_flight -n 10</code></pre>
                 </li>
               </ol>
 
+              <hr>
+
               <h4>Running Standard Tests</h4>
               <p>To run all unit and integration tests:</p>
               <pre><code>go test -v ./...</code></pre>
+
+              <hr>
 
               <h4>Running Endpoint Health Checks</h4>
               <p>To diagnose external API connections without running the full test suite:</p>
@@ -505,7 +510,6 @@ go run ./cmd/test_single_flight -n 10</code></pre>
           </div>
         </div>
       </section>
-      <!-- END: Updated Section -->
 
       <section id="development">
         <div class="expandable-section">
