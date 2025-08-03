@@ -443,6 +443,7 @@ TENCENT_RAG_BOT_APP_KEY=...
         </div>
       </section>
 
+      <!-- START: Updated Section -->
       <section id="usage">
         <div class="expandable-section">
           <div class="section-header" onclick="toggleSection(this)">
@@ -454,27 +455,57 @@ TENCENT_RAG_BOT_APP_KEY=...
               <h4>Running the Application</h4>
               <pre><code>go run main.go</code></pre>
               <p>
-                The server starts on the configured host and port (default
-                <code>http://localhost:8080</code>).
+                The server starts on the configured host and port (default <code>http://localhost:8080</code>).
               </p>
 
               <h4>Advanced Concurrency Testing</h4>
-              <p><strong>1. Testing General Throughput:</strong></p>
-              <pre><code>go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
+              <p>These scripts in the <code>cmd/</code> directory allow you to validate the system's core concurrency and resilience models.</p>
 
-              <p><strong>2. Testing Single-Flight Protection:</strong></p>
-              <pre><code>go run ./cmd/test_single_flight -n 10</code></pre>
+              <h5>1. Testing General Throughput (<code>test_concurrency</code>)</h5>
+              <p>This script validates that the server can handle many <em>different</em> requests in parallel, testing the capacity of the worker pools.</p>
+              <ol>
+                <li>
+                  <strong>Run the test:</strong>
+                  <pre><code># Usage: go run ./cmd/test_concurrency -n <num_requests> -w <server_workers>
+go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
+                </li>
+                <li>
+                  <strong>Analyze results:</strong> The script generates an Excel file like <code>test_results/parallel_test_r20_w10.xlsx</code>. Check that all requests completed and the Time-To-First-Token (TTF) values are reasonable.
+                </li>
+              </ol>
+
+              <h5>2. Testing Single-Flight Protection (<code>test_single_flight</code>)</h5>
+              <p>This script validates the "thundering herd" protection by sending many <em>identical</em> requests simultaneously.</p>
+              <ol>
+                <li>
+                  <strong>(Optional but Recommended)</strong> Clear the relevant Redis cache key before testing to ensure you are not just hitting the cache.
+                </li>
+                <li>
+                  <strong>Run the test:</strong>
+                   <pre><code># Usage: go run ./cmd/test_single_flight -n <num_requests>
+go run ./cmd/test_single_flight -n 10</code></pre>
+                  <p>
+                    <strong>CRITICAL:</strong> The proof is in the <strong>server logs</strong> (viewable in Grafana/Loki or via <code>docker-compose logs chatbot-app</code>). Look for one "leader" request performing the full preparation, while all other "follower" requests share its result, indicated by the <code>Shared result from in-flight request</code> log message.
+                  </p>
+                </li>
+              </ol>
 
               <h4>Running Standard Tests</h4>
+              <p>To run all unit and integration tests:</p>
               <pre><code>go test -v ./...</code></pre>
 
               <h4>Running Endpoint Health Checks</h4>
+              <p>To diagnose external API connections without running the full test suite:</p>
               <pre><code>chmod +x run_health_checks.sh
-./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
+./run_health_checks.sh tools/tooltest/extapi/<tool>.go</code></pre>
+              <p>For example, for testing the valuation tool external apis:</p>
+              <pre><code>./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
+              <p>All Go files inside <code>tools/tooltest/extapi</code> correlates to each tool files (inside <code>toolbe</code> and <code>toolnonbe</code> dir) and can be used for healthcheck.</p>
             </div>
           </div>
         </div>
       </section>
+      <!-- END: Updated Section -->
 
       <section id="development">
         <div class="expandable-section">
