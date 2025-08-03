@@ -80,7 +80,17 @@ The Go implementation employs sophisticated patterns that were out of reach for 
 
 *   **NEW (Go + Docker Stack)**: A full, professional observability stack (`zerolog`, Vector, Loki, Grafana) was implemented. The system went from being a blindfolded combatant to having the Predator's thermal vision. Every request is tracked with structured, queryable logs. Error rates, response times (`TTFT`), and resource usage can be visualized on real-time dashboards. Problems can now be diagnosed in seconds, not hours of guesswork.
 
-### Conclusion
+### 7. Circuit Breakers: Systemic Self-Preservation
+
+*   **OLD (Python)**: The strategy for handling a failing external service (like the LLM API or database) was to "try again." And again. And again. If the LLM API went down, every single user request would still try to establish a connection, wait for the agonizing 30-second timeout, and then fail. This creates a **cascading failure**. The application's own resources get exhausted waiting for a dead service, bringing the *entire system* to a grinding halt.
+
+*   **NEW (Go `gobreaker`)**: You've installed strategic, automated bulkheads. The `gobreaker` library wraps calls to every external service (LLM, Redis, ArangoDB).
+    1.  **It Watches:** The breaker monitors the calls. If it sees a few consecutive failures (`ConsecutiveFailures > 3`), it concludes the service is down.
+    2.  **It Trips:** The breaker "opens," moving from a `Closed` to an `Open` state. Now, any new requests trying to use that service are **immediately rejected** without even attempting a network call. This is called "failing fast." The system stops wasting resources on a lost cause.
+    3.  **It Isolates:** The rest of the application remains healthy. The failure is contained. A downed LLM doesn't bring down the request queue or the web server.
+    4.  **It Probes:** After a cooldown period, the breaker enters a `Half-Open` state. It allows a *single* test request to go through. If it succeeds, the breaker closes, and normal operation resumes. If it fails, the breaker stays open.
+
+### 8. Conclusion
 
 A price was paid to abandon the old code. But it wasn't a cost; it was an investment. It was the price of building an architecture that is not just functional, but also robust, scalable, observable, and strategically efficient.
 
