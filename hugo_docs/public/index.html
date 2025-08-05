@@ -667,7 +667,7 @@ tuntun-go-chatbot/
                         </ul>
                     `;
             break;
-            
+
           case "automated-indexing":
             popupContent = `
                         <h2>⚙️ Automated Schema & Indexing</h2>
@@ -678,7 +678,7 @@ tuntun-go-chatbot/
                         <ul>
                             <li><strong><code>idx_log_user_time</code>:</strong> A persistent index on <code>user_id</code> and <code>user_query_timestamp</code>. This makes retrieving a user's chat history (<code>GetChatHistory</code>) extremely fast, avoiding slow full-collection scans.</li>
                             <li><strong><code>idx_log_request_id</code>:</strong> A unique hash index on <code>request_id</code>. This allows for instantaneous lookups when a user submits a reaction (<code>UpdateReaction</code>), turning a slow search into a direct pointer access.</li>
-                            <li><strong><code>idx_research_stock_code</code>:</strong> A unique hash index on <code>stock_code</code>. This provides near-instant retrieval of research documents (<code>GetResearchDocByStockCode</code>), which is critical for the RAG pipeline.</li>
+<li><strong><code>idx_research_stock_code</code>:</strong> A unique hash index on <code>stock_code</code>. This provides near-instant retrieval of research documents (<code>GetResearchDocByStockCode</code>), which is critical for <strong>analyze_stock</strong> tool.</li>
                         </ul>
                         <hr>
                         <p><strong>Benefits:</strong></p>
