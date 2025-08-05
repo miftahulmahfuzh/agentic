@@ -332,6 +332,7 @@ graph TD
                 <li>Docker & Docker Compose</li>
                 <li>A configured <code>.env</code> file</li>
               </ul>
+              <hr>
 
               <h4>Running with Docker Compose (Recommended)</h4>
               <p>This is the canonical way to run the entire system:</p>
@@ -345,9 +346,10 @@ graph TD
               <ul>
                 <li>Build the Go application container</li>
                 <li>Start ArangoDB, Redis, Loki, Grafana, and Vector</li>
-                <li>Chatbot available at <code>http://localhost:8081</code></li>
+                <li>Chatbot available at <code>http://localhost:8080</code></li>
                 <li>Grafana available at <code>http://localhost:3000</code></li>
               </ul>
+              <hr>
 
               <h4>Manual Local Setup</h4>
               <ol>
@@ -382,7 +384,8 @@ graph TD
 LLM_TYPE=DEEPSEEK # Options: OPENAI, DEEPSEEK, OLLAMA
 DEEPSEEK_API_KEY=sk-your-deepseek-key
 OPENAI_API_KEY=sk-your-openai-key
-PROMPT_VERSION=v1
+PROMPT_VERSION=v1                   # System Prompt used
+TOOL_SELECTION_PROMPT_VERSION=v1    # Tool Selection Prompt used
 
 # --- Token & Output Management ---
 MAX_LLM_INPUT_TOKENS=40000          # Max tokens the LLM accepts as input.
