@@ -165,6 +165,7 @@ graph TD
                 <li><span class="popup-trigger" onclick="showPopup('token-truncation')">Targeted Token Truncation</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('context-aware-caching')">Context-Aware Caching</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('rag')">Direct Stream RAG</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('automated-indexing')">Automated Schema & Indexing</span></li>
             </ul>
           </div>
 
@@ -505,7 +506,7 @@ go run ./cmd/test_single_flight -n 10</code></pre>
               <h4>Running Endpoint Health Checks</h4>
               <p>To diagnose external API connections without running the full test suite:</p>
               <pre><code>chmod +x run_health_checks.sh
-./run_health_checks.sh tools/tooltest/extapi/&lt;tool&gt;.go</code></pre>
+./run_health_checks.sh tools/tooltest/extapi/<tool>.go</code></pre>
               <p>For example, for testing the valuation tool external apis:</p>
               <pre><code>./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
               <p>All Go files inside <code>tools/tooltest/extapi</code> correlates to each tool files (inside <code>toolbe</code> and <code>toolnonbe</code> dir) and can be used for healthcheck.</p>
@@ -662,6 +663,28 @@ tuntun-go-chatbot/
                             <li><strong>Lower Latency:</strong> Skips an entire LLM round-trip.</li>
                             <li><strong>Reduced Cost:</strong> Saves on expensive LLM synthesis API calls.</li>
                             <li><strong>Higher Fidelity:</strong> Delivers raw, unfiltered information directly from the source of truth.</li>
+                        </ul>
+                    `;
+            break;
+            
+          case "automated-indexing":
+            popupContent = `
+                        <h2>⚙️ Automated Schema & Indexing</h2>
+                        <p>On every startup, the application runs an <code>initializeSchema</code> function (in <code>db/arango.go</code>) that verifies and creates the necessary database schema. This isn't just about creating tables; its most critical role is to <strong>guarantee that performance-critical indexes exist</strong>.</p>
+                        <p>This prevents a common production issue where queries are slow after a fresh deployment because a required index is missing. The system ensures optimal performance from the very first request.</p>
+                        <hr>
+                        <p><strong>Ensured Indexes:</strong></p>
+                        <ul>
+                            <li><strong><code>idx_log_user_time</code>:</strong> A persistent index on <code>user_id</code> and <code>user_query_timestamp</code>. This makes retrieving a user's chat history (<code>GetChatHistory</code>) extremely fast, avoiding slow full-collection scans.</li>
+                            <li><strong><code>idx_log_request_id</code>:</strong> A unique hash index on <code>request_id</code>. This allows for instantaneous lookups when a user submits a reaction (<code>UpdateReaction</code>), turning a slow search into a direct pointer access.</li>
+                            <li><strong><code>idx_research_stock_code</code>:</strong> A unique hash index on <code>stock_code</code>. This provides near-instant retrieval of research documents (<code>GetResearchDocByStockCode</code>), which is critical for the RAG pipeline.</li>
+                        </ul>
+                        <hr>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li><strong>Guaranteed Performance:</strong> Queries are fast from the moment the application starts.</li>
+                            <li><strong>Deployment Safety:</strong> Prevents code from running against an un-indexed database, avoiding surprise performance bottlenecks in production.</li>
+                            <li><strong>Self-Healing:</strong> If an index is accidentally deleted, it is automatically recreated on the next restart.</li>
                         </ul>
                     `;
             break;
