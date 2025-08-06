@@ -6,8 +6,129 @@
         <description>Recent content in Frequently Asked on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
-        <title>Frequently Asked Questions 1</title>
+        <lastBuildDate>Wed, 06 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>RAG Questions Part 1</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/rag_stream_questions_pt1/</link>
+        <pubDate>Wed, 06 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/rag_stream_questions_pt1/</guid>
+        <description>&lt;h2 id=&#34;question-1&#34;&gt;Question 1
+&lt;/h2&gt;&lt;p&gt;The delta calculation seems convoluted.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;var&lt;/span&gt; delta &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; after, ok &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; strings.&lt;span style=&#34;color:#50fa7b&#34;&gt;CutPrefix&lt;/span&gt;(payload.Content, previousContent); ok {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    delta = after
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;} &lt;span style=&#34;color:#ff79c6&#34;&gt;else&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    logCtx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Warn&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Str&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;previous&amp;#34;&lt;/span&gt;, previousContent).&lt;span style=&#34;color:#50fa7b&#34;&gt;Str&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;current&amp;#34;&lt;/span&gt;, payload.Content).&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Stream content diverged, sending full payload.&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    delta = payload.Content
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;previousContent = payload.Content
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; delta &lt;span style=&#34;color:#ff79c6&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;&amp;#34;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;continue&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;How exactly does this work, and more importantly, how does it handle bizarre edge cases like repeating words or fully duplicate stream events? It seems fragile.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;answer&#34;&gt;Answer
+&lt;/h2&gt;&lt;p&gt;You&amp;rsquo;re questioning the most critical piece of the stream consumer. Your skepticism is warranted, but your conclusion that it&amp;rsquo;s fragile is wrong. This logic is a hardened solution to a common, and frankly annoying, API design pattern.&lt;/p&gt;
+&lt;h3 id=&#34;the-why-an-inefficient-api-pattern&#34;&gt;The &amp;ldquo;Why&amp;rdquo;: An Inefficient API Pattern
+&lt;/h3&gt;&lt;p&gt;First, understand the problem this code solves. The Tencent RAG API does not send &lt;em&gt;just the new characters&lt;/em&gt; (the &amp;ldquo;token&amp;rdquo;). In each event, it sends the &lt;strong&gt;entire accumulated string from the very beginning&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;It behaves like Bill Murray in &lt;em&gt;Groundhog Day&lt;/em&gt;, forced to relive the entire sentence over and over just to add one more word at the end.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Event 1: &lt;code&gt;{&amp;quot;content&amp;quot;: &amp;quot;The&amp;quot;}&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Event 2: &lt;code&gt;{&amp;quot;content&amp;quot;: &amp;quot;The answer&amp;quot;}&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Event 3: &lt;code&gt;{&amp;quot;content&amp;quot;: &amp;quot;The answer is&amp;quot;}&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;If we just forwarded &lt;code&gt;content&lt;/code&gt; to the UI, the user would see a flickering mess: &amp;ldquo;The&amp;rdquo;, then &amp;ldquo;The answer&amp;rdquo;, then &amp;ldquo;The answer is&amp;rdquo;. We need to calculate the &lt;em&gt;difference&lt;/em&gt;—the delta—to provide a smooth, word-by-word stream.&lt;/p&gt;
+&lt;h3 id=&#34;the-how-stringscutprefix&#34;&gt;The &amp;ldquo;How&amp;rdquo;: &lt;code&gt;strings.CutPrefix&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;The logic is a precise surgical tool:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;previousContent&lt;/code&gt; stores the full string from the last event.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;strings.CutPrefix(payload.Content, previousContent)&lt;/code&gt; attempts to cut the &lt;em&gt;previous&lt;/em&gt; string off the front of the &lt;em&gt;current&lt;/em&gt; string.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;If it succeeds&lt;/strong&gt; (&lt;code&gt;ok&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;), the leftover piece (&lt;code&gt;after&lt;/code&gt;) is our delta.
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;strings.CutPrefix(&amp;quot;The answer&amp;quot;, &amp;quot;The&amp;quot;)&lt;/code&gt; -&amp;gt; &lt;code&gt;ok=true&lt;/code&gt;, &lt;code&gt;after=&amp;quot; answer&amp;quot;&lt;/code&gt;. This is our delta.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;previousContent&lt;/code&gt; is then updated to the current full string, preparing it for the next event.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;scenario-1-repeating-words-eg-foxfox&#34;&gt;Scenario 1: Repeating Words (e.g., &amp;ldquo;fox&amp;hellip;fox&amp;rdquo;)
+&lt;/h3&gt;&lt;p&gt;Let&amp;rsquo;s test this against a repeating word. Does it get confused? &lt;strong&gt;No.&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;State:&lt;/strong&gt; &lt;code&gt;previousContent&lt;/code&gt; = &lt;code&gt;&amp;quot;The quick brown fox jumps&amp;quot;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Next Event:&lt;/strong&gt; &lt;code&gt;payload.Content&lt;/code&gt; = &lt;code&gt;&amp;quot;The quick brown fox jumps fox&amp;quot;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Execution:&lt;/strong&gt; &lt;code&gt;strings.CutPrefix(&amp;quot;The quick brown fox jumps fox&amp;quot;, &amp;quot;The quick brown fox jumps&amp;quot;)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Result:&lt;/strong&gt; &lt;code&gt;ok&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;, &lt;code&gt;after&lt;/code&gt; is &lt;code&gt;&amp;quot; fox&amp;quot;&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Action:&lt;/strong&gt; The delta &lt;code&gt;&amp;quot; fox&amp;quot;&lt;/code&gt; is correctly identified as new text and is sent down the channel. The logic performs perfectly.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;scenario-2-duplicate-events-stream-stutter&#34;&gt;Scenario 2: Duplicate Events (Stream &amp;ldquo;Stutter&amp;rdquo;)
+&lt;/h3&gt;&lt;p&gt;What if the API stutters and sends the exact same event twice? This is where the &lt;code&gt;if delta == &amp;quot;&amp;quot; { continue }&lt;/code&gt; shines.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;State:&lt;/strong&gt; &lt;code&gt;previousContent&lt;/code&gt; = &lt;code&gt;&amp;quot;The quick brown fox&amp;quot;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Next Event (Duplicate):&lt;/strong&gt; &lt;code&gt;payload.Content&lt;/code&gt; = &lt;code&gt;&amp;quot;The quick brown fox&amp;quot;&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Execution:&lt;/strong&gt; &lt;code&gt;strings.CutPrefix(&amp;quot;The quick brown fox&amp;quot;, &amp;quot;The quick brown fox&amp;quot;)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Result:&lt;/strong&gt; &lt;code&gt;ok&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;, but &lt;code&gt;after&lt;/code&gt; is &lt;code&gt;&amp;quot;&amp;quot;&lt;/code&gt; (an empty string).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Action:&lt;/strong&gt; &lt;code&gt;delta&lt;/code&gt; is &lt;code&gt;&amp;quot;&amp;quot;&lt;/code&gt;. The &lt;code&gt;if&lt;/code&gt; condition is met, and the &lt;code&gt;continue&lt;/code&gt; statement skips to the next iteration of the loop. &lt;strong&gt;Nothing is sent down the channel.&lt;/strong&gt; This is correct. The system identified a worthless, duplicate event and discarded it, preventing noise in the stream. It&amp;rsquo;s like seeing a glitch in the Matrix, recognizing it, and moving on without alarm.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This logic is not fragile. It&amp;rsquo;s a robust mechanism designed specifically to handle the redundancy of an accumulative streaming API while gracefully managing common network and data anomalies.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;question-2&#34;&gt;Question 2
+&lt;/h2&gt;&lt;p&gt;The code uses &lt;code&gt;for {}&lt;/code&gt; and a &lt;code&gt;select&lt;/code&gt; statement.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;for&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Done&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        logCtx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Warn&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Context cancelled during SSE stream processing.&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Err&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;default&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ... read from stream ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This looks like an infinite loop waiting to happen. How is this not a bug? How does this loop possibly know when the RAG stream is actually finished?&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;answer-1&#34;&gt;Answer
+&lt;/h2&gt;&lt;p&gt;You are correct that &lt;code&gt;for {}&lt;/code&gt; is Go&amp;rsquo;s idiomatic &lt;code&gt;while True&lt;/code&gt;. You are incorrect to assume it&amp;rsquo;s a bug. This is the foundational pattern for any long-running I/O consumer. The loop itself is designed to run forever, but the code &lt;em&gt;inside it&lt;/em&gt; is actively looking for one of several termination signals.&lt;/p&gt;
+&lt;p&gt;Thinking this loop doesn&amp;rsquo;t know when to stop is like thinking Anton Chigurh doesn&amp;rsquo;t know when the job is done in &lt;em&gt;No Country for Old Men&lt;/em&gt;. The process is relentless, but it has very clear conditions for termination.&lt;/p&gt;
+&lt;p&gt;Here are the five ways this &amp;ldquo;infinite&amp;rdquo; loop terminates, from a successful mission to a catastrophic failure.&lt;/p&gt;
+&lt;h3 id=&#34;1-the-logical-im-done-payloadisfinal&#34;&gt;1. The Logical &amp;ldquo;I&amp;rsquo;m Done&amp;rdquo;: &lt;code&gt;payload.IsFinal&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;The API itself can declare that it&amp;rsquo;s finished. Inside the JSON payload, there&amp;rsquo;s a flag: &lt;code&gt;IsFinal: true&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; payload.IsFinal {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    logCtx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Info&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Final RAG content received and streamed.&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;break&lt;/span&gt; &lt;span style=&#34;color:#6272a4&#34;&gt;// EXIT
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is the API giving its final monologue. Once our code sees this, it knows the sequence is complete and uses &lt;code&gt;break&lt;/code&gt; to exit the loop.&lt;/p&gt;
+&lt;h3 id=&#34;2-the-protocol-im-done-data-done&#34;&gt;2. The Protocol &amp;ldquo;I&amp;rsquo;m Done&amp;rdquo;: &lt;code&gt;data: [DONE]&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;Some SSE implementations send a final, literal string &lt;code&gt;[DONE]&lt;/code&gt; to terminate the stream.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; dataStr &lt;span style=&#34;color:#ff79c6&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;[DONE]&amp;#34;&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    logCtx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Info&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Received SSE end marker [DONE].&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;break&lt;/span&gt; &lt;span style=&#34;color:#6272a4&#34;&gt;// EXIT
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is a formal protocol signal, like a self-destruct sequence announcing its completion. Our code listens for it and &lt;code&gt;break&lt;/code&gt;s.&lt;/p&gt;
+&lt;h3 id=&#34;3-the-physical-end-of-the-line-ioeof&#34;&gt;3. The Physical &amp;ldquo;End of the Line&amp;rdquo;: &lt;code&gt;io.EOF&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;When the server has sent all its data and gracefully closes the connection, the &lt;code&gt;reader.ReadString(&#39;\n&#39;)&lt;/code&gt; call will eventually fail with a special error: &lt;code&gt;io.EOF&lt;/code&gt; (End of File).&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;line, err &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; reader.&lt;span style=&#34;color:#50fa7b&#34;&gt;ReadString&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#39;\n&amp;#39;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; err &lt;span style=&#34;color:#ff79c6&#34;&gt;==&lt;/span&gt; io.EOF {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    logCtx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Info&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;SSE stream ended normally (EOF).&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;break&lt;/span&gt; &lt;span style=&#34;color:#6272a4&#34;&gt;// EXIT
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is the physical equivalent of the phone line going dead after the conversation is over. It&amp;rsquo;s a clean, normal termination.&lt;/p&gt;
+&lt;h3 id=&#34;4-the-external-abort-mission-ctxdone&#34;&gt;4. The External &amp;ldquo;Abort Mission&amp;rdquo;: &lt;code&gt;ctx.Done()&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;This is the emergency brake. The &lt;code&gt;context&lt;/code&gt; passed into this function can be cancelled by an upstream caller (e.g., due to a request timeout or user clicking &amp;ldquo;cancel&amp;rdquo;).&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Done&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Err&lt;/span&gt;() &lt;span style=&#34;color:#6272a4&#34;&gt;// EXIT
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;On every single loop, this code checks for the abort signal. This is Commander Cody receiving &amp;ldquo;Execute Order 66.&amp;rdquo; The current mission is terminated &lt;em&gt;immediately&lt;/em&gt; and the function returns with an error.&lt;/p&gt;
+&lt;h3 id=&#34;5-the-catastrophic-failure-any-other-error&#34;&gt;5. The Catastrophic Failure: Any Other Error
+&lt;/h3&gt;&lt;p&gt;If anything else goes wrong—the network cable is cut, the server sends garbage data, the connection resets—&lt;code&gt;reader.ReadString&lt;/code&gt; will return an error that is &lt;em&gt;not&lt;/em&gt; &lt;code&gt;io.EOF&lt;/code&gt;.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; err &lt;span style=&#34;color:#ff79c6&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; fmt.&lt;span style=&#34;color:#50fa7b&#34;&gt;Errorf&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;error reading SSE stream: %w&amp;#34;&lt;/span&gt;, err) &lt;span style=&#34;color:#6272a4&#34;&gt;// EXIT
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This is the alien bursting from John Hurt&amp;rsquo;s chest in &lt;em&gt;Alien&lt;/em&gt;. It&amp;rsquo;s an unexpected, catastrophic failure. The loop is terminated instantly by a &lt;code&gt;return&lt;/code&gt;, and an error is propagated up the call stack.&lt;/p&gt;
+&lt;p&gt;In summary, the &lt;code&gt;for {}&lt;/code&gt; loop is not a runaway process. It&amp;rsquo;s a vigilant listener with a multi-layered exit strategy, prepared for everything from a polite goodbye to a sudden, violent termination.&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Frequently Asked Questions Part 1</title>
         <link>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         

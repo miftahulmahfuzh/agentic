@@ -1,5 +1,5 @@
 ---
-title: "Frequently Asked Questions 1"
+title: "Frequently Asked Questions Part 1"
 date: 2025-08-02
 draft: false
 ---
