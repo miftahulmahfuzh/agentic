@@ -1,5 +1,5 @@
 ---
-title: "RAG Questions Part 1"
+title: "RAG Stream Q&A Part 1"
 date: 2025-08-06
 draft: false
 ---

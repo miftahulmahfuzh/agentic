@@ -8,7 +8,10 @@
     <loc>http://localhost:1313/agentic/docs/frequently_asked/</loc>
     <lastmod>2025-08-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/agentic/docs/frequently_asked/rag_stream_questions_pt1/</loc>
+    <loc>http://localhost:1313/agentic/docs/frequently_asked/rag_qa_1/</loc>
+    <lastmod>2025-08-06T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/frequently_asked/streamer_qa_1/</loc>
     <lastmod>2025-08-06T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/</loc>
@@ -35,7 +38,7 @@
     <loc>http://localhost:1313/agentic/docs/architectures/data_driven_tool/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</loc>
+    <loc>http://localhost:1313/agentic/docs/frequently_asked/design_qa_1/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/general_go/</loc>

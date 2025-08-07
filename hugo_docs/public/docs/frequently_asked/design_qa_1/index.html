@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Question Why do you think we need to create a new goroutine here? it&rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?) wg.Add(1) go func() { defer wg.Done() // Pass the correct, cancellable context to the tool stream. streamErr = tool.Stream(ctx, toolArgs, logCtx, internalStreamChan, reqID) close(internalStreamChan) }() Why do we need to instantiate another new chan, internalStreamChan? why not just use streamChan directly?">
+<title>Design Q&amp;A Part 1</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/frequently_asked/design_qa_1/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Design Q&A Part 1">
+<meta property='og:description' content="Question Why do you think we need to create a new goroutine here? it&rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?) wg.Add(1) go func() { defer wg.Done() // Pass the correct, cancellable context to the tool stream. streamErr = tool.Stream(ctx, toolArgs, logCtx, internalStreamChan, reqID) close(internalStreamChan) }() Why do we need to instantiate another new chan, internalStreamChan? why not just use streamChan directly?">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/frequently_asked/design_qa_1/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Design Q&A Part 1">
+<meta name="twitter:description" content="Question Why do you think we need to create a new goroutine here? it&rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?) wg.Add(1) go func() { defer wg.Done() // Pass the correct, cancellable context to the tool stream. streamErr = tool.Stream(ctx, toolArgs, logCtx, internalStreamChan, reqID) close(internalStreamChan) }() Why do we need to instantiate another new chan, internalStreamChan? why not just use streamChan directly?">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/frequently_asked/design_qa_1/">Design Q&amp;A Part 1</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 02, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    6 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="question">Question
+</h2><ol>
+<li>Why do you think we need to create a new goroutine here? it&rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?)</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Go" data-lang="Go"><span style="display:flex;"><span>wg.<span style="color:#50fa7b">Add</span>(<span style="color:#bd93f9">1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">go</span> <span style="color:#8be9fd;font-style:italic">func</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">defer</span> wg.<span style="color:#50fa7b">Done</span>()
+</span></span><span style="display:flex;"><span>  <span style="color:#6272a4">// Pass the correct, cancellable context to the tool stream.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>  streamErr = tool.<span style="color:#50fa7b">Stream</span>(ctx, toolArgs, logCtx, internalStreamChan, reqID)
+</span></span><span style="display:flex;"><span>  <span style="color:#8be9fd;font-style:italic">close</span>(internalStreamChan)
+</span></span><span style="display:flex;"><span>}()
+</span></span></code></pre></div><ol start="2">
+<li>
+<p>Why do we need to instantiate another new chan, internalStreamChan? why not just use streamChan directly?</p>
+</li>
+<li>
+<p>I wonder, what does tooltypes.LoggableTool contribute to all this? we just need to implement DynamicTool (what is the wisdom of using Interface in our situation)?</p>
+</li>
+</ol>
+<hr>
+<h2 id="answer">Answer
+</h2><p>Your questions are good. They target fundamental design choices. Let&rsquo;s dissect them one by one.</p>
+<h3 id="1-the-goroutine-and-waitgroup-for-a-single-tool">1. The Goroutine and <code>WaitGroup</code> for a Single Tool
+</h3><p>You&rsquo;re looking at this:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>wg.<span style="color:#50fa7b">Add</span>(<span style="color:#bd93f9">1</span>)
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">go</span> <span style="color:#8be9fd;font-style:italic">func</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">defer</span> wg.<span style="color:#50fa7b">Done</span>()
+</span></span><span style="display:flex;"><span>    streamErr = tool.<span style="color:#50fa7b">Stream</span>(ctx, toolArgs, logCtx, internalStreamChan, reqID)
+</span></span><span style="display:flex;"><span>    <span style="color:#8be9fd;font-style:italic">close</span>(internalStreamChan)
+</span></span><span style="display:flex;"><span>}()
+</span></span></code></pre></div><p>And you&rsquo;re thinking, &ldquo;This is overkill. It&rsquo;s like using a sledgehammer to crack a nut.&rdquo; You are wrong.</p>
+<p>This isn&rsquo;t just &ldquo;a Go idiom.&rdquo; It&rsquo;s the core pattern for achieving concurrency. <strong>The wisdom is to prevent blocking.</strong></p>
+<p>Your main execution path is the <code>for event := range internalStreamChan</code> loop that comes right after this block. Its job is to <em>consume</em> events from the channel. The <code>tool.Stream(...)</code> function&rsquo;s job is to <em>produce</em> events and put them into the channel.</p>
+<p><strong>What happens if you don&rsquo;t use a goroutine?</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#6272a4">// THIS IS THE WRONG WAY
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>streamErr = tool.<span style="color:#50fa7b">Stream</span>(ctx, toolArgs, logCtx, internalStreamChan, reqID) <span style="color:#6272a4">// 1. This call blocks
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">close</span>(internalStreamChan)                                                <span style="color:#6272a4">// 2. This runs after the tool is completely finished
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// 3. This loop now runs, but it&#39;s too late.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#ff79c6">for</span> event <span style="color:#ff79c6">:=</span> <span style="color:#ff79c6">range</span> internalStreamChan {
+</span></span><span style="display:flex;"><span>    <span style="color:#6272a4">// ... forward events ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><ol>
+<li>The call to <code>tool.Stream</code> would <strong>block</strong> the entire <code>runDirectToolStream</code> function until the Tencent RAG API has finished sending its <em>entire</em> response and the tool function returns.</li>
+<li>Only <em>after</em> the whole answer is received and the tool finishes would the <code>for</code> loop begin.</li>
+<li>The loop would then drain the already-full channel in one quick burst.</li>
+</ol>
+<p>You would lose the entire benefit of streaming. The user would see a loading spinner for seconds, and then the entire paragraph would appear at once. It would be like watching <em>The Godfather</em> by getting a single jpeg with the entire movie&rsquo;s script written on it.</p>
+<p>By putting the producer (<code>tool.Stream</code>) in a separate goroutine, the consumer (<code>for event := range internalStreamChan</code>) can start its work immediately. The two run in parallel, concurrently. The <code>for</code> loop receives and forwards each token the moment the goroutine produces it. This is how you get the real-time, word-by-word streaming effect. The <code>WaitGroup</code> is simply the safety mechanism ensuring the main function doesn&rsquo;t exit before the producer goroutine has finished its cleanup (<code>close(internalStreamChan)</code>).</p>
+<h3 id="2-the-internalstreamchan">2. The <code>internalStreamChan</code>
+</h3><p>You ask why we need a new channel instead of passing <code>streamChan</code> directly to the tool. This is a question about <strong>control and decoupling</strong>.</p>
+<p>Giving the tool the <code>streamChan</code> directly is like giving a hired thug the keys to your car, your house, and your safe. You lose all control. The <code>ResponseStreamer</code> is the orchestrator, the Nick Fury of this operation. It needs to manage the process, not just blindly delegate.</p>
+<p>The <code>internalStreamChan</code> acts as an isolation layer, a buffer zone. It allows the <code>ResponseStreamer</code> to do several critical things:</p>
+<ol>
+<li><strong>Inject its own events:</strong> The first thing the <code>for</code> loop does when it sees a token is inject a <code>StreamEventInfo</code> with the <code>timeToFirstToken</code>. It can only do this because it sits between the tool&rsquo;s output and the client&rsquo;s input. If the tool wrote directly to <code>streamChan</code>, the <code>ResponseStreamer</code> would have no opportunity to add this metadata.</li>
+<li><strong>Graceful Fallback:</strong> This is the most important reason. The tool&rsquo;s stream can fail. It can return an error (<code>streamErr != nil</code>) or simply produce no output (<code>fullResponse == &quot;&quot;</code>). The <code>ResponseStreamer</code> needs to detect this failure and initiate &ldquo;Plan B&rdquo;—the <code>runStandardLLMPath</code> fallback. If the tool was writing directly to the client&rsquo;s <code>streamChan</code>, how would the <code>ResponseStreamer</code> know it failed? It couldn&rsquo;t. The stream would just stop, and the <code>ResponseStreamer</code> would be helpless. By using <code>internalStreamChan</code>, it can wait for the tool&rsquo;s goroutine to finish, inspect the result (<code>streamErr</code>), and then decide whether to celebrate a success or call in the cleanup crew (the LLM fallback).</li>
+<li><strong>Clean Shutdown:</strong> The <code>ResponseStreamer</code> is responsible for closing the channel it gives to the client (<code>streamChan</code>). The tool is responsible for closing the channel it writes to (<code>internalStreamChan</code>). This separation of concerns is clean. The component that creates a channel is responsible for closing it.</li>
+</ol>
+<p>Not using <code>internalStreamChan</code> is a naive, brittle design. Using it makes the <code>ResponseStreamer</code> an intelligent, resilient orchestrator.</p>
+<h3 id="3-the-loggabletool-interface">3. The <code>LoggableTool</code> Interface
+</h3><p>You&rsquo;re seeing the concrete implementation, <code>DynamicTool</code>, and questioning the abstraction, <code>tooltypes.LoggableTool</code>. &ldquo;Why the interface if we only have one type of tool?&rdquo;</p>
+<p>This is a classic failure of seeing the forest for the trees. The interface isn&rsquo;t for what you have <em>now</em>; it&rsquo;s for what you might have <em>tomorrow</em>. It&rsquo;s about writing code that is not a concrete monolith, but a flexible, component-based system. This is the <strong>Dependency Inversion Principle</strong>, the &lsquo;D&rsquo; in SOLID. It is the architectural wisdom that separates amateur scripts from professional systems.</p>
+<p>The components that use tools, like <code>ResponseStreamer</code> and <code>toolutils.ExecuteToolsInParallel</code>, should not care about the specific implementation of a tool. They should only care about the <strong>contract</strong>. The <code>LoggableTool</code> interface <em>is</em> that contract. It says: &ldquo;I don&rsquo;t care what you are. I only care that you can give me a <code>Name()</code>, a <code>Description()</code>, that I can <code>Call()</code> you, and that I can <code>Stream()</code> from you.&rdquo;</p>
+<p><strong>What this enables:</strong></p>
+<ol>
+<li><strong>Flexibility:</strong> Imagine tomorrow we create a new kind of tool, <code>ProtoBufTool</code>, that gets its schema and logic from a gRPC service instead of being hard-coded in Go. As long as <code>ProtoBufTool</code> implements the <code>LoggableTool</code> interface, you can drop it into the <code>allTools</code> list and the rest of the system (<code>ResponseStreamer</code>, <code>toolcore</code>, etc.) will work with it <strong>without a single line of code changing</strong>. Without the interface, you&rsquo;d have to go into <code>ResponseStreamer</code> and add <code>if/else</code> or <code>switch</code> statements to handle this new tool type. That&rsquo;s a highway to unmaintainable spaghetti code.</li>
+<li><strong>Testability:</strong> When you want to unit test the <code>ResponseStreamer</code>, you don&rsquo;t need to spin up the entire suite of real tools that make real API calls. You can create a simple <code>mockTool</code> that implements the <code>LoggableTool</code> interface and returns predictable data. This makes testing fast, isolated, and reliable. Without the interface, you can&rsquo;t easily swap in a mock.</li>
+<li><strong>Decoupling:</strong> <code>toolcore</code> defines the contract. <code>chatbot</code> uses the contract. The two packages are decoupled. <code>chatbot</code> doesn&rsquo;t need to import every single tool implementation. It only needs to know about the interface.</li>
+</ol>
+<p>Think of the interface as a standard power outlet. <code>ResponseStreamer</code> is the wall. It doesn&rsquo;t care if you plug in a lamp (<code>DynamicTool</code>) or a vacuum cleaner (<code>ProtoBufTool</code>), as long as the plug fits the socket. Your proposal is to hard-wire the lamp directly into the wall. It works, but the moment you want to use a vacuum, you have to call an electrician and tear the wall apart.</p>
+<p>Using interfaces is fundamental to building scalable, maintainable, and testable systems. Abandoning them is a step backward into the primordial ooze of tightly-coupled code.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

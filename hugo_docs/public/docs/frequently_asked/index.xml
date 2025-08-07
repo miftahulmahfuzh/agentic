@@ -7,11 +7,11 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
         <lastBuildDate>Wed, 06 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
-        <title>RAG Questions Part 1</title>
-        <link>http://localhost:1313/agentic/docs/frequently_asked/rag_stream_questions_pt1/</link>
+        <title>RAG Stream Q&amp;A Part 1</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/rag_qa_1/</link>
         <pubDate>Wed, 06 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/frequently_asked/rag_stream_questions_pt1/</guid>
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/rag_qa_1/</guid>
         <description>&lt;h2 id=&#34;question-1&#34;&gt;Question 1
 &lt;/h2&gt;&lt;p&gt;The delta calculation seems convoluted.&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;var&lt;/span&gt; delta &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;
@@ -128,11 +128,127 @@
 </description>
         </item>
         <item>
-        <title>Frequently Asked Questions Part 1</title>
-        <link>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</link>
+        <title>Streamer Q&amp;A Part 1</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/streamer_qa_1/</link>
+        <pubDate>Wed, 06 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/streamer_qa_1/</guid>
+        <description>&lt;p&gt;&lt;strong&gt;Question:&lt;/strong&gt; We&amp;rsquo;ve observed a critical stability issue where our server&amp;rsquo;s memory usage continuously increases over time, eventually leading to a crash. The problem seems to be linked to clients disconnecting while a response is being streamed. How can a client simply closing their browser tab cause a &amp;ldquo;zombie goroutine&amp;rdquo; that leaks memory, and how does the new &lt;code&gt;streamer.go&lt;/code&gt; architecture definitively solve this?&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Answer:&lt;/strong&gt; This is an excellent and critical question. The phenomenon you&amp;rsquo;re describing is a classic and dangerous concurrency problem in Go, often leading to &amp;ldquo;zombie&amp;rdquo; or &amp;ldquo;leaked&amp;rdquo; goroutines.&lt;/p&gt;
+&lt;p&gt;Here&amp;rsquo;s a detailed breakdown of the problem and the solution.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;part-1-the-root-cause---the-stuck-writer-flaw-in-the-old-streamergo&#34;&gt;Part 1: The Root Cause - The &amp;ldquo;Stuck Writer&amp;rdquo; Flaw in the Old &lt;code&gt;streamer.go&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;The leak occurs because of a fundamental property of Go channels: writing to an unbuffered channel is a &lt;strong&gt;blocking operation&lt;/strong&gt;. The goroutine attempting to write will pause until another goroutine is ready to read.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s trace the failure sequence in the old architecture:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Request Starts:&lt;/strong&gt; A client connects to the &lt;code&gt;/chat/stream/:request_id&lt;/code&gt; endpoint. The &lt;code&gt;handleStreamRequest&lt;/code&gt; handler receives a channel (&lt;code&gt;streamChan&lt;/code&gt;) to read from and starts listening. A worker goroutine is spawned to handle the request and will eventually write to this channel.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Work Begins:&lt;/strong&gt; The worker goroutine (&lt;code&gt;Streamer.Stream&lt;/code&gt;) starts generating the AI response, producing events to send to the client.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Blocking Write:&lt;/strong&gt; The goroutine attempts to send an event to the client: &lt;code&gt;streamChan &amp;lt;- event&lt;/code&gt;. At this exact moment, it pauses, waiting for the &lt;code&gt;handleStreamRequest&lt;/code&gt; handler to read the event from the channel.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Client Disconnects:&lt;/strong&gt; The user closes their browser tab or their network connection drops.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Handler Exits:&lt;/strong&gt; In &lt;code&gt;main.go&lt;/code&gt;, the &lt;code&gt;c.Writer.CloseNotify()&lt;/code&gt; signal fires, indicating the client is gone. The &lt;code&gt;handleStreamRequest&lt;/code&gt; handler logs the disconnect and, crucially, &lt;code&gt;return&lt;/code&gt;s. &lt;strong&gt;The only code that was reading from &lt;code&gt;streamChan&lt;/code&gt; is now gone.&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Goroutine is Leaked:&lt;/strong&gt; The worker goroutine is still alive, but it&amp;rsquo;s permanently frozen at the &lt;code&gt;streamChan &amp;lt;- event&lt;/code&gt; line. It is waiting for a reader that will &lt;em&gt;never&lt;/em&gt; come. This goroutine is now a &lt;strong&gt;zombie&lt;/strong&gt;:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;It will never complete its work.&lt;/li&gt;
+&lt;li&gt;It will never be garbage collected.&lt;/li&gt;
+&lt;li&gt;It continues to hold all its allocated memory (its stack, local variables, etc.) forever.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;With every disconnected client, another zombie goroutine is created, and the server&amp;rsquo;s memory usage climbs relentlessly until it crashes.&lt;/p&gt;
+&lt;p&gt;The specific flaw in &lt;code&gt;OLD STREAMER.GO&lt;/code&gt; is every direct, unguarded channel write:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// OLD STREAMER.GO - The source of the leak
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;llms.&lt;span style=&#34;color:#50fa7b&#34;&gt;GenerateFromSinglePrompt&lt;/span&gt;(ctx, s.services.LLM, logData.FinalInput,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    llms.&lt;span style=&#34;color:#50fa7b&#34;&gt;WithStreamingFunc&lt;/span&gt;(&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(ctx context.Context, chunk []&lt;span style=&#34;color:#8be9fd&#34;&gt;byte&lt;/span&gt;) &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// THIS IS THE BLOCKING POINT. If the handler is gone,
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// the goroutine freezes here forever, leaking memory.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;        streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; tooltypes.StreamEvent{Type: tooltypes.StreamEventToken, Payload: &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;string&lt;/span&gt;(chunk)}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;        &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }),
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h3 id=&#34;part-2-the-solution---robust-context-aware-writes-in-the-new-streamergo&#34;&gt;Part 2: The Solution - Robust, Context-Aware Writes in the New &lt;code&gt;streamer.go&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;The new architecture solves this by making the write operation &amp;ldquo;cancellation-aware.&amp;rdquo; The worker goroutine no longer just blindly tries to write; it simultaneously listens for a signal that the request has been cancelled. This is achieved using a &lt;code&gt;select&lt;/code&gt; statement with the request&amp;rsquo;s &lt;code&gt;context&lt;/code&gt;.&lt;/p&gt;
+&lt;h4 id=&#34;a-the-core-mechanism-the-sendevent-helper&#34;&gt;A. The Core Mechanism: The &lt;code&gt;sendEvent&lt;/code&gt; Helper
+&lt;/h4&gt;&lt;p&gt;The heart of the fix is this new helper function:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// NEW STREAMER.GO - The solution
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; (s &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;ResponseStreamer) &lt;span style=&#34;color:#50fa7b&#34;&gt;sendEvent&lt;/span&gt;(ctx context.Context, streamChan &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; tooltypes.StreamEvent, event tooltypes.StreamEvent) &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Done&lt;/span&gt;():
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#6272a4&#34;&gt;// ESCAPE HATCH: The context was cancelled. Stop trying to write.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; ctx.&lt;span style=&#34;color:#50fa7b&#34;&gt;Err&lt;/span&gt;() &lt;span style=&#34;color:#6272a4&#34;&gt;// Return an error (e.g., context.Canceled)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; streamChan &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; event:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#6272a4&#34;&gt;// HAPPY PATH: The write succeeded because the client is still listening.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This &lt;code&gt;select&lt;/code&gt; statement attempts two operations at once and proceeds with whichever one becomes ready first:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;If the client is connected:&lt;/strong&gt; The &lt;code&gt;streamChan &amp;lt;- event&lt;/code&gt; case will succeed, the event is sent, and the function returns &lt;code&gt;nil&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;If the client has disconnected:&lt;/strong&gt; The &lt;code&gt;streamChan &amp;lt;- event&lt;/code&gt; case will block. However, the system now sends a cancellation signal. This closes the &lt;code&gt;ctx.Done()&lt;/code&gt; channel, making the &lt;code&gt;&amp;lt;-ctx.Done()&lt;/code&gt; case immediately ready. The function returns an error, &lt;strong&gt;unblocking the goroutine&lt;/strong&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;b-the-full-cancellation-flow&#34;&gt;B. The Full Cancellation Flow
+&lt;/h4&gt;&lt;p&gt;Here is how the scenario plays out correctly in the new architecture:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Client Disconnects:&lt;/strong&gt; Same as before.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Manager Cancels Request:&lt;/strong&gt; The &lt;code&gt;handleStreamRequest&lt;/code&gt; handler now calls &lt;code&gt;app.chatManager.CancelStream(requestID)&lt;/code&gt;. This is a critical new step.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Context is Cancelled:&lt;/strong&gt; Inside the &lt;code&gt;Chatbot Manager&lt;/code&gt;, the &lt;code&gt;context.CancelFunc&lt;/code&gt; associated with this specific request is called. This sends a cancellation signal down the &lt;code&gt;context&lt;/code&gt; that was passed to the worker goroutine.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Escape Hatch Fires:&lt;/strong&gt; The worker goroutine, in the middle of its work, calls &lt;code&gt;s.sendEvent(...)&lt;/code&gt;. Inside this function, the &lt;code&gt;select&lt;/code&gt; statement sees that &lt;code&gt;&amp;lt;-ctx.Done()&lt;/code&gt; is ready. It immediately chooses that case and returns a &lt;code&gt;context.Canceled&lt;/code&gt; error.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Graceful Shutdown:&lt;/strong&gt; The main body of the &lt;code&gt;Stream&lt;/code&gt; function receives this error, knows it has been cancelled, stops its processing (e.g., breaks out of its loop), and returns. The goroutine exits cleanly, and all its resources are released.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;The leak is prevented.&lt;/strong&gt; The goroutine cleans itself up as soon as it&amp;rsquo;s notified that its work is no longer needed.&lt;/p&gt;
+&lt;h3 id=&#34;summary-old-vs-new&#34;&gt;Summary: Old vs. New
+&lt;/h3&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Aspect&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;&lt;code&gt;OLD STREAMER.GO&lt;/code&gt; (Flawed)&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;&lt;code&gt;NEW STREAMER.GO&lt;/code&gt; (Robust)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Write Operation&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;streamChan &amp;lt;- event&lt;/code&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;A &lt;code&gt;select&lt;/code&gt; block that tries to write &lt;strong&gt;OR&lt;/strong&gt; checks for cancellation.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Logic&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&amp;ldquo;Fire and Block.&amp;rdquo; Writes and will wait forever if there&amp;rsquo;s no reader.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&amp;ldquo;Write or Abort.&amp;rdquo; Tries to write but will immediately abort if the request is cancelled.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Cancellation&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;The goroutine is oblivious to cancellation and becomes an orphan.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;The goroutine is explicitly linked to the request&amp;rsquo;s &lt;code&gt;context&lt;/code&gt; and respects its cancellation.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Outcome&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Goroutine Leak.&lt;/strong&gt; A &amp;ldquo;zombie&amp;rdquo; goroutine is created on every premature client disconnect, consuming resources until the server crashes.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Graceful Termination.&lt;/strong&gt; The goroutine detects cancellation, stops its work, and exits, releasing all its resources back to the system.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</description>
+        </item>
+        <item>
+        <title>Design Q&amp;A Part 1</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/design_qa_1/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/frequently_asked/qa_pt1/</guid>
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/design_qa_1/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;ol&gt;
 &lt;li&gt;Why do you think we need to create a new goroutine here? it&amp;rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?)&lt;/li&gt;
