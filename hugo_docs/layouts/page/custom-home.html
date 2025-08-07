@@ -464,14 +464,14 @@ TENCENT_RAG_BOT_APP_KEY=...
               <hr>
 
               <h4>Advanced Concurrency Testing</h4>
-              <p>These scripts in the <code>cmd/</code> directory allow you to validate the system's core concurrency and resilience models.</p>
+              <p>These scripts and tests allow you to validate the system's core concurrency and resilience models.</p>
 
               <h4>1. Testing General Throughput (<code>test_concurrency</code>)</h5>
               <p>This script validates that the server can handle many <em>different</em> requests in parallel, testing the capacity of the worker pools.</p>
               <ol>
                 <li>
                   <strong>Run the test:</strong>
-                  <pre><code># Usage: go run ./cmd/test_concurrency -n <num_requests> -w <server_workers>
+                  <pre><code># Usage: go run ./cmd/test_concurrency -n &lt;num_requests&gt; -w &lt;server_workers&gt;
 go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
                 </li>
                 <li>
@@ -487,7 +487,7 @@ go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
                 </li>
                 <li>
                   <strong>Run the test:</strong>
-                   <pre><code># Usage: go run ./cmd/test_single_flight -n <num_requests>
+                   <pre><code># Usage: go run ./cmd/test_single_flight -n &lt;num_requests&gt;
 go run ./cmd/test_single_flight -n 10</code></pre>
                   <p>
                     <strong>CRITICAL:</strong> The proof is in the <strong>server logs</strong> (viewable in Grafana/Loki or via <code>docker-compose logs chatbot-app</code>). Look for one "leader" request performing the full preparation, while all other "follower" requests share its result, indicated by the <code>Shared result from in-flight request</code> log message.
@@ -495,6 +495,26 @@ go run ./cmd/test_single_flight -n 10</code></pre>
                 </li>
               </ol>
 
+              <!-- CANCELLATION TEST SECTION -->
+              <h4>3. Testing End-to-End Cancellation (<code>stream_test.go</code>)</h5>
+              <p>This integration test suite rigorously validates the <span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span> resilience feature. It confirms that a request can be terminated at any point in its lifecycle and that the system reclaims resources gracefully and predictably. This is crucial for preventing resource leaks from abandoned requests.</p>
+              <p>The test simulates every possible cancellation scenario:</p>
+              <ul>
+                <li><strong>Happy Path:</strong> A standard request streams to completion without interruption.</li>
+                <li><strong>Pre-emptive Cancellation:</strong> A request is cancelled *immediately* after submission, before the client even connects to the stream. The test verifies that the server correctly returns a <code>cancelled</code> status.</li>
+                <li><strong>Mid-Stream Cancellation:</strong> The most critical test. It uses a goroutine to begin streaming, then sends a cancellation request from a parallel thread, proving that the <code>context</code> correctly terminates the in-progress work.</li>
+                <li><strong>Post-Completion Cancellation:</strong> The test waits for a stream to finish and for the server to fully close the connection. It then attempts to cancel the now-nonexistent request and verifies the server correctly returns a <code>not_found</code> status, proving proper state management and cleanup.</li>
+              </ul>
+              <ol>
+                <li>
+                  <strong>Run the test:</strong>
+                   <pre><code># This command specifically runs all tests prefixed with "TestStream"
+go test -v -run ^TestStream .</code></pre>
+                </li>
+                <li>
+                  <strong>Analyze results:</strong> Observe the test logs. A successful run will show each scenario being executed with a final <code>✅ Test Passed</code> message, confirming that the system handles all cancellation states correctly.
+                </li>
+              </ol>
               <hr>
 
               <h4>Running Standard Tests</h4>
@@ -506,7 +526,7 @@ go run ./cmd/test_single_flight -n 10</code></pre>
               <h4>Running Endpoint Health Checks</h4>
               <p>To diagnose external API connections without running the full test suite:</p>
               <pre><code>chmod +x run_health_checks.sh
-./run_health_checks.sh tools/tooltest/extapi/<tool>.go</code></pre>
+./run_health_checks.sh tools/tooltest/extapi/&lt;tool&gt;.go</code></pre>
               <p>For example, for testing the valuation tool external apis:</p>
               <pre><code>./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
               <p>All Go files inside <code>tools/tooltest/extapi</code> correlates to each tool files (inside <code>toolbe</code> and <code>toolnonbe</code> dir) and can be used for healthcheck.</p>
