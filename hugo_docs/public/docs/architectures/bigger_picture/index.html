@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
+<title>For The Greater Good</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/architectures/bigger_picture/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="For The Greater Good">
+<meta property='og:description' content="Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/architectures/bigger_picture/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-07T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-07T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="For The Greater Good">
+<meta name="twitter:description" content="Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/architectures/bigger_picture/">For The Greater Good</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 07, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    4 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p><strong>Directive:</strong> To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: <em>&ldquo;Why not just let the Janitor clean it up?&rdquo;</em></p>
+<p><strong>Conclusion:</strong> Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system. This was a war for the soul of the application, not just a cleanup operation.</p>
+<hr>
+<h3 id="argument-1-the-janitor-is-a-coroner-not-a-doctor">Argument 1: The Janitor is a Coroner, Not a Doctor
+</h3><p>The Janitor, by its nature, is a coroner. It arrives on the scene <em>after</em> the damage is done.</p>
+<ul>
+<li><strong>Its Method:</strong> It periodically scans for requests that have been &ldquo;dead&rdquo; for a configured duration (e.g., 30-60 seconds).</li>
+<li><strong>The Cost:</strong> For that entire duration, a leaked &ldquo;zombie&rdquo; goroutine is not merely idle; it is a <strong>resource parasite</strong>.
+<ul>
+<li><strong>It Holds a Semaphore Slot:</strong> Our system has a finite number of concurrent LLM stream slots (<code>llmStreamSemaphore</code>). A zombie goroutine holds one of these precious slots hostage, reducing the server&rsquo;s maximum throughput. If you have 10 slots and 5 are held by zombies, your server&rsquo;s capacity is effectively halved until the Janitor makes its rounds.</li>
+<li><strong>It Consumes Memory:</strong> The goroutine&rsquo;s stack, along with any allocated data (like the full response buffer it was building), remains in memory. This contributes to memory pressure and can trigger premature garbage collection cycles, slowing down the entire application.</li>
+<li><strong>It Wastes CPU:</strong> While the goroutine itself might be blocked, its presence adds overhead to the Go scheduler and garbage collector, which must account for it in their operations.</li>
+</ul>
+</li>
+</ul>
+<p>Relying on the Janitor is like allowing wounded soldiers to bleed out on the battlefield for a full minute before sending a medic, all while they are occupying a limited number of emergency stretchers. It is criminally inefficient.</p>
+<p><strong>The Greater Good:</strong> Our context-aware <code>sendEvent</code> function is the field medic. It acts <em>instantly</em>. The moment a client disconnects, the goroutine is notified, it terminates cleanly, and it immediately releases its semaphore slot, memory, and all other resources back to the pool. This ensures the server always operates at peak capacity and efficiency.</p>
+<hr>
+<h3 id="argument-2-the-janitor-cannot-fix-a-bad-user-experience">Argument 2: The Janitor Cannot Fix a Bad User Experience
+</h3><p>The Janitor is invisible to the user. The race conditions we fixed were not.</p>
+<ul>
+<li><strong>The Pre-emptive Cleanup Problem:</strong> A user explicitly cancels a request and expects confirmation. The system, due to a race condition, tells them the request never existed. This is not a resource leak; it is a <strong>bug</strong>. It breaks the contract with the client and erodes trust in the API. The Janitor is completely powerless to solve this logic error.</li>
+<li><strong>The Muted Messenger Problem:</strong> A user cancels a long-running stream and the connection just drops. Did it work? Is the backend still processing? The user is left in a state of uncertainty. This is a poor user experience.</li>
+</ul>
+<p><strong>The Greater Good:</strong> Our targeted fixes in <code>manager.go</code> and <code>streamer.go</code> were surgical strikes against these race conditions.</p>
+<ul>
+<li>The <strong>Conditional Cleanup</strong> logic ensures the system state remains consistent and correct from the client&rsquo;s perspective. It respects the user&rsquo;s actions.</li>
+<li>The <strong>&ldquo;Last Gasp&rdquo; Write</strong> provides critical, immediate feedback. It turns ambiguity into certainty.</li>
+</ul>
+<p>This is the difference between a system that merely functions and a system that is well-behaved and reliable. The Janitor cleans up garbage; it cannot create correctness or a good user experience.</p>
+<hr>
+<h3 id="summary-the-two-philosophies-of-system-design">Summary: The Two Philosophies of System Design
+</h3><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">The Janitor Philosophy (&ldquo;The Blunt Instrument&rdquo;)</th>
+<th style="text-align:left">The Precision Engineering Philosophy (&ldquo;The Scalpel&rdquo;)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Reactive:</strong> Waits for things to break, then cleans up.</td>
+<td style="text-align:left"><strong>Proactive:</strong> Prevents things from breaking in the first place.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Inefficient:</strong> Wastes critical resources (semaphores, memory) for extended periods.</td>
+<td style="text-align:left"><strong>Efficient:</strong> Releases resources the instant they are no longer needed.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Masks Flaws:</strong> Hides underlying bugs and race conditions behind a slow cleanup cycle.</td>
+<td style="text-align:left"><strong>Exposes and Fixes Flaws:</strong> Forces correct, robust, and predictable logic.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Poor User Experience:</strong> Is powerless to fix API contract violations and user-facing inconsistencies.</td>
+<td style="text-align:left"><strong>Reliable User Experience:</strong> Guarantees consistent and correct behavior in all edge cases.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Strategy:</strong> Hope for the best, and let a slow, periodic process deal with the inevitable failures.</td>
+<td style="text-align:left"><strong>Strategy:</strong> Design for resilience. Handle every state transition correctly and instantly.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The blood and sweat were not for naught. We did not just patch a leak. We re-engineered the system&rsquo;s core concurrency logic to be fundamentally sound. We chose the path of the engineer over that of the janitor. We chose to build a finely-tuned machine, not a leaky bucket with a mop standing by. That is why it was worth it. That is the greater good.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
