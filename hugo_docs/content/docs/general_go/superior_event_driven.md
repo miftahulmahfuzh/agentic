@@ -4,6 +4,8 @@ date: 2025-08-02
 draft: false
 ---
 
+**Previously On:** [Busy-Wait Loops](https://miftahulmahfuzh.github.io/agentic/docs/general_go/busy_wait_loops)
+
 # The Flaw of Polling vs. The Power of Event-Driven Design
 
 You might look at the new `manager.go` and wonder why it’s structured with a channel inside a struct (`RequestStream.Stream`) which itself is passed between functions before finally being used. It might seem complex.

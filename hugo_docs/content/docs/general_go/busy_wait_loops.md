@@ -4,6 +4,8 @@ date: 2025-08-02
 draft: false
 ---
 
+**Next Episode:** [Superior Event-Driven](https://miftahulmahfuzh.github.io/agentic/docs/general_go/superior_event_driven)
+
 # What Are Busy-Wait Loops and Why Are They Terrible?
 
 Yes, the polling system from your old `manager.go` is a classic example of a busy-wait loop, or more accurately, a "busy-wait with naps." The statement in the README is entirely correct.

@@ -140,3 +140,5 @@ graph TD
 ## 7. Conclusion
 
 This dual-path architecture is not a fancy feature; it's a fundamental requirement for a production-grade system that balances capability with cost and performance. It intelligently applies force where needed and finesse where it's most effective. One path is for complex reasoning, the other is for delivering hard facts with extreme prejudice. A professional system knows the difference and acts accordingly.
+
+**Related QA:** [RAG Q&A 1](https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/rag_qa_1)
