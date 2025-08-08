@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-us" dir="ltr">
     <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Previously On: A War Against Race Conditions Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
 <title>For The Greater Good</title>
 
 <link rel='canonical' href='http://localhost:1313/agentic/docs/architectures/bigger_picture/'>
 
 <link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="For The Greater Good">
-<meta property='og:description' content="Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
+<meta property='og:description' content="Previously On: A War Against Race Conditions Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/architectures/bigger_picture/'>
 <meta property='og:site_name' content='Go Chatbot'>
 <meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-07T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-07T00:00:00&#43;00:00'/>
 <meta name="twitter:title" content="For The Greater Good">
-<meta name="twitter:description" content="Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
+<meta name="twitter:description" content="Previously On: A War Against Race Conditions Directive: To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &ldquo;Why not just let the Janitor clean it up?&rdquo; Conclusion: Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system.">
     <link rel="shortcut icon" href="/agentic/favicon.png" />
 
     </head>
@@ -201,7 +201,9 @@
     <section class="article-content">
     
     
-    <p><strong>Directive:</strong> To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: <em>&ldquo;Why not just let the Janitor clean it up?&rdquo;</em></p>
+    <p><strong>Previously On:</strong> <a class="link" href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/race_war"  target="_blank" rel="noopener"
+    >A War Against Race Conditions</a></p>
+<p><strong>Directive:</strong> To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: <em>&ldquo;Why not just let the Janitor clean it up?&rdquo;</em></p>
 <p><strong>Conclusion:</strong> Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system. This was a war for the soul of the application, not just a cleanup operation.</p>
 <hr>
 <h3 id="argument-1-the-janitor-is-a-coroner-not-a-doctor">Argument 1: The Janitor is a Coroner, Not a Doctor

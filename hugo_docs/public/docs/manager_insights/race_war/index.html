@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-us" dir="ltr">
     <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Agentic Chatbot Architecture: A War Against Race Conditions The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in manager.go and streamer.go that were required to achieve true stability. Part 1: Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak) Symptom: The server&rsquo;s memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.">
-<title>Race War</title>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Next Episode: For The Greater Good The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in manager.go and streamer.go that were required to achieve true stability. Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak) Symptom: The server&rsquo;s memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.">
+<title>A War Against Race Conditions</title>
 
 <link rel='canonical' href='http://localhost:1313/agentic/docs/manager_insights/race_war/'>
 
-<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Race War">
-<meta property='og:description' content="Agentic Chatbot Architecture: A War Against Race Conditions The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in manager.go and streamer.go that were required to achieve true stability. Part 1: Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak) Symptom: The server&rsquo;s memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.">
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="A War Against Race Conditions">
+<meta property='og:description' content="Next Episode: For The Greater Good The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in manager.go and streamer.go that were required to achieve true stability. Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak) Symptom: The server&rsquo;s memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/manager_insights/race_war/'>
 <meta property='og:site_name' content='Go Chatbot'>
 <meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
-<meta name="twitter:title" content="Race War">
-<meta name="twitter:description" content="Agentic Chatbot Architecture: A War Against Race Conditions The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in manager.go and streamer.go that were required to achieve true stability. Part 1: Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak) Symptom: The server&rsquo;s memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.">
+<meta name="twitter:title" content="A War Against Race Conditions">
+<meta name="twitter:description" content="Next Episode: For The Greater Good The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in manager.go and streamer.go that were required to achieve true stability. Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak) Symptom: The server&rsquo;s memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.">
     <link rel="shortcut icon" href="/agentic/favicon.png" />
 
     </head>
@@ -149,7 +149,7 @@
 
     <div class="article-title-wrapper">
         <h2 class="article-title">
-            <a href="/agentic/docs/manager_insights/race_war/">Race War</a>
+            <a href="/agentic/docs/manager_insights/race_war/">A War Against Race Conditions</a>
         </h2>
     
         
@@ -201,10 +201,11 @@
     <section class="article-content">
     
     
-    <h3 id="agentic-chatbot-architecture-a-war-against-race-conditions">Agentic Chatbot Architecture: A War Against Race Conditions
-</h3><p>The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in <code>manager.go</code> and <code>streamer.go</code> that were required to achieve true stability.</p>
+    <p><strong>Next Episode:</strong> <a class="link" href="https://miftahulmahfuzh.github.io/agentic/docs/architectures/bigger_picture"  target="_blank" rel="noopener"
+    >For The Greater Good</a></p>
+<p>The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in <code>manager.go</code> and <code>streamer.go</code> that were required to achieve true stability.</p>
 <hr>
-<h3 id="part-1-problem-1---the-zombie-apocalypse-the-original-goroutine-leak">Part 1: Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak)
+<h3 id="problem-1---the-zombie-apocalypse-the-original-goroutine-leak">Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak)
 </h3><p><strong>Symptom:</strong> The server&rsquo;s memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.</p>
 <p><strong>Root Cause: The &ldquo;Stuck Writer&rdquo; Flaw.</strong>
 The original <code>streamer.go</code> had a fatal flaw. Writing to a Go channel (<code>streamChan &lt;- event</code>) is a <strong>blocking operation</strong>. The writer goroutine will freeze until a reader is ready. When a client disconnected, the reading part of the code in <code>handleStreamRequest</code> would terminate. However, the worker goroutine was left frozen mid-write, waiting for a reader that would never come.</p>
@@ -227,7 +228,7 @@ The fix was to make the write operation &ldquo;cancellation-aware&rdquo; by usin
 </span></span></code></pre></div><p>Now, when a client disconnects, the manager cancels the request&rsquo;s context. The <code>sendEvent</code> function sees <code>&lt;-ctx.Done()</code> become ready, aborts the write, and allows the goroutine to shut down gracefully, releasing its memory.</p>
 <p><strong>This solved the memory leak but, like a Faustian bargain, created two new, more insidious race conditions.</strong></p>
 <hr>
-<h3 id="part-2-problem-2---the-pre-emptive-cleanup-the-keyser-söze-problem">Part 2: Problem #2 - The Pre-emptive Cleanup (The Keyser Söze Problem)
+<h3 id="problem-2---the-pre-emptive-cleanup-the-keyser-söze-problem">Problem #2 - The Pre-emptive Cleanup (The Keyser Söze Problem)
 </h3><p><strong>Symptom:</strong> A client calls <code>/cancel</code> on a request and <em>then</em> calls <code>/stream</code> to get the final cancellation confirmation. Instead of the expected <code>{&quot;status&quot;:&quot;cancelled&quot;}</code> message, they receive a &ldquo;request not found&rdquo; error. The request had vanished.</p>
 <p><strong>Root Cause: Overly Aggressive Cleanup.</strong>
 Our new cancellation mechanism was too effective. Here&rsquo;s the race:</p>
@@ -258,7 +259,7 @@ The worker goroutine needed to be taught some discretion. It cannot clean up a r
 </span></span><span style="display:flex;"><span>}()
 </span></span></code></pre></div><p>The worker now yields cleanup duty for <code>StateCancelled</code> requests, ensuring the record stays alive long enough for <code>GetRequestResultStream</code> to find it and serve the proper confirmation.</p>
 <hr>
-<h3 id="part-3-problem-3---the-muted-messenger-the-hasta-la-vista-paradox">Part 3: Problem #3 - The Muted Messenger (The &ldquo;Hasta la Vista&rdquo; Paradox)
+<h3 id="problem-3---the-muted-messenger-the-hasta-la-vista-paradox">Problem #3 - The Muted Messenger (The &ldquo;Hasta la Vista&rdquo; Paradox)
 </h3><p><strong>Symptom:</strong> A client calls <code>/cancel</code> <em>during</em> an active stream. The stream stops, but the connection simply closes. The final, crucial <code>{&quot;status&quot;:&quot;cancelled&quot;}</code> message is never received.</p>
 <p><strong>Root Cause: A Logical Paradox.</strong>
 This was the most subtle problem.</p>

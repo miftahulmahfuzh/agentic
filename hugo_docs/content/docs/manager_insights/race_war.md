@@ -1,16 +1,16 @@
 ---
-title: "Race War"
+title: "A War Against Race Conditions"
 date: 2025-08-02
 draft: false
 ---
 
-### Agentic Chatbot Architecture: A War Against Race Conditions
+**Next Episode:** [For The Greater Good](https://miftahulmahfuzh.github.io/agentic/docs/architectures/bigger_picture)
 
 The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go's concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in `manager.go` and `streamer.go` that were required to achieve true stability.
 
 ---
 
-### Part 1: Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak)
+### Problem #1 - The Zombie Apocalypse (The Original Goroutine Leak)
 
 **Symptom:** The server's memory usage would climb relentlessly over time, especially under load, leading to an inevitable crash.
 
@@ -46,7 +46,7 @@ Now, when a client disconnects, the manager cancels the request's context. The `
 
 ---
 
-### Part 2: Problem #2 - The Pre-emptive Cleanup (The Keyser Söze Problem)
+### Problem #2 - The Pre-emptive Cleanup (The Keyser Söze Problem)
 
 **Symptom:** A client calls `/cancel` on a request and *then* calls `/stream` to get the final cancellation confirmation. Instead of the expected `{"status":"cancelled"}` message, they receive a "request not found" error. The request had vanished.
 
@@ -84,7 +84,7 @@ The worker now yields cleanup duty for `StateCancelled` requests, ensuring the r
 
 ---
 
-### Part 3: Problem #3 - The Muted Messenger (The "Hasta la Vista" Paradox)
+### Problem #3 - The Muted Messenger (The "Hasta la Vista" Paradox)
 
 **Symptom:** A client calls `/cancel` *during* an active stream. The stream stops, but the connection simply closes. The final, crucial `{"status":"cancelled"}` message is never received.
 

@@ -20,6 +20,9 @@
     <loc>http://localhost:1313/agentic/docs/frequently_asked/rag_qa_1/</loc>
     <lastmod>2025-08-06T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/manager_insights/race_war/</loc>
+    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/narratives/baba_yaga/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
@@ -75,9 +78,6 @@
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/python_stuff/python_workers/</loc>
-    <lastmod>2025-08-02T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/agentic/docs/manager_insights/race_war/</loc>
     <lastmod>2025-08-02T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/caller_insights/rag_stream/</loc>

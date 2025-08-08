@@ -4,6 +4,8 @@ date: 2025-08-07
 draft: false
 ---
 
+**Previously On:** [A War Against Race Conditions](https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/race_war)
+
 **Directive:** To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: *"Why not just let the Janitor clean it up?"*
 
 **Conclusion:** Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system. This was a war for the soul of the application, not just a cleanup operation.

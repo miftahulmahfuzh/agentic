@@ -12,7 +12,9 @@
         <pubDate>Thu, 07 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/architectures/bigger_picture/</guid>
-        <description>&lt;p&gt;&lt;strong&gt;Directive:&lt;/strong&gt; To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &lt;em&gt;&amp;ldquo;Why not just let the Janitor clean it up?&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
+        <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/race_war&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;A War Against Race Conditions&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Directive:&lt;/strong&gt; To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &lt;em&gt;&amp;ldquo;Why not just let the Janitor clean it up?&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Conclusion:&lt;/strong&gt; Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system. This was a war for the soul of the application, not just a cleanup operation.&lt;/p&gt;
 &lt;hr&gt;
 &lt;h3 id=&#34;argument-1-the-janitor-is-a-coroner-not-a-doctor&#34;&gt;Argument 1: The Janitor is a Coroner, Not a Doctor
