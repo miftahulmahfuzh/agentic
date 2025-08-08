@@ -84,4 +84,4 @@ Imagine you have to assassinate 10 targets in a building.
 *   Python's semaphore limited the **concurrency** of I/O-bound tasks on a **single thread**.
 *   Go's semaphore limits the **parallelism** of independent goroutines across **multiple threads**.
 
-Your intuition was correct. The Python "workers" were an illusion, a clever juggling act. The Go workers are real. They are an army.
+The Python "workers" were an illusion, a clever juggling act. The Go workers are real. They are an army.

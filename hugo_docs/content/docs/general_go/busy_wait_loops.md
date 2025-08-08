@@ -70,4 +70,4 @@ This is the fundamental difference:
 *   **Busy-Wait:** You use the CPU to check for an event.
 *   **Channel Wait:** You tell the scheduler "wake me up when this event happens," and the CPU goes off to do other useful work.
 
-Your README is correct. The new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.
+The chatbot's new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.
