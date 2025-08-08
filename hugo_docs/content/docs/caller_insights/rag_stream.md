@@ -4,6 +4,8 @@ date: 2025-08-02
 draft: false
 ---
 
+**Next Episode:** [RAG Stream Journey](https://miftahulmahfuzh.github.io/agentic/docs/narratives/rag_stream_pt2)
+
 # Architectural Blueprint: Dual-Path Request Processing
 
 ## 1. Core Principle: No-Nonsense Efficiency

@@ -86,3 +86,5 @@ This architecture creates a clean, efficient flow, communicating through channel
 6.  **`GetRequestResultStream` -> Client:** This function, called by the client, simply waits on the channels inside the `RequestStream` holder. It is a passive observer. When the Streaming Worker sends the `streamChan`, it receives it and begins forwarding tokens to the client.
 
 This is a true pipeline. The fast "preparation" workers are never held hostage by the slow "streaming" workers, allowing the system to process a high volume of incoming requests efficiently, even when the final LLM calls are slow.
+
+**Related QA:** [Design Q&A 1](https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/design_qa_1)

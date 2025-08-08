@@ -4,6 +4,8 @@ date: 2025-08-02
 draft: false
 ---
 
+**Previously On:** [The Dual-Path Architecture](https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/rag_stream)
+
 Let's trace the journey of the query "how to register in tuntun?" from the moment the user hits "send" to the final word appearing on their screen.
 
 This story unfolds in four main acts:
