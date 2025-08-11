@@ -347,7 +347,9 @@ For this one specific scenario, we needed a function that would attempt one fina
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</guid>
-        <description>&lt;h1 id=&#34;what-are-busy-wait-loops-and-why-are-they-terrible&#34;&gt;What Are Busy-Wait Loops and Why Are They Terrible?
+        <description>&lt;p&gt;&lt;strong&gt;Next Episode:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/general_go/superior_event_driven&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Superior Event-Driven&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;what-are-busy-wait-loops-and-why-are-they-terrible&#34;&gt;What Are Busy-Wait Loops and Why Are They Terrible?
 &lt;/h1&gt;&lt;p&gt;Yes, the polling system from your old &lt;code&gt;manager.go&lt;/code&gt; is a classic example of a busy-wait loop, or more accurately, a &amp;ldquo;busy-wait with naps.&amp;rdquo; The statement in the README is entirely correct.&lt;/p&gt;
 &lt;h3 id=&#34;what-is-a-busy-wait-loop&#34;&gt;What is a Busy-Wait Loop?
 &lt;/h3&gt;&lt;p&gt;A busy-wait loop, or &amp;ldquo;spinning,&amp;rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:&lt;/p&gt;
@@ -396,7 +398,7 @@ For this one specific scenario, we needed a function that would attempt one fina
 &lt;li&gt;&lt;strong&gt;Busy-Wait:&lt;/strong&gt; You use the CPU to check for an event.&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;Channel Wait:&lt;/strong&gt; You tell the scheduler &amp;ldquo;wake me up when this event happens,&amp;rdquo; and the CPU goes off to do other useful work.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Your README is correct. The new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.&lt;/p&gt;
+&lt;p&gt;The chatbot&amp;rsquo;s new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.&lt;/p&gt;
 </description>
         </item>
         <item>
@@ -1047,6 +1049,8 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
 &lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;This is a true pipeline. The fast &amp;ldquo;preparation&amp;rdquo; workers are never held hostage by the slow &amp;ldquo;streaming&amp;rdquo; workers, allowing the system to process a high volume of incoming requests efficiently, even when the final LLM calls are slow.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Related QA:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/design_qa_1&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Design Q&amp;amp;A 1&lt;/a&gt;&lt;/p&gt;
 </description>
         </item>
         <item>
@@ -1612,7 +1616,7 @@ Every query, no matter how simple, was forced through this expensive, multi-step
 &lt;li&gt;Python&amp;rsquo;s semaphore limited the &lt;strong&gt;concurrency&lt;/strong&gt; of I/O-bound tasks on a &lt;strong&gt;single thread&lt;/strong&gt;.&lt;/li&gt;
 &lt;li&gt;Go&amp;rsquo;s semaphore limits the &lt;strong&gt;parallelism&lt;/strong&gt; of independent goroutines across &lt;strong&gt;multiple threads&lt;/strong&gt;.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Your intuition was correct. The Python &amp;ldquo;workers&amp;rdquo; were an illusion, a clever juggling act. The Go workers are real. They are an army.&lt;/p&gt;
+&lt;p&gt;The Python &amp;ldquo;workers&amp;rdquo; were an illusion, a clever juggling act. The Go workers are real. They are an army.&lt;/p&gt;
 </description>
         </item>
         <item>
@@ -1621,7 +1625,9 @@ Every query, no matter how simple, was forced through this expensive, multi-step
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/caller_insights/rag_stream/</guid>
-        <description>&lt;h1 id=&#34;architectural-blueprint-dual-path-request-processing&#34;&gt;Architectural Blueprint: Dual-Path Request Processing
+        <description>&lt;p&gt;&lt;strong&gt;Next Episode:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/narratives/rag_stream_pt2&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;RAG Stream Journey&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;architectural-blueprint-dual-path-request-processing&#34;&gt;Architectural Blueprint: Dual-Path Request Processing
 &lt;/h1&gt;&lt;h2 id=&#34;1-core-principle-no-nonsense-efficiency&#34;&gt;1. Core Principle: No-Nonsense Efficiency
 &lt;/h2&gt;&lt;p&gt;This system does not use a one-size-fits-all approach. That&amp;rsquo;s inefficient and expensive. Instead, it operates on a dual-path architecture designed to segregate requests based on complexity. Like Anton Chigurh, it chooses the right tool for the job, without sentiment.&lt;/p&gt;
 &lt;p&gt;The architecture features two distinct processing pathways, chosen dynamically by an LLM router:&lt;/p&gt;
@@ -1776,6 +1782,8 @@ graph TD
 &lt;/table&gt;
 &lt;h2 id=&#34;7-conclusion&#34;&gt;7. Conclusion
 &lt;/h2&gt;&lt;p&gt;This dual-path architecture is not a fancy feature; it&amp;rsquo;s a fundamental requirement for a production-grade system that balances capability with cost and performance. It intelligently applies force where needed and finesse where it&amp;rsquo;s most effective. One path is for complex reasoning, the other is for delivering hard facts with extreme prejudice. A professional system knows the difference and acts accordingly.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Related QA:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/rag_qa_1&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;RAG Q&amp;amp;A 1&lt;/a&gt;&lt;/p&gt;
 </description>
         </item>
         <item>
@@ -1784,7 +1792,9 @@ graph TD
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</guid>
-        <description>&lt;p&gt;Let&amp;rsquo;s trace the journey of the query &amp;ldquo;how to register in tuntun?&amp;rdquo; from the moment the user hits &amp;ldquo;send&amp;rdquo; to the final word appearing on their screen.&lt;/p&gt;
+        <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/rag_stream&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;The Dual-Path Architecture&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s trace the journey of the query &amp;ldquo;how to register in tuntun?&amp;rdquo; from the moment the user hits &amp;ldquo;send&amp;rdquo; to the final word appearing on their screen.&lt;/p&gt;
 &lt;p&gt;This story unfolds in four main acts:&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;&lt;strong&gt;The Submission:&lt;/strong&gt; The request enters the system.&lt;/li&gt;
@@ -2203,7 +2213,9 @@ graph LR
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/general_go/superior_event_driven/</guid>
-        <description>&lt;h1 id=&#34;the-flaw-of-polling-vs-the-power-of-event-driven-design&#34;&gt;The Flaw of Polling vs. The Power of Event-Driven Design
+        <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/general_go/busy_wait_loops&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Busy-Wait Loops&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;the-flaw-of-polling-vs-the-power-of-event-driven-design&#34;&gt;The Flaw of Polling vs. The Power of Event-Driven Design
 &lt;/h1&gt;&lt;p&gt;You might look at the new &lt;code&gt;manager.go&lt;/code&gt; and wonder why it’s structured with a channel inside a struct (&lt;code&gt;RequestStream.Stream&lt;/code&gt;) which itself is passed between functions before finally being used. It might seem complex.&lt;/p&gt;
 &lt;p&gt;The reason is simple: this architecture is fundamentally more intelligent, efficient, and scalable than the common alternative—a polling loop. The alternative is the architectural equivalent of a security guard repeatedly running to the front gate every 10 seconds to see if a package has arrived. Our way is letting the guard sleep soundly at their desk until the delivery driver rings the bell.&lt;/p&gt;
 &lt;h3 id=&#34;the-old-way-inefficient-polling-are-we-there-yet&#34;&gt;The Old Way: Inefficient Polling (&amp;ldquo;Are We There Yet?&amp;rdquo;)

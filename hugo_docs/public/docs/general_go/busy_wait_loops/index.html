@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-us" dir="ltr">
     <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Next Episode: Superior Event-Driven What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
 <title>Busy Wait Loops</title>
 
 <link rel='canonical' href='http://localhost:1313/agentic/docs/general_go/busy_wait_loops/'>
 
 <link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Busy Wait Loops">
-<meta property='og:description' content="What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
+<meta property='og:description' content="Next Episode: Superior Event-Driven What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/general_go/busy_wait_loops/'>
 <meta property='og:site_name' content='Go Chatbot'>
 <meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-02T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-02T00:00:00&#43;00:00'/>
 <meta name="twitter:title" content="Busy Wait Loops">
-<meta name="twitter:description" content="What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
+<meta name="twitter:description" content="Next Episode: Superior Event-Driven What Are Busy-Wait Loops and Why Are They Terrible? Yes, the polling system from your old manager.go is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct. What is a Busy-Wait Loop? A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:">
     <link rel="shortcut icon" href="/agentic/favicon.png" />
 
     </head>
@@ -201,7 +201,9 @@
     <section class="article-content">
     
     
-    <h1 id="what-are-busy-wait-loops-and-why-are-they-terrible">What Are Busy-Wait Loops and Why Are They Terrible?
+    <p><strong>Next Episode:</strong> <a class="link" href="https://miftahulmahfuzh.github.io/agentic/docs/general_go/superior_event_driven"  target="_blank" rel="noopener"
+    >Superior Event-Driven</a></p>
+<h1 id="what-are-busy-wait-loops-and-why-are-they-terrible">What Are Busy-Wait Loops and Why Are They Terrible?
 </h1><p>Yes, the polling system from your old <code>manager.go</code> is a classic example of a busy-wait loop, or more accurately, a &ldquo;busy-wait with naps.&rdquo; The statement in the README is entirely correct.</p>
 <h3 id="what-is-a-busy-wait-loop">What is a Busy-Wait Loop?
 </h3><p>A busy-wait loop, or &ldquo;spinning,&rdquo; is a technique where a process repeatedly checks a condition in a tight loop. In its purest, most toxic form, it looks like this:</p>
@@ -250,7 +252,7 @@
 <li><strong>Busy-Wait:</strong> You use the CPU to check for an event.</li>
 <li><strong>Channel Wait:</strong> You tell the scheduler &ldquo;wake me up when this event happens,&rdquo; and the CPU goes off to do other useful work.</li>
 </ul>
-<p>Your README is correct. The new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.</p>
+<p>The chatbot&rsquo;s new design eliminates the busy-wait loop entirely, replacing it with an efficient, blocking channel read that frees up the CPU and makes the system vastly more scalable.</p>
 
 </section>
 

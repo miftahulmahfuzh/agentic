@@ -33,7 +33,9 @@
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</guid>
-        <description>&lt;p&gt;Let&amp;rsquo;s trace the journey of the query &amp;ldquo;how to register in tuntun?&amp;rdquo; from the moment the user hits &amp;ldquo;send&amp;rdquo; to the final word appearing on their screen.&lt;/p&gt;
+        <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/rag_stream&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;The Dual-Path Architecture&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s trace the journey of the query &amp;ldquo;how to register in tuntun?&amp;rdquo; from the moment the user hits &amp;ldquo;send&amp;rdquo; to the final word appearing on their screen.&lt;/p&gt;
 &lt;p&gt;This story unfolds in four main acts:&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;&lt;strong&gt;The Submission:&lt;/strong&gt; The request enters the system.&lt;/li&gt;

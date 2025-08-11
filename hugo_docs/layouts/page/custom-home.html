@@ -501,7 +501,7 @@ go run ./cmd/test_single_flight -n 10</code></pre>
               <p>The test simulates every possible cancellation scenario:</p>
               <ul>
                 <li><strong>Happy Path:</strong> A standard request streams to completion without interruption.</li>
-                <li><strong>Pre-emptive Cancellation:</strong> A request is cancelled *immediately* after submission, before the client even connects to the stream. The test verifies that the server correctly returns a <code>cancelled</code> status.</li>
+                <li><strong>Pre-emptive Cancellation:</strong> A request is cancelled <strong>immediately</strong> after submission, before the client even connects to the stream. The test verifies that the server correctly returns a <code>cancelled</code> status.</li>
                 <li><strong>Mid-Stream Cancellation:</strong> The most critical test. It uses a goroutine to begin streaming, then sends a cancellation request from a parallel thread, proving that the <code>context</code> correctly terminates the in-progress work.</li>
                 <li><strong>Post-Completion Cancellation:</strong> The test waits for a stream to finish and for the server to fully close the connection. It then attempts to cancel the now-nonexistent request and verifies the server correctly returns a <code>not_found</code> status, proving proper state management and cleanup.</li>
               </ul>
@@ -518,8 +518,10 @@ go test -v -run ^TestStream .</code></pre>
               <hr>
 
               <h4>Running Standard Tests</h4>
-              <p>To run all unit and integration tests:</p>
-              <pre><code>go test -v ./...</code></pre>
+              <p>To run endpoint tests and stream-cancel tests:</p>
+              <pre><code>go test -v .</code></pre>
+              <p>To run all tools tests:</p>
+              <pre><code>go test -v ./tools/tooltest -run TestAllTools</code></pre>
 
               <hr>
 

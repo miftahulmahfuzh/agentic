@@ -60,7 +60,9 @@
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/caller_insights/rag_stream/</guid>
-        <description>&lt;h1 id=&#34;architectural-blueprint-dual-path-request-processing&#34;&gt;Architectural Blueprint: Dual-Path Request Processing
+        <description>&lt;p&gt;&lt;strong&gt;Next Episode:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/narratives/rag_stream_pt2&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;RAG Stream Journey&lt;/a&gt;&lt;/p&gt;
+&lt;h1 id=&#34;architectural-blueprint-dual-path-request-processing&#34;&gt;Architectural Blueprint: Dual-Path Request Processing
 &lt;/h1&gt;&lt;h2 id=&#34;1-core-principle-no-nonsense-efficiency&#34;&gt;1. Core Principle: No-Nonsense Efficiency
 &lt;/h2&gt;&lt;p&gt;This system does not use a one-size-fits-all approach. That&amp;rsquo;s inefficient and expensive. Instead, it operates on a dual-path architecture designed to segregate requests based on complexity. Like Anton Chigurh, it chooses the right tool for the job, without sentiment.&lt;/p&gt;
 &lt;p&gt;The architecture features two distinct processing pathways, chosen dynamically by an LLM router:&lt;/p&gt;
@@ -215,6 +217,8 @@ graph TD
 &lt;/table&gt;
 &lt;h2 id=&#34;7-conclusion&#34;&gt;7. Conclusion
 &lt;/h2&gt;&lt;p&gt;This dual-path architecture is not a fancy feature; it&amp;rsquo;s a fundamental requirement for a production-grade system that balances capability with cost and performance. It intelligently applies force where needed and finesse where it&amp;rsquo;s most effective. One path is for complex reasoning, the other is for delivering hard facts with extreme prejudice. A professional system knows the difference and acts accordingly.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Related QA:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/rag_qa_1&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;RAG Q&amp;amp;A 1&lt;/a&gt;&lt;/p&gt;
 </description>
         </item>
         

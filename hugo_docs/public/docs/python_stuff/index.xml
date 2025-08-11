@@ -179,7 +179,7 @@ Every query, no matter how simple, was forced through this expensive, multi-step
 &lt;li&gt;Python&amp;rsquo;s semaphore limited the &lt;strong&gt;concurrency&lt;/strong&gt; of I/O-bound tasks on a &lt;strong&gt;single thread&lt;/strong&gt;.&lt;/li&gt;
 &lt;li&gt;Go&amp;rsquo;s semaphore limits the &lt;strong&gt;parallelism&lt;/strong&gt; of independent goroutines across &lt;strong&gt;multiple threads&lt;/strong&gt;.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Your intuition was correct. The Python &amp;ldquo;workers&amp;rdquo; were an illusion, a clever juggling act. The Go workers are real. They are an army.&lt;/p&gt;
+&lt;p&gt;The Python &amp;ldquo;workers&amp;rdquo; were an illusion, a clever juggling act. The Go workers are real. They are an army.&lt;/p&gt;
 </description>
         </item>
         
