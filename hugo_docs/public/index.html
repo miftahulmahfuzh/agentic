@@ -154,7 +154,8 @@ graph TD
             <h4>🛡️ Resource Management</h4>
             <ul>
                 <li><span class="popup-trigger" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight Request Coalescing</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight (Preparation Phase)</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">End-to-End Stream Broadcasting</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('state-aware-janitor')">State-Aware Janitor</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span></li>
             </ul>
@@ -831,8 +832,8 @@ Assistant: The market cap for GOOGL is $1.7T.</code></pre>
 
         case "single-flight":
             popupContent = `
-                <h2>🛡️ Single-Flight Request Coalescing</h2>
-                <p>This feature protects against the "thundering herd" problem where multiple, identical, un-cached requests arrive simultaneously. Using Go's standard <code>singleflight</code> library, only the <strong>first</strong> request triggers the expensive work (tool execution, LLM calls).</p>
+                <h2>🛡️ Single-Flight (Preparation Phase)</h2>
+                <p>This pattern protects against the "thundering herd" problem during the <strong>Preparation Phase</strong>. When multiple, identical, un-cached requests arrive, Go's standard <code>singleflight</code> library ensures only the <strong>first</strong> request triggers the expensive preparation work (tool selection, initial LLM checks).</p>
                 <div class="mermaid">
 graph TD
     subgraph Before ["Without Single-Flight"]
@@ -873,13 +874,51 @@ graph TD
     class SF sfStyle
     class API,API2 apiStyle
                 </div>
-                <p>All other identical requests simply wait and share the result from the first one. This is visible in the logs via the message: <code>"Shared result from in-flight request"</code>.</p>
+                <p>All other identical requests simply wait and share the static result from the first one. This is visible in the logs via the message: <code>"Shared result from in-flight request"</code>.</p>
+                <hr>
+                <p>However, <code>singleflight</code> is limited—it can only return a single, static value. It cannot deduplicate a continuous stream of data. For that, the system uses the more advanced <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">End-to-End Stream Broadcasting</span>  pattern in the Streaming Phase.</p>
+            `;
+            break;
+
+        case "e2e-stream-broadcasting":
+            popupContent = `
+                <h2>🚀 End-to-End Stream Broadcasting</h2>
+                <p>This is the system's ultimate solution to the "thundering herd" problem, applied during the <strong>Streaming Phase</strong>. It ensures that for any number of identical requests, only one expensive LLM stream is ever created. It's the difference between every house running its own fiber optic cable to a TV station versus just tuning into a broadcast.</p>
+                <div class="mermaid">
+graph TD
+    subgraph Old ["Without Broadcasting (Wasteful)"]
+        Req1["Identical Req A"] --> LLM1["🔥 Expensive LLM Stream 1"]
+        Req2["Identical Req B"] --> LLM2["🔥 Expensive LLM Stream 2"]
+        Req3["Identical Req C"] --> LLM3["🔥 Expensive LLM Stream 3"]
+    end
+    subgraph New ["With Stream Broadcasting (Efficient)"]
+        Leader["Leader Req A"] --> LLM4["✅ Single LLM Stream"]
+        LLM4 -- "feeds" --> Broadcaster["🚀 StreamBroadcaster"]
+        FollowerB["Follower Req B"] -- "subscribes" --> Broadcaster
+        FollowerC["Follower Req C"] -- "subscribes" --> Broadcaster
+    end
+    
+    %% Styling
+    classDef reqStyle fill:#cce5ff,stroke:#004085
+    classDef llmStyle fill:#f8d7da,stroke:#721c24
+    classDef goodLlmStyle fill:#d4edda,stroke:#155724
+    classDef broadcasterStyle fill:#fff3cd,stroke:#856404
+    
+    class Req1,Req2,Req3,Leader,FollowerB,FollowerC reqStyle
+    class LLM1,LLM2,LLM3 llmStyle
+    class LLM4 goodLlmStyle
+    class Broadcaster broadcasterStyle
+                </div>
+                <p>The first request becomes the "leader" and initiates the stream. Its output is fed into a custom <code>StreamBroadcaster</code>. All subsequent "follower" requests simply subscribe to this broadcaster and receive the same stream of data.</p>
+                <hr>
+                <p><strong>Race-Condition Proof:</strong> The broadcaster's genius lies in its handling of late subscribers. It maintains a history of all broadcasted events. When a new client subscribes, it is <strong>atomically caught up</strong> with the entire history before joining the live stream. This guarantees every client receives the full, identical response, regardless of when they connect.</p>
                 <hr>
                 <p><strong>Benefits:</strong></p>
                 <ul>
-                    <li>Prevents self-inflicted DDoS attacks.</li>
-                    <li>Saves significant LLM API costs and reduces load on downstream services.</li>
-                    <li>Improves overall system efficiency under high load.</li>
+                    <li><strong>Massive Cost Savings:</strong> Only one LLM call is made for countless identical requests.</li>
+                    <li><strong>Extreme Performance:</strong> Follower requests get data almost instantly without waiting for a new LLM call to start.</li>
+                    <li><strong>System Stability:</strong> Prevents overwhelming the LLM provider API.</li>
+                    <li><strong>Guaranteed Consistency:</strong> All users see the exact same answer.</li>
                 </ul>
             `;
             break;
