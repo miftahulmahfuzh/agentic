@@ -6,7 +6,162 @@
         <description>Recent content in Tuntun Go Agentic Chatbot on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Thu, 07 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 12 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Circuit Breaker Pattern</title>
+        <link>http://localhost:1313/agentic/docs/architectures/circuit_breaker/</link>
+        <pubDate>Tue, 12 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/architectures/circuit_breaker/</guid>
+        <description>&lt;h2 id=&#34;overview&#34;&gt;Overview
+&lt;/h2&gt;&lt;p&gt;The Circuit Breaker pattern is a resilience pattern designed to prevent cascading failures in distributed systems. It acts as a protective barrier between your application and potentially unreliable external services, preventing your entire system from failing when a downstream dependency becomes unavailable or starts responding slowly.&lt;/p&gt;
+&lt;p&gt;This implementation uses the &lt;code&gt;gobreaker&lt;/code&gt; library to create circuit breakers for different services (LLM, Redis, and ArangoDB) with customized configurations based on each service&amp;rsquo;s characteristics and reliability expectations.&lt;/p&gt;
+&lt;h2 id=&#34;circuit-breaker-states&#34;&gt;Circuit Breaker States
+&lt;/h2&gt;&lt;p&gt;A circuit breaker operates in three states:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Closed&lt;/strong&gt;: Normal operation. All requests pass through to the service.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Open&lt;/strong&gt;: The service is considered unhealthy. All requests are immediately rejected without calling the service.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Half-Open&lt;/strong&gt;: Testing phase. A limited number of requests are allowed through to test if the service has recovered.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;parameter-configuration&#34;&gt;Parameter Configuration
+&lt;/h2&gt;&lt;p&gt;The &lt;code&gt;newCircuitBreaker&lt;/code&gt; function accepts the following parameters:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(name, maxRequests, interval, timeout, failureRateThreshold, minRequests)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;parameter-descriptions&#34;&gt;Parameter Descriptions
+&lt;/h3&gt;&lt;h4 id=&#34;name-string&#34;&gt;&lt;code&gt;name&lt;/code&gt; (string)
+&lt;/h4&gt;&lt;p&gt;The identifier for the circuit breaker, used for logging and monitoring purposes. This helps you identify which service is experiencing issues in your logs.&lt;/p&gt;
+&lt;h4 id=&#34;maxrequests-uint32&#34;&gt;&lt;code&gt;maxRequests&lt;/code&gt; (uint32)
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;Applies only to Half-Open state.&lt;/strong&gt; After the circuit breaker has been in the Open state and the timeout period expires, it enters Half-Open state. This parameter defines how many test requests are allowed through during this phase. If all test requests succeed, the breaker returns to Closed state. If any fail, it immediately returns to Open state.&lt;/p&gt;
+&lt;h4 id=&#34;interval-timeduration&#34;&gt;&lt;code&gt;interval&lt;/code&gt; (time.Duration)
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;The sliding window duration.&lt;/strong&gt; This defines the time window over which the circuit breaker evaluates request statistics. All success and failure metrics are calculated based on requests made within this rolling time window.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Important:&lt;/strong&gt; Setting this to 0 will prevent the breaker from resetting its counts, making it ineffective.&lt;/p&gt;
+&lt;h4 id=&#34;timeout-timeduration&#34;&gt;&lt;code&gt;timeout&lt;/code&gt; (time.Duration)
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;The penalty period.&lt;/strong&gt; When the circuit breaker trips and enters the Open state, it remains in this state for the specified timeout duration. During this time, all requests are rejected immediately without attempting to call the service.&lt;/p&gt;
+&lt;h4 id=&#34;failureratethreshold-float64&#34;&gt;&lt;code&gt;failureRateThreshold&lt;/code&gt; (float64)
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;The failure percentage that triggers the breaker.&lt;/strong&gt; When the percentage of failed requests within the sliding window reaches or exceeds this threshold, the circuit breaker will trip to Open state. Value should be between 0.0 (0%) and 1.0 (100%).&lt;/p&gt;
+&lt;h4 id=&#34;minrequests-uint32&#34;&gt;&lt;code&gt;minRequests&lt;/code&gt; (uint32)
+&lt;/h4&gt;&lt;p&gt;&lt;strong&gt;The minimum sample size required.&lt;/strong&gt; The circuit breaker will not consider tripping unless it has observed at least this many requests within the current sliding window. This prevents single failures in low-traffic scenarios from unnecessarily triggering the breaker.&lt;/p&gt;
+&lt;h2 id=&#34;service-specific-configurations&#34;&gt;Service-Specific Configurations
+&lt;/h2&gt;&lt;h3 id=&#34;llm-circuit-breaker&#34;&gt;LLM Circuit Breaker
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;llmCB = &lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;LLM&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;2&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;15&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;60&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;0.5&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;5&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Configuration reasoning:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;15-second sliding window&lt;/strong&gt;: Provides enough time to observe patterns in LLM response behavior&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Minimum 5 requests&lt;/strong&gt;: Ensures statistical significance before considering a trip&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;50% failure threshold&lt;/strong&gt;: Moderate tolerance, as LLM services can be inherently variable&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;60-second timeout&lt;/strong&gt;: Longer recovery period accounts for the time needed for LLM services to stabilize&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;2 test requests in Half-Open&lt;/strong&gt;: Conservative approach for expensive LLM calls&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Use case:&lt;/strong&gt; Suitable for slow, expensive, and potentially variable services like Large Language Models.&lt;/p&gt;
+&lt;h3 id=&#34;redis-circuit-breaker&#34;&gt;Redis Circuit Breaker
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;redisCB = &lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Redis&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;3&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;10&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;30&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;0.6&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Configuration reasoning:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;10-second sliding window&lt;/strong&gt;: Faster detection for a service that should respond quickly&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Minimum 10 requests&lt;/strong&gt;: Higher threshold reflects expected high throughput&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;60% failure threshold&lt;/strong&gt;: More tolerant of failures, as Redis is generally reliable&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;30-second timeout&lt;/strong&gt;: Quicker recovery expectation for a fast, reliable service&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;3 test requests in Half-Open&lt;/strong&gt;: Moderate testing approach&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Use case:&lt;/strong&gt; Optimized for fast, high-throughput services that are generally reliable but may experience occasional network issues.&lt;/p&gt;
+&lt;h3 id=&#34;arangodb-circuit-breaker&#34;&gt;ArangoDB Circuit Breaker
+&lt;/h3&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;arangoCB = &lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;ArangoDB&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;5&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;5&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;30&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;0.5&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;Configuration reasoning:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;5-second sliding window&lt;/strong&gt;: Very responsive to recent problems&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Minimum 10 requests&lt;/strong&gt;: Expects high traffic volume&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;50% failure threshold&lt;/strong&gt;: Less tolerant of failures for a critical database service&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;30-second timeout&lt;/strong&gt;: Quick recovery expectation for a database service&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;5 test requests in Half-Open&lt;/strong&gt;: More thorough testing before fully reopening&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Use case:&lt;/strong&gt; Designed for critical, high-throughput database services that should be consistently available and performant.&lt;/p&gt;
+&lt;h2 id=&#34;implementation-example&#34;&gt;Implementation Example
+&lt;/h2&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;type&lt;/span&gt; Services &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	LLM         &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;ResilientLLM
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	Tokenizer   &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;tiktoken.Tiktoken
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	RedisClient &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;db.RedisStore
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	ArangoStore &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;db.ArangoStore
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// Creates a new circuit breaker with a sane, ratio-based configuration.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(name &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, maxRequests &lt;span style=&#34;color:#8be9fd&#34;&gt;uint32&lt;/span&gt;, interval time.Duration, timeout time.Duration, failureRateThreshold &lt;span style=&#34;color:#8be9fd&#34;&gt;float64&lt;/span&gt;, minRequests &lt;span style=&#34;color:#8be9fd&#34;&gt;uint32&lt;/span&gt;) &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;gobreaker.CircuitBreaker {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; gobreaker.&lt;span style=&#34;color:#50fa7b&#34;&gt;NewCircuitBreaker&lt;/span&gt;(gobreaker.Settings{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		Name:        name,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		MaxRequests: maxRequests, &lt;span style=&#34;color:#6272a4&#34;&gt;// For Half-Open state probes. Keep it low.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;		Interval:    interval,    &lt;span style=&#34;color:#6272a4&#34;&gt;// THE SLIDING WINDOW. DON&amp;#39;T SET THIS TO 0.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;		Timeout:     timeout,     &lt;span style=&#34;color:#6272a4&#34;&gt;// Penalty box time after tripping.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;		ReadyToTrip: &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(counts gobreaker.Counts) &lt;span style=&#34;color:#8be9fd&#34;&gt;bool&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			&lt;span style=&#34;color:#6272a4&#34;&gt;// Don&amp;#39;t trip if we haven&amp;#39;t seen enough traffic to make a decision.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;			&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; counts.Requests &amp;lt; minRequests {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;				&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;false&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			failureRate &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;float64&lt;/span&gt;(counts.TotalFailures) &lt;span style=&#34;color:#ff79c6&#34;&gt;/&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;float64&lt;/span&gt;(counts.Requests)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; failureRate &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;gt;=&lt;/span&gt; failureRateThreshold
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		OnStateChange: &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(name &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, from gobreaker.State, to gobreaker.State) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;			log.&lt;span style=&#34;color:#50fa7b&#34;&gt;Info&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Str&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;breaker&amp;#34;&lt;/span&gt;, name).&lt;span style=&#34;color:#50fa7b&#34;&gt;Str&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;from&amp;#34;&lt;/span&gt;, from.&lt;span style=&#34;color:#50fa7b&#34;&gt;String&lt;/span&gt;()).&lt;span style=&#34;color:#50fa7b&#34;&gt;Str&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;to&amp;#34;&lt;/span&gt;, to.&lt;span style=&#34;color:#50fa7b&#34;&gt;String&lt;/span&gt;()).&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Circuit Breaker state changed.&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	})
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// This function initializes all external clients, passing the resilience patterns (circuit breakers)
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// into them for encapsulation.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;NewServices&lt;/span&gt;(ctx context.Context, cfg &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;config.Settings) (&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;Services, &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6272a4&#34;&gt;// --- Create all circuit breakers first ---
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	llmCB &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;LLM&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;2&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;15&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;60&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;0.5&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;5&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	redisCB &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Redis&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;3&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;10&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;30&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;0.6&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	arangoCB &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;newCircuitBreaker&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;ArangoDB&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;5&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;5&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;30&lt;/span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;time.Second, &lt;span style=&#34;color:#bd93f9&#34;&gt;0.5&lt;/span&gt;, &lt;span style=&#34;color:#bd93f9&#34;&gt;10&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6272a4&#34;&gt;// --- Initialize services, injecting their respective circuit breakers ---
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	llm, tokenizer, llmErr &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#50fa7b&#34;&gt;NewResilientLLM&lt;/span&gt;(ctx, cfg, llmCB)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; llmErr &lt;span style=&#34;color:#ff79c6&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;, fmt.&lt;span style=&#34;color:#50fa7b&#34;&gt;Errorf&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;❌ (CircuitBreaker) - Failed to initialize LLM &amp;amp; Tokenizer: %w&amp;#34;&lt;/span&gt;, llmErr)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	redisStore, redisErr &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; db.&lt;span style=&#34;color:#50fa7b&#34;&gt;NewRedisStore&lt;/span&gt;(ctx, cfg, redisCB)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; redisErr &lt;span style=&#34;color:#ff79c6&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		log.&lt;span style=&#34;color:#50fa7b&#34;&gt;Warn&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Err&lt;/span&gt;(redisErr).&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;❌ (CircuitBreaker) - Failed to initialize Redis.&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	arangoStore, arangoErr &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; db.&lt;span style=&#34;color:#50fa7b&#34;&gt;NewArangoStore&lt;/span&gt;(ctx, cfg, arangoCB)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; arangoErr &lt;span style=&#34;color:#ff79c6&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		log.&lt;span style=&#34;color:#50fa7b&#34;&gt;Warn&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Err&lt;/span&gt;(arangoErr).&lt;span style=&#34;color:#50fa7b&#34;&gt;Msg&lt;/span&gt;(&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;❌ (CircuitBreaker) - Failed to initialize ArangoDB&amp;#34;&lt;/span&gt;)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;amp;&lt;/span&gt;Services{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		LLM:         llm,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		Tokenizer:   tokenizer,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		RedisClient: redisStore,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		ArangoStore: arangoStore,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}, &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;benefits&#34;&gt;Benefits
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Fail-fast behavior&lt;/strong&gt;: Prevents long timeouts and resource exhaustion&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;System stability&lt;/strong&gt;: Isolates failures to prevent cascading effects&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Automatic recovery&lt;/strong&gt;: Tests service health and automatically resumes traffic when appropriate&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Configurable resilience&lt;/strong&gt;: Allows fine-tuning based on service characteristics&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Observability&lt;/strong&gt;: Provides logging and state change notifications for monitoring&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;best-practices&#34;&gt;Best Practices
+&lt;/h2&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Configure based on service characteristics&lt;/strong&gt;: Fast services should have shorter intervals and timeouts, while slower services may need longer windows.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Set appropriate minimum request thresholds&lt;/strong&gt;: Prevent false positives in low-traffic scenarios.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Monitor circuit breaker state changes&lt;/strong&gt;: Use the logging output to understand system behavior and adjust configurations.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Test your configurations&lt;/strong&gt;: Verify that your settings provide the right balance between sensitivity and stability for your specific use case.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Consider fallback strategies&lt;/strong&gt;: Implement graceful degradation when services are unavailable rather than just failing requests.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
         <title>For The Greater Good</title>
         <link>http://localhost:1313/agentic/docs/architectures/bigger_picture/</link>
         <pubDate>Thu, 07 Aug 2025 00:00:00 +0000</pubDate>

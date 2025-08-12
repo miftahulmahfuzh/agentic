@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Overview The Circuit Breaker pattern is a resilience pattern designed to prevent cascading failures in distributed systems. It acts as a protective barrier between your application and potentially unreliable external services, preventing your entire system from failing when a downstream dependency becomes unavailable or starts responding slowly. This implementation uses the gobreaker library to create circuit breakers for different services (LLM, Redis, and ArangoDB) with customized configurations based on each service&rsquo;s characteristics and reliability expectations.">
+<title>Circuit Breaker Pattern</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/architectures/circuit_breaker/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Circuit Breaker Pattern">
+<meta property='og:description' content="Overview The Circuit Breaker pattern is a resilience pattern designed to prevent cascading failures in distributed systems. It acts as a protective barrier between your application and potentially unreliable external services, preventing your entire system from failing when a downstream dependency becomes unavailable or starts responding slowly. This implementation uses the gobreaker library to create circuit breakers for different services (LLM, Redis, and ArangoDB) with customized configurations based on each service&rsquo;s characteristics and reliability expectations.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/architectures/circuit_breaker/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-12T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-12T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Circuit Breaker Pattern">
+<meta name="twitter:description" content="Overview The Circuit Breaker pattern is a resilience pattern designed to prevent cascading failures in distributed systems. It acts as a protective barrier between your application and potentially unreliable external services, preventing your entire system from failing when a downstream dependency becomes unavailable or starts responding slowly. This implementation uses the gobreaker library to create circuit breakers for different services (LLM, Redis, and ArangoDB) with customized configurations based on each service&rsquo;s characteristics and reliability expectations.">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/architectures/circuit_breaker/">Circuit Breaker Pattern</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 12, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    5 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h2 id="overview">Overview
+</h2><p>The Circuit Breaker pattern is a resilience pattern designed to prevent cascading failures in distributed systems. It acts as a protective barrier between your application and potentially unreliable external services, preventing your entire system from failing when a downstream dependency becomes unavailable or starts responding slowly.</p>
+<p>This implementation uses the <code>gobreaker</code> library to create circuit breakers for different services (LLM, Redis, and ArangoDB) with customized configurations based on each service&rsquo;s characteristics and reliability expectations.</p>
+<h2 id="circuit-breaker-states">Circuit Breaker States
+</h2><p>A circuit breaker operates in three states:</p>
+<ol>
+<li><strong>Closed</strong>: Normal operation. All requests pass through to the service.</li>
+<li><strong>Open</strong>: The service is considered unhealthy. All requests are immediately rejected without calling the service.</li>
+<li><strong>Half-Open</strong>: Testing phase. A limited number of requests are allowed through to test if the service has recovered.</li>
+</ol>
+<h2 id="parameter-configuration">Parameter Configuration
+</h2><p>The <code>newCircuitBreaker</code> function accepts the following parameters:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#50fa7b">newCircuitBreaker</span>(name, maxRequests, interval, timeout, failureRateThreshold, minRequests)
+</span></span></code></pre></div><h3 id="parameter-descriptions">Parameter Descriptions
+</h3><h4 id="name-string"><code>name</code> (string)
+</h4><p>The identifier for the circuit breaker, used for logging and monitoring purposes. This helps you identify which service is experiencing issues in your logs.</p>
+<h4 id="maxrequests-uint32"><code>maxRequests</code> (uint32)
+</h4><p><strong>Applies only to Half-Open state.</strong> After the circuit breaker has been in the Open state and the timeout period expires, it enters Half-Open state. This parameter defines how many test requests are allowed through during this phase. If all test requests succeed, the breaker returns to Closed state. If any fail, it immediately returns to Open state.</p>
+<h4 id="interval-timeduration"><code>interval</code> (time.Duration)
+</h4><p><strong>The sliding window duration.</strong> This defines the time window over which the circuit breaker evaluates request statistics. All success and failure metrics are calculated based on requests made within this rolling time window.</p>
+<p><strong>Important:</strong> Setting this to 0 will prevent the breaker from resetting its counts, making it ineffective.</p>
+<h4 id="timeout-timeduration"><code>timeout</code> (time.Duration)
+</h4><p><strong>The penalty period.</strong> When the circuit breaker trips and enters the Open state, it remains in this state for the specified timeout duration. During this time, all requests are rejected immediately without attempting to call the service.</p>
+<h4 id="failureratethreshold-float64"><code>failureRateThreshold</code> (float64)
+</h4><p><strong>The failure percentage that triggers the breaker.</strong> When the percentage of failed requests within the sliding window reaches or exceeds this threshold, the circuit breaker will trip to Open state. Value should be between 0.0 (0%) and 1.0 (100%).</p>
+<h4 id="minrequests-uint32"><code>minRequests</code> (uint32)
+</h4><p><strong>The minimum sample size required.</strong> The circuit breaker will not consider tripping unless it has observed at least this many requests within the current sliding window. This prevents single failures in low-traffic scenarios from unnecessarily triggering the breaker.</p>
+<h2 id="service-specific-configurations">Service-Specific Configurations
+</h2><h3 id="llm-circuit-breaker">LLM Circuit Breaker
+</h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>llmCB = <span style="color:#50fa7b">newCircuitBreaker</span>(<span style="color:#f1fa8c">&#34;LLM&#34;</span>, <span style="color:#bd93f9">2</span>, <span style="color:#bd93f9">15</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">60</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">0.5</span>, <span style="color:#bd93f9">5</span>)
+</span></span></code></pre></div><p><strong>Configuration reasoning:</strong></p>
+<ul>
+<li><strong>15-second sliding window</strong>: Provides enough time to observe patterns in LLM response behavior</li>
+<li><strong>Minimum 5 requests</strong>: Ensures statistical significance before considering a trip</li>
+<li><strong>50% failure threshold</strong>: Moderate tolerance, as LLM services can be inherently variable</li>
+<li><strong>60-second timeout</strong>: Longer recovery period accounts for the time needed for LLM services to stabilize</li>
+<li><strong>2 test requests in Half-Open</strong>: Conservative approach for expensive LLM calls</li>
+</ul>
+<p><strong>Use case:</strong> Suitable for slow, expensive, and potentially variable services like Large Language Models.</p>
+<h3 id="redis-circuit-breaker">Redis Circuit Breaker
+</h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>redisCB = <span style="color:#50fa7b">newCircuitBreaker</span>(<span style="color:#f1fa8c">&#34;Redis&#34;</span>, <span style="color:#bd93f9">3</span>, <span style="color:#bd93f9">10</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">30</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">0.6</span>, <span style="color:#bd93f9">10</span>)
+</span></span></code></pre></div><p><strong>Configuration reasoning:</strong></p>
+<ul>
+<li><strong>10-second sliding window</strong>: Faster detection for a service that should respond quickly</li>
+<li><strong>Minimum 10 requests</strong>: Higher threshold reflects expected high throughput</li>
+<li><strong>60% failure threshold</strong>: More tolerant of failures, as Redis is generally reliable</li>
+<li><strong>30-second timeout</strong>: Quicker recovery expectation for a fast, reliable service</li>
+<li><strong>3 test requests in Half-Open</strong>: Moderate testing approach</li>
+</ul>
+<p><strong>Use case:</strong> Optimized for fast, high-throughput services that are generally reliable but may experience occasional network issues.</p>
+<h3 id="arangodb-circuit-breaker">ArangoDB Circuit Breaker
+</h3><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>arangoCB = <span style="color:#50fa7b">newCircuitBreaker</span>(<span style="color:#f1fa8c">&#34;ArangoDB&#34;</span>, <span style="color:#bd93f9">5</span>, <span style="color:#bd93f9">5</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">30</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">0.5</span>, <span style="color:#bd93f9">10</span>)
+</span></span></code></pre></div><p><strong>Configuration reasoning:</strong></p>
+<ul>
+<li><strong>5-second sliding window</strong>: Very responsive to recent problems</li>
+<li><strong>Minimum 10 requests</strong>: Expects high traffic volume</li>
+<li><strong>50% failure threshold</strong>: Less tolerant of failures for a critical database service</li>
+<li><strong>30-second timeout</strong>: Quick recovery expectation for a database service</li>
+<li><strong>5 test requests in Half-Open</strong>: More thorough testing before fully reopening</li>
+</ul>
+<p><strong>Use case:</strong> Designed for critical, high-throughput database services that should be consistently available and performant.</p>
+<h2 id="implementation-example">Implementation Example
+</h2><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> Services <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	LLM         <span style="color:#ff79c6">*</span>ResilientLLM
+</span></span><span style="display:flex;"><span>	Tokenizer   <span style="color:#ff79c6">*</span>tiktoken.Tiktoken
+</span></span><span style="display:flex;"><span>	RedisClient <span style="color:#ff79c6">*</span>db.RedisStore
+</span></span><span style="display:flex;"><span>	ArangoStore <span style="color:#ff79c6">*</span>db.ArangoStore
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// Creates a new circuit breaker with a sane, ratio-based configuration.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">newCircuitBreaker</span>(name <span style="color:#8be9fd">string</span>, maxRequests <span style="color:#8be9fd">uint32</span>, interval time.Duration, timeout time.Duration, failureRateThreshold <span style="color:#8be9fd">float64</span>, minRequests <span style="color:#8be9fd">uint32</span>) <span style="color:#ff79c6">*</span>gobreaker.CircuitBreaker {
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">return</span> gobreaker.<span style="color:#50fa7b">NewCircuitBreaker</span>(gobreaker.Settings{
+</span></span><span style="display:flex;"><span>		Name:        name,
+</span></span><span style="display:flex;"><span>		MaxRequests: maxRequests, <span style="color:#6272a4">// For Half-Open state probes. Keep it low.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>		Interval:    interval,    <span style="color:#6272a4">// THE SLIDING WINDOW. DON&#39;T SET THIS TO 0.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>		Timeout:     timeout,     <span style="color:#6272a4">// Penalty box time after tripping.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>		ReadyToTrip: <span style="color:#8be9fd;font-style:italic">func</span>(counts gobreaker.Counts) <span style="color:#8be9fd">bool</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#6272a4">// Don&#39;t trip if we haven&#39;t seen enough traffic to make a decision.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>			<span style="color:#ff79c6">if</span> counts.Requests &lt; minRequests {
+</span></span><span style="display:flex;"><span>				<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">false</span>
+</span></span><span style="display:flex;"><span>			}
+</span></span><span style="display:flex;"><span>			failureRate <span style="color:#ff79c6">:=</span> <span style="color:#8be9fd;font-style:italic">float64</span>(counts.TotalFailures) <span style="color:#ff79c6">/</span> <span style="color:#8be9fd;font-style:italic">float64</span>(counts.Requests)
+</span></span><span style="display:flex;"><span>			<span style="color:#ff79c6">return</span> failureRate <span style="color:#ff79c6">&gt;=</span> failureRateThreshold
+</span></span><span style="display:flex;"><span>		},
+</span></span><span style="display:flex;"><span>		OnStateChange: <span style="color:#8be9fd;font-style:italic">func</span>(name <span style="color:#8be9fd">string</span>, from gobreaker.State, to gobreaker.State) {
+</span></span><span style="display:flex;"><span>			log.<span style="color:#50fa7b">Info</span>().<span style="color:#50fa7b">Str</span>(<span style="color:#f1fa8c">&#34;breaker&#34;</span>, name).<span style="color:#50fa7b">Str</span>(<span style="color:#f1fa8c">&#34;from&#34;</span>, from.<span style="color:#50fa7b">String</span>()).<span style="color:#50fa7b">Str</span>(<span style="color:#f1fa8c">&#34;to&#34;</span>, to.<span style="color:#50fa7b">String</span>()).<span style="color:#50fa7b">Msg</span>(<span style="color:#f1fa8c">&#34;Circuit Breaker state changed.&#34;</span>)
+</span></span><span style="display:flex;"><span>		},
+</span></span><span style="display:flex;"><span>	})
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#6272a4">// This function initializes all external clients, passing the resilience patterns (circuit breakers)
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4">// into them for encapsulation.
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span><span style="color:#8be9fd;font-style:italic">func</span> <span style="color:#50fa7b">NewServices</span>(ctx context.Context, cfg <span style="color:#ff79c6">*</span>config.Settings) (<span style="color:#ff79c6">*</span>Services, <span style="color:#8be9fd">error</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// --- Create all circuit breakers first ---
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	llmCB <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">newCircuitBreaker</span>(<span style="color:#f1fa8c">&#34;LLM&#34;</span>, <span style="color:#bd93f9">2</span>, <span style="color:#bd93f9">15</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">60</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">0.5</span>, <span style="color:#bd93f9">5</span>)
+</span></span><span style="display:flex;"><span>	redisCB <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">newCircuitBreaker</span>(<span style="color:#f1fa8c">&#34;Redis&#34;</span>, <span style="color:#bd93f9">3</span>, <span style="color:#bd93f9">10</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">30</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">0.6</span>, <span style="color:#bd93f9">10</span>)
+</span></span><span style="display:flex;"><span>	arangoCB <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">newCircuitBreaker</span>(<span style="color:#f1fa8c">&#34;ArangoDB&#34;</span>, <span style="color:#bd93f9">5</span>, <span style="color:#bd93f9">5</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">30</span><span style="color:#ff79c6">*</span>time.Second, <span style="color:#bd93f9">0.5</span>, <span style="color:#bd93f9">10</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#6272a4">// --- Initialize services, injecting their respective circuit breakers ---
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	llm, tokenizer, llmErr <span style="color:#ff79c6">:=</span> <span style="color:#50fa7b">NewResilientLLM</span>(ctx, cfg, llmCB)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">if</span> llmErr <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">nil</span>, fmt.<span style="color:#50fa7b">Errorf</span>(<span style="color:#f1fa8c">&#34;❌ (CircuitBreaker) - Failed to initialize LLM &amp; Tokenizer: %w&#34;</span>, llmErr)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	redisStore, redisErr <span style="color:#ff79c6">:=</span> db.<span style="color:#50fa7b">NewRedisStore</span>(ctx, cfg, redisCB)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">if</span> redisErr <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span>		log.<span style="color:#50fa7b">Warn</span>().<span style="color:#50fa7b">Err</span>(redisErr).<span style="color:#50fa7b">Msg</span>(<span style="color:#f1fa8c">&#34;❌ (CircuitBreaker) - Failed to initialize Redis.&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	arangoStore, arangoErr <span style="color:#ff79c6">:=</span> db.<span style="color:#50fa7b">NewArangoStore</span>(ctx, cfg, arangoCB)
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">if</span> arangoErr <span style="color:#ff79c6">!=</span> <span style="color:#ff79c6">nil</span> {
+</span></span><span style="display:flex;"><span>		log.<span style="color:#50fa7b">Warn</span>().<span style="color:#50fa7b">Err</span>(arangoErr).<span style="color:#50fa7b">Msg</span>(<span style="color:#f1fa8c">&#34;❌ (CircuitBreaker) - Failed to initialize ArangoDB&#34;</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#ff79c6">return</span> <span style="color:#ff79c6">&amp;</span>Services{
+</span></span><span style="display:flex;"><span>		LLM:         llm,
+</span></span><span style="display:flex;"><span>		Tokenizer:   tokenizer,
+</span></span><span style="display:flex;"><span>		RedisClient: redisStore,
+</span></span><span style="display:flex;"><span>		ArangoStore: arangoStore,
+</span></span><span style="display:flex;"><span>	}, <span style="color:#ff79c6">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="benefits">Benefits
+</h2><ul>
+<li><strong>Fail-fast behavior</strong>: Prevents long timeouts and resource exhaustion</li>
+<li><strong>System stability</strong>: Isolates failures to prevent cascading effects</li>
+<li><strong>Automatic recovery</strong>: Tests service health and automatically resumes traffic when appropriate</li>
+<li><strong>Configurable resilience</strong>: Allows fine-tuning based on service characteristics</li>
+<li><strong>Observability</strong>: Provides logging and state change notifications for monitoring</li>
+</ul>
+<h2 id="best-practices">Best Practices
+</h2><ol>
+<li>
+<p><strong>Configure based on service characteristics</strong>: Fast services should have shorter intervals and timeouts, while slower services may need longer windows.</p>
+</li>
+<li>
+<p><strong>Set appropriate minimum request thresholds</strong>: Prevent false positives in low-traffic scenarios.</p>
+</li>
+<li>
+<p><strong>Monitor circuit breaker state changes</strong>: Use the logging output to understand system behavior and adjust configurations.</p>
+</li>
+<li>
+<p><strong>Test your configurations</strong>: Verify that your settings provide the right balance between sensitivity and stability for your specific use case.</p>
+</li>
+<li>
+<p><strong>Consider fallback strategies</strong>: Implement graceful degradation when services are unavailable rather than just failing requests.</p>
+</li>
+</ol>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
