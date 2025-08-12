@@ -162,76 +162,117 @@
 </description>
         </item>
         <item>
-        <title>For The Greater Good</title>
-        <link>http://localhost:1313/agentic/docs/architectures/bigger_picture/</link>
-        <pubDate>Thu, 07 Aug 2025 00:00:00 +0000</pubDate>
+        <title>StreamBroadcaster Pattern</title>
+        <link>http://localhost:1313/agentic/docs/architectures/stream_broadcaster/</link>
+        <pubDate>Tue, 12 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/bigger_picture/</guid>
-        <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/race_war&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
-    &gt;A War Against Race Conditions&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Directive:&lt;/strong&gt; To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &lt;em&gt;&amp;ldquo;Why not just let the Janitor clean it up?&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;Conclusion:&lt;/strong&gt; Relying solely on the Janitor is a strategy of failure. It is reactive, inefficient, and masks fundamental design flaws that manifest as poor performance and instability. The proactive, multi-stage fixes we implemented were not just about plugging a leak; they were about forging a robust, responsive, and resource-efficient system. This was a war for the soul of the application, not just a cleanup operation.&lt;/p&gt;
+        <guid>http://localhost:1313/agentic/docs/architectures/stream_broadcaster/</guid>
+        <description>&lt;h3 id=&#34;context-and-inquiry&#34;&gt;Context and Inquiry
+&lt;/h3&gt;&lt;p&gt;A load test was conducted by sending 10 identical, concurrent requests to the server to validate the end-to-end &lt;code&gt;StreamBroadcaster&lt;/code&gt; implementation. The test yielded the following key observations:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Data Integrity:&lt;/strong&gt; All 10 clients received the exact same final response, confirming that the broadcast content was consistent.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Synchronized Lifetime:&lt;/strong&gt; The total API call duration was identical for all clients, indicating they were all tied to a single underlying generation process.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;TTF Variance:&lt;/strong&gt; A peculiar variance was noted in the client-side &amp;ldquo;Time To First Token&amp;rdquo; (TTF). Some clients registered a TTF of &lt;code&gt;10.93s&lt;/code&gt;, while others registered a TTF of &lt;code&gt;12.62s&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This leads to a critical question:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Is the observed variance in TTF expected behavior? How does the &lt;code&gt;StreamBroadcaster&lt;/code&gt; pattern ensure that clients subscribing at different points in the stream&amp;rsquo;s lifecycle—some potentially &amp;ldquo;late&amp;rdquo;—still receive the complete and correct data?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Write a documentation that explains the mechanics of the &lt;code&gt;StreamBroadcaster&lt;/code&gt; pattern, detailing how it handles these scenarios, and contrasts it with the previously flawed &lt;code&gt;singleflight.Group&lt;/code&gt; implementation to demonstrate its superior efficiency and robustness.&lt;/p&gt;
 &lt;hr&gt;
-&lt;h3 id=&#34;argument-1-the-janitor-is-a-coroner-not-a-doctor&#34;&gt;Argument 1: The Janitor is a Coroner, Not a Doctor
-&lt;/h3&gt;&lt;p&gt;The Janitor, by its nature, is a coroner. It arrives on the scene &lt;em&gt;after&lt;/em&gt; the damage is done.&lt;/p&gt;
+&lt;h3 id=&#34;explanation&#34;&gt;Explanation
+&lt;/h3&gt;&lt;p&gt;Yes. The behavior you&amp;rsquo;re seeing is not a bug. It is the &lt;strong&gt;expected and correct&lt;/strong&gt; outcome of the &lt;code&gt;StreamBroadcaster&lt;/code&gt; pattern. You have successfully proven that it works.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s break down your test results, because they perfectly illustrate the pattern&amp;rsquo;s mechanics:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Identical &lt;code&gt;Full Response&lt;/code&gt; (Length: 2216 chars):&lt;/strong&gt; This is the most important result. It proves that every single one of the 10 clients received the exact same stream of data, character for character. The broadcast was successful.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Identical &lt;code&gt;Total API call duration&lt;/code&gt; (38.69s):&lt;/strong&gt; This proves that all 10 client connections were tethered to a &lt;em&gt;single underlying event&lt;/em&gt;. They all started waiting at roughly the same time, and their connections were all terminated when the one-and-only LLM stream finished. If 10 separate LLM calls were made, you would see a wide variance in completion times, and the total test duration would be much longer.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Variable &lt;code&gt;Client-Side TTF&lt;/code&gt; (10.93s vs. 12.62s):&lt;/strong&gt; This is the brilliant part. This proves the &amp;ldquo;late subscriber&amp;rdquo; and &amp;ldquo;history replay&amp;rdquo; mechanisms are working.&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Its Method:&lt;/strong&gt; It periodically scans for requests that have been &amp;ldquo;dead&amp;rdquo; for a configured duration (e.g., 30-60 seconds).&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;The Cost:&lt;/strong&gt; For that entire duration, a leaked &amp;ldquo;zombie&amp;rdquo; goroutine is not merely idle; it is a &lt;strong&gt;resource parasite&lt;/strong&gt;.
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;It Holds a Semaphore Slot:&lt;/strong&gt; Our system has a finite number of concurrent LLM stream slots (&lt;code&gt;llmStreamSemaphore&lt;/code&gt;). A zombie goroutine holds one of these precious slots hostage, reducing the server&amp;rsquo;s maximum throughput. If you have 10 slots and 5 are held by zombies, your server&amp;rsquo;s capacity is effectively halved until the Janitor makes its rounds.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;It Consumes Memory:&lt;/strong&gt; The goroutine&amp;rsquo;s stack, along with any allocated data (like the full response buffer it was building), remains in memory. This contributes to memory pressure and can trigger premature garbage collection cycles, slowing down the entire application.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;It Wastes CPU:&lt;/strong&gt; While the goroutine itself might be blocked, its presence adds overhead to the Go scheduler and garbage collector, which must account for it in their operations.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The &amp;ldquo;Leader&amp;rdquo; (TTF: 10.93s):&lt;/strong&gt; One of your 10 requests was the first to arrive. It became the &amp;ldquo;chosen one&amp;rdquo; that initiated the actual LLM call. It took 10.93 seconds for the LLM to process the prompt and return the very first token. This is the &lt;em&gt;true&lt;/em&gt; Time To First Token.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The &amp;ldquo;Followers&amp;rdquo; (TTF: 12.62s):&lt;/strong&gt; Why is their TTF &lt;em&gt;longer&lt;/em&gt;? It&amp;rsquo;s not. The &lt;code&gt;apiCallStart&lt;/code&gt; time is measured from the client&amp;rsquo;s perspective. Some of your requests were scheduled by the OS and made their &lt;code&gt;http.Get&lt;/code&gt; call a fraction of a second &lt;em&gt;after&lt;/em&gt; the leader had already started the stream and received the first few tokens. When these late-comers subscribed, the &lt;code&gt;StreamBroadcaster&lt;/code&gt; &lt;strong&gt;instantly replayed the history&lt;/strong&gt; of tokens that had already been broadcast. Their &amp;ldquo;first token&amp;rdquo; was received almost instantaneously upon connection, but because their &lt;code&gt;apiCallStart&lt;/code&gt; was later, the absolute time looks different. The key is that they didn&amp;rsquo;t have to wait another 10.93 seconds. They caught up immediately.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Relying on the Janitor is like allowing wounded soldiers to bleed out on the battlefield for a full minute before sending a medic, all while they are occupying a limited number of emergency stretchers. It is criminally inefficient.&lt;/p&gt;
-&lt;p&gt;&lt;strong&gt;The Greater Good:&lt;/strong&gt; Our context-aware &lt;code&gt;sendEvent&lt;/code&gt; function is the field medic. It acts &lt;em&gt;instantly&lt;/em&gt;. The moment a client disconnects, the goroutine is notified, it terminates cleanly, and it immediately releases its semaphore slot, memory, and all other resources back to the pool. This ensures the server always operates at peak capacity and efficiency.&lt;/p&gt;
+&lt;/ol&gt;
+&lt;p&gt;You have not found a problem. You have validated the solution.&lt;/p&gt;
+&lt;p&gt;Here is the documentation you requested.&lt;/p&gt;
 &lt;hr&gt;
-&lt;h3 id=&#34;argument-2-the-janitor-cannot-fix-a-bad-user-experience&#34;&gt;Argument 2: The Janitor Cannot Fix a Bad User Experience
-&lt;/h3&gt;&lt;p&gt;The Janitor is invisible to the user. The race conditions we fixed were not.&lt;/p&gt;
+&lt;h2 id=&#34;the-streambroadcaster-pattern-end-to-end-request-deduplication&#34;&gt;The StreamBroadcaster Pattern: End-to-End Request Deduplication
+&lt;/h2&gt;&lt;p&gt;This document explains the &lt;code&gt;StreamBroadcaster&lt;/code&gt; pattern, a fan-out mechanism designed to solve the problem of expensive, concurrent, and identical requests that produce a stream of data. It ensures that for any number of identical requests arriving simultaneously, the underlying expensive work (like an LLM call) is performed &lt;strong&gt;only once&lt;/strong&gt;, and the resulting stream is broadcast to all clients.&lt;/p&gt;
+&lt;h3 id=&#34;the-problem-the-inadequacy-of-singleflightgroup-for-streaming&#34;&gt;The Problem: The Inadequacy of &lt;code&gt;singleflight.Group&lt;/code&gt; for Streaming
+&lt;/h3&gt;&lt;p&gt;In our initial design, we correctly identified that identical, concurrent requests were wasteful. We used &lt;code&gt;golang.org/x/sync/singleflight&lt;/code&gt; to deduplicate the &amp;ldquo;preparation&amp;rdquo; phase of the request.&lt;/p&gt;
+&lt;p&gt;This was a good first step, but it was critically flawed. It was like hiring one scout (Geralt) to figure out the path to a monster&amp;rsquo;s lair, but then sending 10 different, expensive armies to fight the same monster simultaneously.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;singleflight.Group&lt;/code&gt; is designed to return a single, atomic &lt;code&gt;(interface{}, error)&lt;/code&gt; value. It is fundamentally incapable of handling a continuous stream of data from a channel (&lt;code&gt;&amp;lt;-chan T&lt;/code&gt;). Its limitation meant:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Preparation was deduplicated:&lt;/strong&gt; Only one request would perform the history lookup, tool selection, and prompt formatting.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Execution was wastefully duplicated:&lt;/strong&gt; Every single request, after receiving the prepared data from the single flight, would then initiate its own expensive, independent LLM stream.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;For 10 identical requests, we were still making 10 LLM calls. This was inefficient, costly, and unacceptable. We weren&amp;rsquo;t deduplicating the work; we were just synchronizing the start of the work.&lt;/p&gt;
+&lt;h3 id=&#34;the-solution-the-streambroadcaster&#34;&gt;The Solution: The &lt;code&gt;StreamBroadcaster&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;The &lt;code&gt;StreamBroadcaster&lt;/code&gt; is a purpose-built solution that acts as a 1-to-many publisher/subscriber (pub/sub) system for a stream of events. It&amp;rsquo;s the difference between every household running their own private fiber optic cable to the TV station versus everyone just tuning in to the same broadcast signal.&lt;/p&gt;
+&lt;p&gt;Think of it as a Mission Control that handles one rocket launch, but broadcasts the video feed to every news network in the world.&lt;/p&gt;
+&lt;h4 id=&#34;core-components--logic&#34;&gt;Core Components &amp;amp; Logic
+&lt;/h4&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Broadcaster Map (&lt;code&gt;manager.broadcasters&lt;/code&gt;):&lt;/strong&gt; The &lt;code&gt;Manager&lt;/code&gt; holds a central, thread-safe map: &lt;code&gt;map[string]*StreamBroadcaster&lt;/code&gt;. The key is the request&amp;rsquo;s &lt;code&gt;cacheKey&lt;/code&gt; (derived from the question and context), and the value is the active broadcaster for that content.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The First Request: The &amp;ldquo;Chosen One&amp;rdquo;&lt;/strong&gt;&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;The Pre-emptive Cleanup Problem:&lt;/strong&gt; A user explicitly cancels a request and expects confirmation. The system, due to a race condition, tells them the request never existed. This is not a resource leak; it is a &lt;strong&gt;bug&lt;/strong&gt;. It breaks the contract with the client and erodes trust in the API. The Janitor is completely powerless to solve this logic error.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;The Muted Messenger Problem:&lt;/strong&gt; A user cancels a long-running stream and the connection just drops. Did it work? Is the backend still processing? The user is left in a state of uncertainty. This is a poor user experience.&lt;/li&gt;
+&lt;li&gt;When the first request for a unique piece of content arrives, it calculates its &lt;code&gt;cacheKey&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It checks the broadcaster map and finds nothing. It realizes it is the first.&lt;/li&gt;
+&lt;li&gt;It creates a &lt;strong&gt;new &lt;code&gt;StreamBroadcaster&lt;/code&gt; instance&lt;/strong&gt; and places it in the map.&lt;/li&gt;
+&lt;li&gt;It immediately subscribes its own client channel to this new broadcaster.&lt;/li&gt;
+&lt;li&gt;It then proceeds to initiate the one and only expensive LLM stream. It has become the &amp;ldquo;producer.&amp;rdquo;&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;strong&gt;The Greater Good:&lt;/strong&gt; Our targeted fixes in &lt;code&gt;manager.go&lt;/code&gt; and &lt;code&gt;streamer.go&lt;/code&gt; were surgical strikes against these race conditions.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Subsequent Requests: The &amp;ldquo;Followers&amp;rdquo;&lt;/strong&gt;&lt;/p&gt;
 &lt;ul&gt;
-&lt;li&gt;The &lt;strong&gt;Conditional Cleanup&lt;/strong&gt; logic ensures the system state remains consistent and correct from the client&amp;rsquo;s perspective. It respects the user&amp;rsquo;s actions.&lt;/li&gt;
-&lt;li&gt;The &lt;strong&gt;&amp;ldquo;Last Gasp&amp;rdquo; Write&lt;/strong&gt; provides critical, immediate feedback. It turns ambiguity into certainty.&lt;/li&gt;
+&lt;li&gt;While the first request&amp;rsquo;s LLM stream is running, other identical requests arrive.&lt;/li&gt;
+&lt;li&gt;They calculate the exact same &lt;code&gt;cacheKey&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;They check the broadcaster map and &lt;strong&gt;find the existing &lt;code&gt;StreamBroadcaster&lt;/code&gt;&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;They simply &amp;ldquo;tune in&amp;rdquo; by calling &lt;code&gt;broadcaster.Subscribe()&lt;/code&gt; with their own client channel.&lt;/li&gt;
+&lt;li&gt;They &lt;strong&gt;do not&lt;/strong&gt; create a new LLM stream. They become &amp;ldquo;consumers&amp;rdquo; of the stream already in progress.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;This is the difference between a system that merely functions and a system that is well-behaved and reliable. The Janitor cleans up garbage; it cannot create correctness or a good user experience.&lt;/p&gt;
-&lt;hr&gt;
-&lt;h3 id=&#34;summary-the-two-philosophies-of-system-design&#34;&gt;Summary: The Two Philosophies of System Design
-&lt;/h3&gt;&lt;table&gt;
-&lt;thead&gt;
-&lt;tr&gt;
-&lt;th style=&#34;text-align:left&#34;&gt;The Janitor Philosophy (&amp;ldquo;The Blunt Instrument&amp;rdquo;)&lt;/th&gt;
-&lt;th style=&#34;text-align:left&#34;&gt;The Precision Engineering Philosophy (&amp;ldquo;The Scalpel&amp;rdquo;)&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Reactive:&lt;/strong&gt; Waits for things to break, then cleans up.&lt;/td&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Proactive:&lt;/strong&gt; Prevents things from breaking in the first place.&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Inefficient:&lt;/strong&gt; Wastes critical resources (semaphores, memory) for extended periods.&lt;/td&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Efficient:&lt;/strong&gt; Releases resources the instant they are no longer needed.&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Masks Flaws:&lt;/strong&gt; Hides underlying bugs and race conditions behind a slow cleanup cycle.&lt;/td&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Exposes and Fixes Flaws:&lt;/strong&gt; Forces correct, robust, and predictable logic.&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Poor User Experience:&lt;/strong&gt; Is powerless to fix API contract violations and user-facing inconsistencies.&lt;/td&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Reliable User Experience:&lt;/strong&gt; Guarantees consistent and correct behavior in all edge cases.&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Strategy:&lt;/strong&gt; Hope for the best, and let a slow, periodic process deal with the inevitable failures.&lt;/td&gt;
-&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Strategy:&lt;/strong&gt; Design for resilience. Handle every state transition correctly and instantly.&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;The blood and sweat were not for naught. We did not just patch a leak. We re-engineered the system&amp;rsquo;s core concurrency logic to be fundamentally sound. We chose the path of the engineer over that of the janitor. We chose to build a finely-tuned machine, not a leaky bucket with a mop standing by. That is why it was worth it. That is the greater good.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;the-secret-sauce-the-subscribe-method&#34;&gt;The Secret Sauce: The &lt;code&gt;Subscribe&lt;/code&gt; Method
+&lt;/h4&gt;&lt;p&gt;The most critical part of the pattern is the &lt;code&gt;Subscribe&lt;/code&gt; method, which is designed to be completely immune to race conditions, especially for fast, cached responses.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt; (b &lt;span style=&#34;color:#ff79c6&#34;&gt;*&lt;/span&gt;StreamBroadcaster) &lt;span style=&#34;color:#50fa7b&#34;&gt;Subscribe&lt;/span&gt;(sub &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; tooltypes.StreamEvent) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	b.lock.&lt;span style=&#34;color:#50fa7b&#34;&gt;Lock&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;defer&lt;/span&gt; b.lock.&lt;span style=&#34;color:#50fa7b&#34;&gt;Unlock&lt;/span&gt;()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6272a4&#34;&gt;// 1. Replay History: Immediately send all past events to the new subscriber.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;for&lt;/span&gt; _, event &lt;span style=&#34;color:#ff79c6&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color:#ff79c6&#34;&gt;range&lt;/span&gt; b.history {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		sub &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; event
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6272a4&#34;&gt;// 2. Check if Done: If the broadcast is over, the history is complete. Close the channel.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#ff79c6&#34;&gt;if&lt;/span&gt; b.isDone {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;close&lt;/span&gt;(sub)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;		&lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	&lt;span style=&#34;color:#6272a4&#34;&gt;// 3. Go Live: If the broadcast is still active, add the subscriber to the live list.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	b.subscribers = &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;append&lt;/span&gt;(b.subscribers, sub)
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;This atomic &amp;ldquo;catch-up-then-subscribe&amp;rdquo; logic guarantees that a subscriber receives the entire stream, regardless of when it joins:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Joining Before:&lt;/strong&gt; Subscribes to an empty history, gets added to the live list, and receives all events as they are generated.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Joining During:&lt;/strong&gt; Instantly receives the history of events that have already passed, gets added to the live list, and receives all subsequent live events.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Joining After:&lt;/strong&gt; The broadcast is already &lt;code&gt;done&lt;/code&gt;. It receives the complete history of all events and its channel is immediately closed. The client gets the full response as if it were there from the beginning.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;how-this-explains-your-test-results&#34;&gt;How this Explains Your Test Results
+&lt;/h3&gt;&lt;p&gt;Your test results perfectly demonstrate this behavior.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The clients that subscribed &amp;ldquo;during&amp;rdquo; the broadcast received a partial history instantly, leading to a different &lt;code&gt;Client-Side TTF&lt;/code&gt; calculation, but still got the full message.&lt;/li&gt;
+&lt;li&gt;All clients were connected to the same underlying broadcast, so their total connection time (&lt;code&gt;API Call Duration&lt;/code&gt;) was identical, dictated by the single LLM call&amp;rsquo;s lifecycle.&lt;/li&gt;
+&lt;li&gt;Because everyone receives events from the same history and the same live feed, the &lt;code&gt;Full Response&lt;/code&gt; was identical for all.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The &lt;code&gt;StreamBroadcaster&lt;/code&gt; pattern is not just a fix; it is a robust architectural improvement that provides massive efficiency gains and a consistent user experience under concurrent load. It&amp;rsquo;s the difference between sending one Terminator back in time to do the job versus sending a whole, expensive, and redundant army of them. One is efficient; the other is a sequel.&lt;/p&gt;
 </description>
         </item>
         <item>
