@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -289,6 +290,7 @@ graph TD
                 an <code>X-API-Key</code> header matching the configured
                 environment variable.
               </p>
+              <hr>
 
               <h4>Endpoints Summary</h4>
               <ul>
@@ -746,7 +748,7 @@ graph TD
         Req7[Request] -->|Test Request| Dep3[Dependency]
     end
 
-    Normal ==>|"Consecutive Failures"| FailureDetection
+    Normal ==>|"Failures Within Sliding-Window"| FailureDetection
     FailureDetection ==>|"Threshold Met"| CircuitOpen
     CircuitOpen ==>|"Cooldown Expires"| HalfOpen
     HalfOpen ==>|"Success (Reset)"| Normal
