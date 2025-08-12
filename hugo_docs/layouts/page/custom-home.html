@@ -1,4 +1,3 @@
-<!-- layouts/page/custom-home.html -->
 <!doctype html>
 <html lang="en">
   <head>
@@ -154,7 +153,7 @@ graph TD
             <h4>🛡️ Resource Management</h4>
             <ul>
                 <li><span class="popup-trigger" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight (Preparation Phase)</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight Group</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">End-to-End Stream Broadcasting</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('state-aware-janitor')">State-Aware Janitor</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span></li>
@@ -469,7 +468,7 @@ TENCENT_RAG_BOT_APP_KEY=...
               <h4>Advanced Concurrency Testing</h4>
               <p>These scripts and tests allow you to validate the system's core concurrency and resilience models.</p>
 
-              <h4>1. Testing General Throughput (<code>test_concurrency</code>)</h5>
+              <h4>1. Testing General Throughput (<code>test_concurrency</code>)</h4>
               <p>This script validates that the server can handle many <em>different</em> requests in parallel, testing the capacity of the worker pools.</p>
               <ol>
                 <li>
@@ -482,24 +481,36 @@ go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
                 </li>
               </ol>
 
-              <h4>2. Testing Single-Flight Protection (<code>test_single_flight</code>)</h5>
-              <p>This script validates the "thundering herd" protection by sending many <em>identical</em> requests simultaneously.</p>
+              <h4>2. Testing End-to-End Broadcast & Single-Flight Protection (<code>test_single_flight</code>)</h4>
+              <p>This test validates the complete end-to-end request deduplication strategy by sending many <em>identical</em> requests simultaneously. It confirms that the <span class="popup-trigger" onclick="showPopup('single-flight')">preparation-phase single-flight</span> and the <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">streaming-phase broadcast</span> work together perfectly to handle a "thundering herd" scenario.</p>
               <ol>
                 <li>
-                  <strong>(Optional but Recommended)</strong> Clear the relevant Redis cache key before testing to ensure you are not just hitting the cache.
+                  <strong>(Optional but Recommended)</strong> Clear the relevant Redis cache key before testing (e.g., <code>redis-cli DEL "ai_chatbot_conv:..."</code>) to ensure you are not just hitting the cache and are testing a live LLM broadcast.
                 </li>
                 <li>
                   <strong>Run the test:</strong>
                    <pre><code># Usage: go run ./cmd/test_single_flight -n &lt;num_requests&gt;
 go run ./cmd/test_single_flight -n 10</code></pre>
-                  <p>
-                    <strong>CRITICAL:</strong> The proof is in the <strong>server logs</strong> (viewable in Grafana/Loki or via <code>docker-compose logs chatbot-app</code>). Look for one "leader" request performing the full preparation, while all other "follower" requests share its result, indicated by the <code>Shared result from in-flight request</code> log message.
-                  </p>
+                </li>
+                <li>
+                  <strong>Analyze Server Logs:</strong> The proof of the <strong>preparation-phase</strong> single-flight is in the server logs. Look for:
+                  <ul>
+                      <li>One log message saying <code>"No active broadcaster found. Creating a new one."</code> (the leader).</li>
+                      <li>Nine (or N-1) messages saying <code>"Found active broadcaster. Subscribing."</code> (the followers).</li>
+                  </ul>
+                </li>
+                <li>
+                  <strong>Analyze Excel Results:</strong> The proof of the <strong>streaming-phase</strong> broadcast is in the generated <code>test_results/broadcast_test_r10.xlsx</code> file:
+                  <ul>
+                    <li><strong>Data Integrity:</strong> Verify that the <code>Full Response</code> column is <strong>identical</strong> for all 10 requests. This proves everyone received the same data.</li>
+                    <li><strong>Synchronized Lifetime:</strong> Check that the <code>API Call Duration (s)</code> is the same for all requests. This proves they were all tethered to a single underlying stream.</li>
+                    <li><strong>TTF Variance:</strong> Observe the slight variations in <code>Client-Side TTF (s)</code>. This is not a bug; it is <strong>proof</strong> that the "late subscriber" and "history replay" mechanisms are working, as follower clients catch up to the broadcast that has already started.</li>
+                  </ul>
                 </li>
               </ol>
 
               <!-- CANCELLATION TEST SECTION -->
-              <h4>3. Testing End-to-End Cancellation (<code>stream_test.go</code>)</h5>
+              <h4>3. Testing End-to-End Cancellation (<code>stream_test.go</code>)</h4>
               <p>This integration test suite rigorously validates the <span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span> resilience feature. It confirms that a request can be terminated at any point in its lifecycle and that the system reclaims resources gracefully and predictably. This is crucial for preventing resource leaks from abandoned requests.</p>
               <p>The test simulates every possible cancellation scenario:</p>
               <ul>
@@ -833,7 +844,7 @@ Assistant: The market cap for GOOGL is $1.7T.</code></pre>
 
         case "single-flight":
             popupContent = `
-                <h2>🛡️ Single-Flight (Preparation Phase)</h2>
+                <h2>🛡️ Single-Flight Group</h2>
                 <p>This pattern protects against the "thundering herd" problem during the <strong>Preparation Phase</strong>. When multiple, identical, un-cached requests arrive, Go's standard <code>singleflight</code> library ensures only the <strong>first</strong> request triggers the expensive preparation work (tool selection, initial LLM checks).</p>
                 <div class="mermaid">
 graph TD
@@ -884,7 +895,7 @@ graph TD
         case "e2e-stream-broadcasting":
             popupContent = `
                 <h2>🚀 End-to-End Stream Broadcasting</h2>
-                <p>This is the system's ultimate solution to the "thundering herd" problem, applied during the <strong>Streaming Phase</strong>. It ensures that for any number of identical requests, only one expensive LLM stream is ever created. It's the difference between every house running its own fiber optic cable to a TV station versus just tuning into a broadcast.</p>
+                <p>This is the system's ultimate solution to the "thundering herd" problem, applied during the <strong>Streaming Phase</strong>. It ensures that for any number of identical requests, only one expensive LLM stream is ever created. It's the difference between every house running its own fiber optic cable to a TV station vs just tuning into a broadcast.</p>
                 <div class="mermaid">
 graph TD
     subgraph Old ["Without Broadcasting (Wasteful)"]
@@ -898,13 +909,13 @@ graph TD
         FollowerB["Follower Req B"] -- "subscribes" --> Broadcaster
         FollowerC["Follower Req C"] -- "subscribes" --> Broadcaster
     end
-    
+
     %% Styling
     classDef reqStyle fill:#cce5ff,stroke:#004085
     classDef llmStyle fill:#f8d7da,stroke:#721c24
     classDef goodLlmStyle fill:#d4edda,stroke:#155724
     classDef broadcasterStyle fill:#fff3cd,stroke:#856404
-    
+
     class Req1,Req2,Req3,Leader,FollowerB,FollowerC reqStyle
     class LLM1,LLM2,LLM3 llmStyle
     class LLM4 goodLlmStyle
