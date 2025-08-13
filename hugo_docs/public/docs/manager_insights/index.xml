@@ -153,6 +153,108 @@
 </description>
         </item>
         <item>
+        <title>Concurrent &amp; Parallel</title>
+        <link>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</link>
+        <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</guid>
+        <description>&lt;h1 id=&#34;concurrency--parallelism-the-ops-center-of-managergo&#34;&gt;Concurrency &amp;amp; Parallelism: The Ops Center of &lt;code&gt;manager.go&lt;/code&gt;
+&lt;/h1&gt;&lt;p&gt;Welcome to the mission briefing. Our &lt;code&gt;manager.go&lt;/code&gt; file is the central nervous system of our chatbot operation, much like an MI6 Ops Center. It needs to handle a flood of incoming requests from agents (users) all over the world. To do this without melting down, it masterfully employs the arts of &lt;strong&gt;concurrency&lt;/strong&gt; and &lt;strong&gt;parallelism&lt;/strong&gt;.&lt;/p&gt;
+&lt;h2 id=&#34;concurrency-juggling-multiple-missions-at-once&#34;&gt;Concurrency: Juggling Multiple Missions at Once
+&lt;/h2&gt;&lt;p&gt;Concurrency is about structuring our code to handle many things at once, even if we only have one CPU core doing the work. It&amp;rsquo;s about switching between tasks efficiently so that no single task blocks the entire system.&lt;/p&gt;
+&lt;p&gt;In &lt;code&gt;manager.go&lt;/code&gt;, concurrency is achieved primarily through &lt;strong&gt;Goroutines&lt;/strong&gt; and &lt;strong&gt;Channels&lt;/strong&gt;.&lt;/p&gt;
+&lt;h3 id=&#34;the-tools-of-concurrency&#34;&gt;The Tools of Concurrency:
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Goroutines (&lt;code&gt;go func(...)&lt;/code&gt;)&lt;/strong&gt;: Every time you see &lt;code&gt;go ...&lt;/code&gt;, we&amp;rsquo;re launching a new, independent task. It could be processing a new request, the janitor cleaning up old files, or a &amp;ldquo;leader&amp;rdquo; generating a response stream for multiple listeners. They all run without waiting for each other to finish.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Channels (&lt;code&gt;chan&lt;/code&gt;)&lt;/strong&gt;: This is our secure communication line.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;requestQueue&lt;/code&gt;: This is the &amp;ldquo;mission assignment&amp;rdquo; desk. New requests arrive here and wait to be picked up by a worker from the pool.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The &lt;code&gt;StreamBroadcaster&lt;/code&gt;&lt;/strong&gt;: This is the real star of the show. Think of it as a secure, open-frequency radio broadcast. One agent (the &amp;ldquo;leader&amp;rdquo;) starts broadcasting intel (the LLM response stream), and any other agents on the same mission (the &amp;ldquo;followers&amp;rdquo;) can simply tune in and receive the same live feed. It&amp;rsquo;s how we efficiently share the results of one expensive operation with many clients.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The &lt;code&gt;select&lt;/code&gt; Statement&lt;/strong&gt;: This is the system&amp;rsquo;s &amp;ldquo;situational awareness.&amp;rdquo; A &lt;code&gt;select&lt;/code&gt; block allows a goroutine to listen to multiple channels at once. It&amp;rsquo;s like Batman in &lt;em&gt;The Dark Knight&lt;/em&gt; watching dozens of monitors, waiting for a signal.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The &lt;code&gt;janitor&lt;/code&gt; uses &lt;code&gt;select&lt;/code&gt; to wait for either its next cleaning interval (&lt;code&gt;ticker.C&lt;/code&gt;) or a shutdown signal (&lt;code&gt;ctx.Done()&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;requestWorkerPool&lt;/code&gt; uses &lt;code&gt;select&lt;/code&gt; to wait for a new mission from the &lt;code&gt;requestQueue&lt;/code&gt; or a shutdown signal.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;sync.RWMutex&lt;/code&gt;: The Consigliere&lt;/strong&gt;: The &lt;code&gt;activeRequests&lt;/code&gt; map is our &amp;ldquo;family business&amp;rdquo; ledger. Multiple goroutines need to read from it, and some need to write to it. The &lt;code&gt;sync.RWMutex&lt;/code&gt; is our Tom Hagen from &lt;em&gt;The Godfather&lt;/em&gt;.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;m.requestsLock.RLock()&lt;/code&gt;: Many agents can &lt;strong&gt;ask&lt;/strong&gt; what the plan is (a read lock). This is fast.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;m.requestsLock.Lock()&lt;/code&gt;: But only &lt;strong&gt;one&lt;/strong&gt; agent can go into the room to &lt;strong&gt;change&lt;/strong&gt; the plan (a write lock). All others must wait.&lt;/li&gt;
+&lt;li&gt;This primitive protects our shared data from being corrupted, ensuring the integrity of our operation.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;context.Context&lt;/code&gt; and &lt;code&gt;cancel()&lt;/code&gt;: The Kill Switch&lt;/strong&gt;: Every operation that might take time (API calls, LLM streams) is given a &lt;code&gt;context&lt;/code&gt;. This context is our kill switch, like the neck bombs from &lt;em&gt;Suicide Squad&lt;/em&gt;.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;When a request is cancelled or times out, we call its &lt;code&gt;cancel()&lt;/code&gt; function. This sends a signal down through &lt;code&gt;ctx.Done()&lt;/code&gt; to every goroutine working on that request. They see the signal, stop what they&amp;rsquo;re doing, and clean up. &amp;ldquo;Mission aborted. Get out now.&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;This gets even more interesting with the broadcast model. If a &lt;strong&gt;follower&lt;/strong&gt; cancels, they are simply unsubscribed from the broadcast. If the &lt;strong&gt;leader&lt;/strong&gt; cancels, we perform a clever deception: we send a fake cancellation message to &lt;em&gt;their&lt;/em&gt; stream and unsubscribe them, but the underlying broadcast continues for any other followers. The mission must go on!&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;sync.WaitGroup&lt;/code&gt;: The Rendezvous Point&lt;/strong&gt;: In &lt;code&gt;streamer.go&lt;/code&gt;, when a tool that streams its own output is called, it runs in its own goroutine. The main goroutine needs to wait for the tool to finish completely. A &lt;code&gt;sync.WaitGroup&lt;/code&gt; is the rendezvous point, like in &lt;em&gt;Ocean&amp;rsquo;s Eleven&lt;/em&gt;. Danny Ocean tells the team (&lt;code&gt;wg.Add(1)&lt;/code&gt;), and he waits at the exit (&lt;code&gt;wg.Wait()&lt;/code&gt;) until every member has done their job and signaled they&amp;rsquo;re clear (&lt;code&gt;defer wg.Done()&lt;/code&gt;). This ensures perfect synchronization.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;the-janitor-the-cleaner&#34;&gt;The &amp;ldquo;Janitor&amp;rdquo;: The Cleaner
+&lt;/h3&gt;&lt;p&gt;The &lt;code&gt;janitor&lt;/code&gt; goroutine is our Mike Ehrmantraut from &lt;em&gt;Breaking Bad&lt;/em&gt; or Winston from &lt;em&gt;John Wick&lt;/em&gt;. It&amp;rsquo;s a background process that runs periodically (&lt;code&gt;time.NewTicker&lt;/code&gt;) to clean up messes. It finds requests that have been stuck in the queue too long (&amp;ldquo;timed out in queue&amp;rdquo;) or are taking too long to process (&amp;ldquo;timed out during processing&amp;rdquo;). It then purges their records, ensuring the system stays clean. No loose ends.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;parallelism-executing-with-the-full-crew&#34;&gt;Parallelism: Executing with the Full Crew
+&lt;/h2&gt;&lt;p&gt;Parallelism is when we take our concurrent design and run it on a machine with multiple CPU cores. Now, multiple tasks aren&amp;rsquo;t just being &lt;em&gt;managed&lt;/em&gt; at once; they are &lt;em&gt;executing&lt;/em&gt; at the exact same time.&lt;/p&gt;
+&lt;p&gt;In &lt;code&gt;manager.go&lt;/code&gt;, this is controlled by our &lt;strong&gt;Worker Pool, Semaphores, and the Single-Flight Group&lt;/strong&gt;. We don&amp;rsquo;t want to unleash an infinite number of Hulks on our system; we need to control our resources.&lt;/p&gt;
+&lt;h3 id=&#34;the-tools-of-parallelism&#34;&gt;The Tools of Parallelism:
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Worker Pool (&lt;code&gt;requestWorkerPool&lt;/code&gt;)&lt;/strong&gt;: Instead of a multi-stage assembly line, we now have a unified team of elite agents. The &lt;code&gt;requestWorkerPool&lt;/code&gt; listens to the &lt;code&gt;requestQueue&lt;/code&gt; and dispatches workers to handle missions &lt;em&gt;in parallel&lt;/em&gt;, from start to finish.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Semaphores (&lt;code&gt;chan struct{}&lt;/code&gt;)&lt;/strong&gt;: This is our resource management, our &amp;ldquo;Nick Fury&amp;rdquo; deciding who gets deployed. A semaphore is a channel used to limit how many goroutines can access a resource simultaneously.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;prepareSemaphore&lt;/code&gt;: Its size (&lt;code&gt;config.MaxConcurrentRequests&lt;/code&gt;) determines how many requests can be processed at the same time. This is like having the &lt;em&gt;Fast &amp;amp; Furious&lt;/em&gt; family&amp;rsquo;s tech crew (Tej, Ramsey) all working on different hacks at once.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;llmStreamSemaphore&lt;/code&gt;: This one is critical. LLM streaming is expensive. This semaphore has a smaller limit (&lt;code&gt;config.MaxConcurrentLLMStreams&lt;/code&gt;) to prevent us from overwhelming the LLM service. It ensures only a few &amp;ldquo;heavy hitters&amp;rdquo; (like Thor or The Hulk) are active at any given moment.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;A worker from the pool must first acquire a &amp;ldquo;slot&amp;rdquo; from &lt;code&gt;prepareSemaphore&lt;/code&gt; before it begins processing.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// This line blocks until a &amp;#34;slot&amp;#34; is free.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;m.prepareSemaphore &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt;{}{}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;go&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(&lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// This defer ensures the &amp;#34;slot&amp;#34; is released when the worker is done.
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;defer&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;() { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;m.prepareSemaphore }()
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}()
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Only the leader of a broadcast mission will attempt to acquire a slot from the &lt;code&gt;llmStreamSemaphore&lt;/code&gt;.&lt;/p&gt;
+&lt;h3 id=&#34;the-de-duplication-strategy-singleflight-and-the-streambroadcaster&#34;&gt;The De-Duplication Strategy: &lt;code&gt;singleflight&lt;/code&gt; and the &lt;code&gt;StreamBroadcaster&lt;/code&gt;
+&lt;/h3&gt;&lt;p&gt;This is our ace in the hole, the core of our new efficiency model. It&amp;rsquo;s how we handle identical, simultaneous requests.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Problem&lt;/strong&gt;: A &amp;ldquo;thundering herd.&amp;rdquo; Multiple, identical requests arrive at once for data that isn&amp;rsquo;t in the cache. Without a de-duplication strategy, we&amp;rsquo;d launch parallel operations for every single request, all doing the same redundant, expensive work.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Solution&lt;/strong&gt;: We combine &lt;code&gt;singleflight.Group&lt;/code&gt; with our &lt;code&gt;StreamBroadcaster&lt;/code&gt;. Think of it as setting up a secure press conference.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The First Request (The Leader)&lt;/strong&gt;: When the first request for a specific topic (&lt;code&gt;cacheKey&lt;/code&gt;) arrives, &lt;code&gt;m.sfGroup.Do()&lt;/code&gt; allows it through. This request is now the &lt;strong&gt;Leader&lt;/strong&gt;. Its job is to set up the press conference: it does the expensive preparation, creates a &lt;code&gt;StreamBroadcaster&lt;/code&gt;, and starts the live feed (&lt;code&gt;initiateAndManageBroadcast&lt;/code&gt;).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Subsequent Requests (The Followers)&lt;/strong&gt;: Any other requests for the &lt;em&gt;same topic&lt;/em&gt; that arrive while the Leader is working are put on hold by &lt;code&gt;singleflight.Group&lt;/code&gt;. They don&amp;rsquo;t do any work themselves. They simply wait for the Leader to establish the broadcast.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Tuning In&lt;/strong&gt;: Once the Leader has set up the &lt;code&gt;StreamBroadcaster&lt;/code&gt;, its &lt;code&gt;broadcastInfo&lt;/code&gt; is shared with all the waiting Followers. Now, both the Leader and all the Followers call &lt;code&gt;broadcaster.Subscribe()&lt;/code&gt; to get their own personal earpiece and &amp;ldquo;tune in&amp;rdquo; to the live feed. The &lt;code&gt;StreamBroadcaster&lt;/code&gt; even has a &lt;code&gt;history&lt;/code&gt; so that late-joiners get all the intel from the beginning.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This is a massive improvement. Instead of ten agents all trying to breach the same wall, one agent (the Leader) breaches it and then holds the door open for everyone else. The result of one expensive operation is shared live with many. Only the Leader is responsible for writing the final result to the cache, preventing redundant writes.&lt;/p&gt;
+&lt;p&gt;In short: &lt;code&gt;manager.go&lt;/code&gt; uses concurrency to &lt;strong&gt;structure&lt;/strong&gt; the work and parallelism to &lt;strong&gt;execute&lt;/strong&gt; it, but its true genius lies in the &lt;code&gt;singleflight&lt;/code&gt; and &lt;code&gt;StreamBroadcaster&lt;/code&gt; combo, which ensures we do expensive work exactly once and share the results with ruthless efficiency.&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>Implicit Decoupling</title>
         <link>http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
@@ -614,94 +716,6 @@ For this one specific scenario, we needed a function that would attempt one fina
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
-</description>
-        </item>
-        <item>
-        <title>Concurrent &amp; Parallel</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</link>
-        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
-        
-        <guid>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</guid>
-        <description>&lt;h1 id=&#34;concurrency--parallelism-the-ops-center-of-managergo&#34;&gt;Concurrency &amp;amp; Parallelism: The Ops Center of &lt;code&gt;manager.go&lt;/code&gt;
-&lt;/h1&gt;&lt;p&gt;Welcome to the mission briefing. Our &lt;code&gt;manager.go&lt;/code&gt; file is the central nervous system of our chatbot operation, much like The Continental from &lt;em&gt;John Wick&lt;/em&gt; or the IMF headquarters from &lt;em&gt;Mission: Impossible&lt;/em&gt;. It needs to handle a flood of incoming requests from agents (users) all over the world. To do this without melting down, it masterfully employs the arts of &lt;strong&gt;concurrency&lt;/strong&gt; and &lt;strong&gt;parallelism&lt;/strong&gt;.&lt;/p&gt;
-&lt;h2 id=&#34;concurrency-managing-multiple-missions-like-ethan-hunt&#34;&gt;Concurrency: Managing Multiple Missions (like Ethan Hunt)
-&lt;/h2&gt;&lt;p&gt;Concurrency is about structuring our code to handle many things at once, even if we only have one CPU core doing the work. It&amp;rsquo;s about switching between tasks efficiently so that no single task blocks the entire system.&lt;/p&gt;
-&lt;p&gt;In &lt;code&gt;manager.go&lt;/code&gt;, concurrency is achieved primarily through &lt;strong&gt;Goroutines&lt;/strong&gt; and &lt;strong&gt;Channels&lt;/strong&gt;.&lt;/p&gt;
-&lt;h3 id=&#34;the-tools-of-concurrency&#34;&gt;The Tools of Concurrency:
-&lt;/h3&gt;&lt;ol&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Goroutines (&lt;code&gt;go func(...)&lt;/code&gt;)&lt;/strong&gt;: Every time you see &lt;code&gt;go ...&lt;/code&gt;, we&amp;rsquo;re essentially telling one of our agents to start a new, independent task. It could be preparing a request, streaming a response, or the janitor cleaning up old files. They can all run without waiting for each other to finish.&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Channels (&lt;code&gt;chan&lt;/code&gt;)&lt;/strong&gt;: This is our secure communication line. How does Ethan Hunt get new intel from Benji? Through his earpiece. In Go, channels are those earpieces.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;requestQueue&lt;/code&gt;: This is the &amp;ldquo;mission assignment&amp;rdquo; desk. New requests arrive here and wait to be picked up.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;preparedQueue&lt;/code&gt;: This is the hand-off. The intel team (&lt;code&gt;prepareWorker&lt;/code&gt;) has assembled the &amp;ldquo;briefcase&amp;rdquo; (&lt;code&gt;PreparedRequestData&lt;/code&gt;) and passes it to the field team (&lt;code&gt;streamWorker&lt;/code&gt;) for the main operation.&lt;/li&gt;
-&lt;li&gt;This prevents goroutines from stepping on each other&amp;rsquo;s toes, avoiding the chaos you&amp;rsquo;d get if the entire &lt;em&gt;Suicide Squad&lt;/em&gt; tried to use one gun. It&amp;rsquo;s orderly and safe.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;The &lt;code&gt;select&lt;/code&gt; Statement&lt;/strong&gt;: This is the system&amp;rsquo;s &amp;ldquo;situational awareness.&amp;rdquo; A &lt;code&gt;select&lt;/code&gt; block allows a goroutine to listen to multiple channels at once. It&amp;rsquo;s like Batman in &lt;em&gt;The Dark Knight&lt;/em&gt; watching dozens of monitors in his sonar-vision room, waiting for a signal.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;The &lt;code&gt;janitor&lt;/code&gt; uses &lt;code&gt;select&lt;/code&gt; to wait for either its next cleaning interval (&lt;code&gt;ticker.C&lt;/code&gt;) or a shutdown signal (&lt;code&gt;ctx.Done()&lt;/code&gt;).&lt;/li&gt;
-&lt;li&gt;The worker managers use &lt;code&gt;select&lt;/code&gt; to wait for a new request &lt;em&gt;or&lt;/em&gt; a shutdown signal.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;The &lt;code&gt;for...range&lt;/code&gt; Loop on a Channel: The Assembly Line&lt;/strong&gt;: This is how we process a stream of work. Unlike a &lt;code&gt;for&lt;/code&gt; loop over a static list, a &lt;code&gt;for...range&lt;/code&gt; on a channel will &lt;strong&gt;block and wait&lt;/strong&gt; for the next item to arrive. It&amp;rsquo;s the assembly line in &lt;em&gt;Breaking Bad&lt;/em&gt;: one goroutine (Walter) is &amp;ldquo;cooking&amp;rdquo; and putting items on the belt (&lt;code&gt;internalStreamChan &amp;lt;- event&lt;/code&gt;), and the &lt;code&gt;for&lt;/code&gt; loop (Jesse) is on the other end, picking each item off the belt as it arrives. The loop only ends when the producer closes the channel, signaling the end of the production run. This is the core mechanism that makes real-time streaming possible.&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;&lt;code&gt;sync.RWMutex&lt;/code&gt;: The Consigliere&lt;/strong&gt;: The &lt;code&gt;activeRequests&lt;/code&gt; map is our &amp;ldquo;family business&amp;rdquo; ledger. Multiple goroutines need to read from it, and some need to write to it. An uncoordinated mob would lead to disaster. The &lt;code&gt;sync.RWMutex&lt;/code&gt; is our Tom Hagen from &lt;em&gt;The Godfather&lt;/em&gt;.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;m.requestsLock.RLock()&lt;/code&gt;: Many people can go to Tom at once to &lt;strong&gt;ask&lt;/strong&gt; what the plan is (a read lock). This is fast and efficient.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;m.requestsLock.Lock()&lt;/code&gt;: But only &lt;strong&gt;one&lt;/strong&gt; person can go into the room with the Don to &lt;strong&gt;change&lt;/strong&gt; the plan (a write lock). All others must wait until the meeting is over.&lt;/li&gt;
-&lt;li&gt;This primitive protects our shared data from being corrupted by simultaneous writes, ensuring the integrity of our operation.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;&lt;code&gt;context.Context&lt;/code&gt; and &lt;code&gt;cancel()&lt;/code&gt;: The Kill Switch&lt;/strong&gt;: Every operation that might take time (API calls, LLM streams) is given a &lt;code&gt;context&lt;/code&gt;. This context is our kill switch, like the neck bombs from &lt;em&gt;Suicide Squad&lt;/em&gt;. When a request is cancelled or times out, we call its &lt;code&gt;cancel()&lt;/code&gt; function. This sends a signal down through the &lt;code&gt;ctx.Done()&lt;/code&gt; channel to every goroutine working on that request. They see the signal, stop what they&amp;rsquo;re doing, and clean up. It&amp;rsquo;s how we tell an agent, &amp;ldquo;Mission aborted. Get out now.&amp;rdquo; No hesitation, no wasted resources.&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;&lt;code&gt;sync.WaitGroup&lt;/code&gt;: The Rendezvous Point&lt;/strong&gt;: In &lt;code&gt;streamResponse&lt;/code&gt;, when a tool that streams its own output is called (like &lt;code&gt;frequently_asked&lt;/code&gt;), it runs in its own goroutine. The main goroutine needs to wait for the tool to finish its work completely before it can proceed with cleanup. A &lt;code&gt;sync.WaitGroup&lt;/code&gt; is the rendezvous point, like in &lt;em&gt;Ocean&amp;rsquo;s Eleven&lt;/em&gt;. Danny Ocean tells the team (&lt;code&gt;wg.Add(1)&lt;/code&gt;), and he waits at the exit (&lt;code&gt;wg.Wait()&lt;/code&gt;) until every member has done their job and signaled they&amp;rsquo;re clear (&lt;code&gt;defer wg.Done()&lt;/code&gt;). This ensures perfect synchronization.&lt;/p&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;The entire system is &lt;em&gt;concurrently&lt;/em&gt; handling queuing, preparation, streaming, cancellation, and cleanup using these specialized tools.&lt;/p&gt;
-&lt;h3 id=&#34;the-janitor-the-cleaner&#34;&gt;The &amp;ldquo;Janitor&amp;rdquo;: The Cleaner
-&lt;/h3&gt;&lt;p&gt;The &lt;code&gt;janitor&lt;/code&gt; goroutine is our Mike Ehrmantraut from &lt;em&gt;Breaking Bad&lt;/em&gt; or Winston from &lt;em&gt;John Wick&lt;/em&gt;. It&amp;rsquo;s a background process that runs periodically (&lt;code&gt;time.NewTicker&lt;/code&gt;) to clean up messes. It finds requests that have been stuck in the queue too long (&amp;ldquo;timed out in queue&amp;rdquo;) or are taking too long to process (&amp;ldquo;timed out during processing&amp;rdquo;). It then triggers their kill switch (&lt;code&gt;cancelFunc()&lt;/code&gt;) and removes them from the active list. No loose ends. No witnesses.&lt;/p&gt;
-&lt;hr&gt;
-&lt;h2 id=&#34;parallelism-assembling-the-crew-like-the-avengers&#34;&gt;Parallelism: Assembling the Crew (like The Avengers)
-&lt;/h2&gt;&lt;p&gt;Parallelism is when we take our concurrent design and run it on a machine with multiple CPU cores. Now, multiple tasks aren&amp;rsquo;t just being &lt;em&gt;managed&lt;/em&gt; at once; they are &lt;em&gt;executing&lt;/em&gt; at the exact same time.&lt;/p&gt;
-&lt;p&gt;In &lt;code&gt;manager.go&lt;/code&gt;, this is controlled by our &lt;strong&gt;Worker Pools, Semaphores, and the Single-Flight Group&lt;/strong&gt;. We don&amp;rsquo;t want to unleash an infinite number of Hulks on our system; that would be chaos. We need to control our resources.&lt;/p&gt;
-&lt;h3 id=&#34;the-tools-of-parallelism&#34;&gt;The Tools of Parallelism:
-&lt;/h3&gt;&lt;ol&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Worker Pools (&lt;code&gt;prepareWorkerManager&lt;/code&gt;, &lt;code&gt;streamWorkerManager&lt;/code&gt;)&lt;/strong&gt;: Instead of one agent doing everything, we have a team. These managers listen to their respective queues and dispatch workers to handle tasks &lt;em&gt;in parallel&lt;/em&gt;, up to a certain limit.&lt;/p&gt;
-&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Semaphores (&lt;code&gt;chan struct{}&lt;/code&gt;)&lt;/strong&gt;: This is our resource management, our &amp;ldquo;Nick Fury&amp;rdquo; deciding who gets deployed. A semaphore is a channel used to limit the number of goroutines that can access a resource simultaneously.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;prepareSemaphore&lt;/code&gt;: Its size (&lt;code&gt;config.MaxConcurrentRequests&lt;/code&gt;) determines how many requests can be in the &amp;ldquo;preparation&amp;rdquo; stage at the same time. This is like having the &lt;em&gt;Fast &amp;amp; Furious&lt;/em&gt; family&amp;rsquo;s tech crew (Tej, Ramsey) all working on different hacks at once.&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;llmStreamSemaphore&lt;/code&gt;: This one is critical. LLM streaming is expensive. This semaphore has a smaller limit (&lt;code&gt;config.MaxConcurrentLLMStreams&lt;/code&gt;) to prevent us from overwhelming the LLM service or our own server. It ensures only a few &amp;ldquo;heavy hitters&amp;rdquo; (like Thor or The Terminator) are active at any given moment.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/li&gt;
-&lt;/ol&gt;
-&lt;p&gt;When a request arrives in &lt;code&gt;prepareWorkerManager&lt;/code&gt;, it must first acquire a &amp;ldquo;slot&amp;rdquo; from &lt;code&gt;prepareSemaphore&lt;/code&gt;. This is how we achieve true parallelism.&lt;/p&gt;
-&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;// This line blocks until a &amp;#34;slot&amp;#34; is free.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;m.prepareSemaphore &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt;{}{}
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;go&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(&lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;) {
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// This defer ensures the &amp;#34;slot&amp;#34; is released when the worker is done.
-&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;defer&lt;/span&gt; &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;() { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt;m.prepareSemaphore }()
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;...&lt;/span&gt;
-&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}()
-&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;the-cache-stampede-defense-singleflight&#34;&gt;The Cache Stampede Defense: &lt;code&gt;singleflight&lt;/code&gt;
-&lt;/h3&gt;&lt;p&gt;This is our ace in the hole. The &lt;code&gt;prepareRequest&lt;/code&gt; function uses a &lt;code&gt;singleflight.Group&lt;/code&gt; to prevent a &amp;ldquo;thundering herd&amp;rdquo; scenario.&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;The Problem&lt;/strong&gt;: Multiple, identical requests arrive simultaneously for data that isn&amp;rsquo;t in the cache. Without &lt;code&gt;singleflight&lt;/code&gt;, we&amp;rsquo;d launch parallel operations for every single request, all doing the same redundant, expensive work.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;The Solution&lt;/strong&gt;: The &lt;code&gt;singleflight.Group&lt;/code&gt; is our gatekeeper. When the first request for a specific &lt;code&gt;cacheKey&lt;/code&gt; arrives, it&amp;rsquo;s allowed through to execute the expensive &lt;code&gt;doExpensivePreparation&lt;/code&gt; function. Any other requests for the &lt;em&gt;same key&lt;/em&gt; that arrive while the first is still running are put on hold. They don&amp;rsquo;t start their own work; they simply wait. Once the first request completes, its result is shared with all the waiting requests.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;It&amp;rsquo;s like in &lt;em&gt;Mission: Impossible&lt;/em&gt;—the first agent through the laser grid (&lt;code&gt;doExpensivePreparation&lt;/code&gt;) disables the trap, and the rest of the team (&lt;code&gt;the waiting goroutines&lt;/code&gt;) can just walk right through.&lt;/p&gt;
-&lt;p&gt;This is implemented with &lt;code&gt;m.sfGroup.Do(cacheKey, ...)&lt;/code&gt; and is the reason the core logic was moved into the &lt;code&gt;doExpensivePreparation&lt;/code&gt; function. Furthermore, the &lt;code&gt;cachingRequestsMap&lt;/code&gt; (protected by its own &lt;code&gt;RWMutex&lt;/code&gt;) and the &lt;code&gt;ShouldCache&lt;/code&gt; flag in &lt;code&gt;PreparedRequestData&lt;/code&gt; ensure that only the &lt;em&gt;first&lt;/em&gt; agent—the one who did the work—is responsible for writing the result to the Redis cache. The others get the data but don&amp;rsquo;t create unnecessary writes.&lt;/p&gt;
-&lt;p&gt;In short: &lt;code&gt;manager.go&lt;/code&gt; uses concurrency to &lt;strong&gt;structure&lt;/strong&gt; the work and parallelism to &lt;strong&gt;execute&lt;/strong&gt; it, just like a master strategist planning a mission and then deploying the perfect team to get it done.&lt;/p&gt;
 </description>
         </item>
         
