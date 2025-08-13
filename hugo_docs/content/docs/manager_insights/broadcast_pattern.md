@@ -6,6 +6,8 @@ draft: false
 
 # Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern
 
+[The Age of Sauron](https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/) | [Implicit Decoupling](https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/)
+
 This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication.
 
 ### Executive Summary

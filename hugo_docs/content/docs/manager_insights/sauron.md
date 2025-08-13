@@ -6,6 +6,8 @@ draft: false
 
 # Sauron: The Immortal, The Devious, The Exploiter
 
+[Implicit Decoupling](https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/) | [Broadcast Pattern](https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/)
+
 This parchment details the architecture of "Sauron," the second-generation request management system. It replaces the naive, inefficient, and fragile "Pre-Sauron" architecture with a robust, intelligent, and ruthless system designed for maximum efficiency and correctness under high-concurrency workloads.
 
 The Sauron architecture is defined by three core tenets that address the fundamental challenges of handling concurrent, identical, streaming requests: Immortality, Deception, and Exploitation.

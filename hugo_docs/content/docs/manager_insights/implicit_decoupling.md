@@ -6,6 +6,8 @@ draft: false
 
 # Analysis: Implicit Decoupling in the Single-Pool Architecture
 
+[Broadcast Pattern](https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/) | [The Age of Sauron](https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/)
+
 This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved.
 
 ## 1. The Architectural Question

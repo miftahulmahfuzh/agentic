@@ -13,7 +13,10 @@
         
         <guid>http://localhost:1313/agentic/docs/manager_insights/broadcast_pattern/</guid>
         <description>&lt;h1 id=&#34;architecture-analysis-from-dual-worker-pools-to-a-broadcast-pattern&#34;&gt;Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern
-&lt;/h1&gt;&lt;p&gt;This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication.&lt;/p&gt;
+&lt;/h1&gt;&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;The Age of Sauron&lt;/a&gt; | &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Implicit Decoupling&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication.&lt;/p&gt;
 &lt;h3 id=&#34;executive-summary&#34;&gt;Executive Summary
 &lt;/h3&gt;&lt;p&gt;The initial question was: &lt;strong&gt;&amp;ldquo;Is it true that we don&amp;rsquo;t have a separate worker pool anymore?&amp;rdquo;&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;The answer is nuanced but trends towards &lt;strong&gt;yes&lt;/strong&gt;. The old architecture featured two distinct, sequential worker pools, each managed by its own semaphore (&lt;code&gt;prepareSemaphore&lt;/code&gt; and &lt;code&gt;llmStreamSemaphore&lt;/code&gt;). The new architecture consolidates this into a &lt;strong&gt;single, unified request worker pool&lt;/strong&gt; controlled by the &lt;code&gt;prepareSemaphore&lt;/code&gt;.&lt;/p&gt;
@@ -156,7 +159,10 @@
         
         <guid>http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/</guid>
         <description>&lt;h1 id=&#34;analysis-implicit-decoupling-in-the-single-pool-architecture&#34;&gt;Analysis: Implicit Decoupling in the Single-Pool Architecture
-&lt;/h1&gt;&lt;p&gt;This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved.&lt;/p&gt;
+&lt;/h1&gt;&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Broadcast Pattern&lt;/a&gt; | &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;The Age of Sauron&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved.&lt;/p&gt;
 &lt;h2 id=&#34;1-the-architectural-question&#34;&gt;1. The Architectural Question
 &lt;/h2&gt;&lt;p&gt;The system architecture has shifted from a dual-worker-pool model to a single pool managed by &lt;code&gt;prepareSemaphore&lt;/code&gt;, augmented by a &lt;code&gt;singleflight&lt;/code&gt; group and an &lt;code&gt;llmStreamSemaphore&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;A critical concern arises from this change: is the vital feature of &lt;strong&gt;decoupling&lt;/strong&gt; between the initial, lightweight request preparation and the expensive, heavyweight LLM streaming still intact?&lt;/p&gt;
@@ -239,7 +245,10 @@
         
         <guid>http://localhost:1313/agentic/docs/manager_insights/sauron/</guid>
         <description>&lt;h1 id=&#34;sauron-the-immortal-the-devious-the-exploiter&#34;&gt;Sauron: The Immortal, The Devious, The Exploiter
-&lt;/h1&gt;&lt;p&gt;This parchment details the architecture of &amp;ldquo;Sauron,&amp;rdquo; the second-generation request management system. It replaces the naive, inefficient, and fragile &amp;ldquo;Pre-Sauron&amp;rdquo; architecture with a robust, intelligent, and ruthless system designed for maximum efficiency and correctness under high-concurrency workloads.&lt;/p&gt;
+&lt;/h1&gt;&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Implicit Decoupling&lt;/a&gt; | &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;Broadcast Pattern&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;This parchment details the architecture of &amp;ldquo;Sauron,&amp;rdquo; the second-generation request management system. It replaces the naive, inefficient, and fragile &amp;ldquo;Pre-Sauron&amp;rdquo; architecture with a robust, intelligent, and ruthless system designed for maximum efficiency and correctness under high-concurrency workloads.&lt;/p&gt;
 &lt;p&gt;The Sauron architecture is defined by three core tenets that address the fundamental challenges of handling concurrent, identical, streaming requests: Immortality, Deception, and Exploitation.&lt;/p&gt;
 &lt;h2 id=&#34;1-the-exploiter-on-demand-broadcasting&#34;&gt;1. The Exploiter: On-Demand Broadcasting
 &lt;/h2&gt;&lt;p&gt;The foundational principle of Sauron is the exploitation of the &lt;code&gt;singleflight.Group&lt;/code&gt; to create stream broadcasts &lt;em&gt;on-demand&lt;/em&gt;.&lt;/p&gt;

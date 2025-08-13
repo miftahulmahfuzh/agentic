@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-us" dir="ltr">
     <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Analysis: Implicit Decoupling in the Single-Pool Architecture This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved. 1. The Architectural Question The system architecture has shifted from a dual-worker-pool model to a single pool managed by prepareSemaphore, augmented by a singleflight group and an llmStreamSemaphore. A critical concern arises from this change: is the vital feature of decoupling between the initial, lightweight request preparation and the expensive, heavyweight LLM streaming still intact?">
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Analysis: Implicit Decoupling in the Single-Pool Architecture Broadcast Pattern | The Age of Sauron This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved. 1. The Architectural Question The system architecture has shifted from a dual-worker-pool model to a single pool managed by prepareSemaphore, augmented by a singleflight group and an llmStreamSemaphore.">
 <title>Implicit Decoupling</title>
 
 <link rel='canonical' href='http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/'>
 
 <link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Implicit Decoupling">
-<meta property='og:description' content="Analysis: Implicit Decoupling in the Single-Pool Architecture This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved. 1. The Architectural Question The system architecture has shifted from a dual-worker-pool model to a single pool managed by prepareSemaphore, augmented by a singleflight group and an llmStreamSemaphore. A critical concern arises from this change: is the vital feature of decoupling between the initial, lightweight request preparation and the expensive, heavyweight LLM streaming still intact?">
+<meta property='og:description' content="Analysis: Implicit Decoupling in the Single-Pool Architecture Broadcast Pattern | The Age of Sauron This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved. 1. The Architectural Question The system architecture has shifted from a dual-worker-pool model to a single pool managed by prepareSemaphore, augmented by a singleflight group and an llmStreamSemaphore.">
 <meta property='og:url' content='http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/'>
 <meta property='og:site_name' content='Go Chatbot'>
 <meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-13T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-13T00:00:00&#43;00:00'/>
 <meta name="twitter:title" content="Implicit Decoupling">
-<meta name="twitter:description" content="Analysis: Implicit Decoupling in the Single-Pool Architecture This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved. 1. The Architectural Question The system architecture has shifted from a dual-worker-pool model to a single pool managed by prepareSemaphore, augmented by a singleflight group and an llmStreamSemaphore. A critical concern arises from this change: is the vital feature of decoupling between the initial, lightweight request preparation and the expensive, heavyweight LLM streaming still intact?">
+<meta name="twitter:description" content="Analysis: Implicit Decoupling in the Single-Pool Architecture Broadcast Pattern | The Age of Sauron This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved. 1. The Architectural Question The system architecture has shifted from a dual-worker-pool model to a single pool managed by prepareSemaphore, augmented by a singleflight group and an llmStreamSemaphore.">
     <link rel="shortcut icon" href="/agentic/favicon.png" />
 
     </head>
@@ -202,7 +202,10 @@
     
     
     <h1 id="analysis-implicit-decoupling-in-the-single-pool-architecture">Analysis: Implicit Decoupling in the Single-Pool Architecture
-</h1><p>This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved.</p>
+</h1><p><a class="link" href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/"  target="_blank" rel="noopener"
+    >Broadcast Pattern</a> | <a class="link" href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/"  target="_blank" rel="noopener"
+    >The Age of Sauron</a></p>
+<p>This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved.</p>
 <h2 id="1-the-architectural-question">1. The Architectural Question
 </h2><p>The system architecture has shifted from a dual-worker-pool model to a single pool managed by <code>prepareSemaphore</code>, augmented by a <code>singleflight</code> group and an <code>llmStreamSemaphore</code>.</p>
 <p>A critical concern arises from this change: is the vital feature of <strong>decoupling</strong> between the initial, lightweight request preparation and the expensive, heavyweight LLM streaming still intact?</p>
