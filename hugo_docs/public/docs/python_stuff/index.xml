@@ -6,10 +6,10 @@
         <description>Recent content in Python Stuff on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/python_stuff/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 13 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/python_stuff/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Python vs Go</title>
         <link>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</link>
-        <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
+        <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
         
         <guid>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
@@ -51,7 +51,7 @@ Every query, no matter how simple, was forced through this expensive, multi-step
 &lt;p&gt;&lt;strong&gt;NEW (Go)&lt;/strong&gt;: The architecture implements an intelligent, dual-path system. The initial LLM call acts as a master router.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Path A (Standard Generation):&lt;/strong&gt; For complex queries requiring multiple tools, the system follows the traditional path—gathering tool output and invoking a final LLM call. It does this far more efficiently than Python, but the path is logically similar.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Path B (Direct Tool Stream):&lt;/strong&gt; This is the game-changer. When the LLM router determines the user&amp;rsquo;s query can be answered by a single, stream-capable &amp;ldquo;Natural Answer&amp;rdquo; tool (like the &lt;code&gt;frequently_asked&lt;/code&gt; RAG tool), it triggers a specialized workflow. The &lt;code&gt;Manager&lt;/code&gt; &lt;strong&gt;bypasses the expensive second LLM call entirely&lt;/strong&gt;. A dedicated goroutine invokes the tool&amp;rsquo;s &lt;code&gt;Stream&lt;/code&gt; method, which pushes its response directly into a channel. The &lt;code&gt;Manager&lt;/code&gt; relays events from this channel directly to the client.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Path B (Direct Tool Stream):&lt;/strong&gt; This is the game-changer. When the LLM router determines the user&amp;rsquo;s query can be answered by a single, stream-capable &amp;ldquo;Natural Answer&amp;rdquo; tool (like the &lt;code&gt;frequently_asked&lt;/code&gt; RAG tool), it triggers a specialized workflow. The &lt;code&gt;Manager&lt;/code&gt; &lt;strong&gt;bypasses the expensive second LLM call entirely&lt;/strong&gt;. A dedicated goroutine in the &lt;code&gt;ResponseStreamer&lt;/code&gt; invokes the tool&amp;rsquo;s &lt;code&gt;Stream&lt;/code&gt; method, which pushes its response directly into a channel. The &lt;code&gt;Manager&lt;/code&gt; relays events from this channel directly to the client.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;This is the difference between the full, complex heist plan from &lt;em&gt;Ocean&amp;rsquo;s Eleven&lt;/em&gt; and a simple smash-and-grab. The system knows which job it&amp;rsquo;s on and uses the most direct, efficient method, providing two massive benefits:&lt;/p&gt;
 &lt;ol&gt;
@@ -73,7 +73,7 @@ Every query, no matter how simple, was forced through this expensive, multi-step
 &lt;/h3&gt;&lt;p&gt;The Go implementation employs sophisticated patterns that were out of reach for the Python script.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;strong&gt;&lt;code&gt;singleflight.Group&lt;/code&gt;&lt;/strong&gt;: The silver bullet against &amp;ldquo;thundering herds.&amp;rdquo; If 100 users ask the same question, the Python code would launch 100 identical, expensive LLM calls. The &lt;code&gt;singleflight&lt;/code&gt; group ensures only the &lt;em&gt;first&lt;/em&gt; request does the expensive work; all other identical requests wait and share that single result. It&amp;rsquo;s like in &lt;em&gt;Mission: Impossible&lt;/em&gt;—instead of the whole team disarming the same bomb, one specialist does it while the others cover the exits.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;singleflight.Group&lt;/code&gt;&lt;/strong&gt;: The silver bullet against &amp;ldquo;thundering herds.&amp;rdquo; If 100 users ask the same question, the Python code would launch 100 identical, expensive LLM calls. The &lt;code&gt;singleflight&lt;/code&gt; group in the &lt;code&gt;Manager&lt;/code&gt; ensures only the &lt;em&gt;first&lt;/em&gt; request does the expensive work (&lt;code&gt;doExpensivePreparation&lt;/code&gt;); all other identical requests wait and share that single result via the &lt;code&gt;StreamBroadcaster&lt;/code&gt;. It&amp;rsquo;s like in &lt;em&gt;Mission: Impossible&lt;/em&gt;—instead of the whole team disarming the same bomb, one specialist does it while the others cover the exits.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;The Janitor&lt;/strong&gt;: The Python code had no mechanism for cleaning up stuck requests. The Go architecture has a dedicated &lt;code&gt;janitor&lt;/code&gt; goroutine. It is the goddamn Terminator. It periodically sweeps through, finds timed-out or orphaned requests, and terminates them. It can&amp;rsquo;t be bargained with. It can&amp;rsquo;t be reasoned with. It doesn&amp;rsquo;t feel pity, or remorse, or fear. And it absolutely will not stop until the system is clean, ensuring self-healing and long-term stability.&lt;/p&gt;
@@ -100,7 +100,7 @@ Every query, no matter how simple, was forced through this expensive, multi-step
 &lt;h3 id=&#34;7-circuit-breakers-systemic-self-preservation&#34;&gt;7. Circuit Breakers: Systemic Self-Preservation
 &lt;/h3&gt;&lt;ul&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;strong&gt;OLD (Python)&lt;/strong&gt;: The strategy for handling a failing external service (like the LLM API or database) was to &amp;ldquo;try again.&amp;rdquo; And again. And again. If the LLM API went down, every single user request would still try to establish a connection, wait for the agonizing 30-second timeout, and then fail. This creates a &lt;strong&gt;cascading failure&lt;/strong&gt;. The application&amp;rsquo;s own resources get exhausted waiting for a dead service, bringing the &lt;em&gt;entire system&lt;/em&gt; to a grinding halt.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;OLD (Python)&lt;/strong&gt;: The strategy for handling a failing external service (like the LLM API or database) was to &amp;ldquo;try again.&amp;rdquo; And again. And again. If the LLM API went down, every single user request would still try to establish a connection, wait for the agonizing 30-second timeout, and then fail. This creates a &lt;strong&gt;cascading failure&lt;/strong&gt;. The application&amp;rsquo;s own resources get exhausted waiting for a dead service, bringing the &lt;em&gt;entire system&lt;/em&gt; to a grinding halt. It&amp;rsquo;s the Titanic hitting the iceberg; without watertight compartments, the whole ship was doomed to sink.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;NEW (Go &lt;code&gt;gobreaker&lt;/code&gt;)&lt;/strong&gt;: You&amp;rsquo;ve installed strategic, automated bulkheads. The &lt;code&gt;gobreaker&lt;/code&gt; library wraps calls to every external service (LLM, Redis, ArangoDB).&lt;/p&gt;

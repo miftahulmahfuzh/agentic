@@ -1,6 +1,6 @@
 ---
 title: "Python vs Go"
-date: 2025-08-02
+date: 2025-08-13
 draft: false
 ---
 
@@ -48,7 +48,7 @@ This is a strategic capability the Python code could never achieve. It's the sys
 
 *   **NEW (Go)**: The architecture implements an intelligent, dual-path system. The initial LLM call acts as a master router.
     *   **Path A (Standard Generation):** For complex queries requiring multiple tools, the system follows the traditional path—gathering tool output and invoking a final LLM call. It does this far more efficiently than Python, but the path is logically similar.
-    *   **Path B (Direct Tool Stream):** This is the game-changer. When the LLM router determines the user's query can be answered by a single, stream-capable "Natural Answer" tool (like the `frequently_asked` RAG tool), it triggers a specialized workflow. The `Manager` **bypasses the expensive second LLM call entirely**. A dedicated goroutine invokes the tool's `Stream` method, which pushes its response directly into a channel. The `Manager` relays events from this channel directly to the client.
+    *   **Path B (Direct Tool Stream):** This is the game-changer. When the LLM router determines the user's query can be answered by a single, stream-capable "Natural Answer" tool (like the `frequently_asked` RAG tool), it triggers a specialized workflow. The `Manager` **bypasses the expensive second LLM call entirely**. A dedicated goroutine in the `ResponseStreamer` invokes the tool's `Stream` method, which pushes its response directly into a channel. The `Manager` relays events from this channel directly to the client.
 
     This is the difference between the full, complex heist plan from *Ocean's Eleven* and a simple smash-and-grab. The system knows which job it's on and uses the most direct, efficient method, providing two massive benefits:
     1.  **Drastic Latency Reduction:** Time-to-first-token for common RAG queries is minimized because an entire LLM round-trip is eliminated.
@@ -64,7 +64,7 @@ This is a strategic capability the Python code could never achieve. It's the sys
 
 The Go implementation employs sophisticated patterns that were out of reach for the Python script.
 
-*   **`singleflight.Group`**: The silver bullet against "thundering herds." If 100 users ask the same question, the Python code would launch 100 identical, expensive LLM calls. The `singleflight` group ensures only the *first* request does the expensive work; all other identical requests wait and share that single result. It's like in *Mission: Impossible*—instead of the whole team disarming the same bomb, one specialist does it while the others cover the exits.
+*   **`singleflight.Group`**: The silver bullet against "thundering herds." If 100 users ask the same question, the Python code would launch 100 identical, expensive LLM calls. The `singleflight` group in the `Manager` ensures only the *first* request does the expensive work (`doExpensivePreparation`); all other identical requests wait and share that single result via the `StreamBroadcaster`. It's like in *Mission: Impossible*—instead of the whole team disarming the same bomb, one specialist does it while the others cover the exits.
 
 *   **The Janitor**: The Python code had no mechanism for cleaning up stuck requests. The Go architecture has a dedicated `janitor` goroutine. It is the goddamn Terminator. It periodically sweeps through, finds timed-out or orphaned requests, and terminates them. It can't be bargained with. It can't be reasoned with. It doesn't feel pity, or remorse, or fear. And it absolutely will not stop until the system is clean, ensuring self-healing and long-term stability.
 
@@ -82,7 +82,7 @@ The Go implementation employs sophisticated patterns that were out of reach for 
 
 ### 7. Circuit Breakers: Systemic Self-Preservation
 
-*   **OLD (Python)**: The strategy for handling a failing external service (like the LLM API or database) was to "try again." And again. And again. If the LLM API went down, every single user request would still try to establish a connection, wait for the agonizing 30-second timeout, and then fail. This creates a **cascading failure**. The application's own resources get exhausted waiting for a dead service, bringing the *entire system* to a grinding halt.
+*   **OLD (Python)**: The strategy for handling a failing external service (like the LLM API or database) was to "try again." And again. And again. If the LLM API went down, every single user request would still try to establish a connection, wait for the agonizing 30-second timeout, and then fail. This creates a **cascading failure**. The application's own resources get exhausted waiting for a dead service, bringing the *entire system* to a grinding halt. It's the Titanic hitting the iceberg; without watertight compartments, the whole ship was doomed to sink.
 
 *   **NEW (Go `gobreaker`)**: You've installed strategic, automated bulkheads. The `gobreaker` library wraps calls to every external service (LLM, Redis, ArangoDB).
     1.  **It Watches:** The breaker monitors the calls. If it sees a few consecutive failures (`ConsecutiveFailures > 3`), it concludes the service is down.
