@@ -239,6 +239,125 @@
 </description>
         </item>
         <item>
+        <title>StreamBroadcaster</title>
+        <link>http://localhost:1313/agentic/docs/manager_insights/streambroadcaster/</link>
+        <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/manager_insights/streambroadcaster/</guid>
+        <description>&lt;p&gt;Let&amp;rsquo;s break down the &lt;code&gt;StreamBroadcaster&lt;/code&gt; in detail. It&amp;rsquo;s a crucial component for implementing the &amp;ldquo;shared broadcast&amp;rdquo; or &amp;ldquo;fan-out&amp;rdquo; pattern, which is at the heart of the new request de-duplication strategy.&lt;/p&gt;
+&lt;h3 id=&#34;1-the-core-problem-it-solves&#34;&gt;1. The Core Problem it Solves
+&lt;/h3&gt;&lt;p&gt;Imagine two or more users ask the exact same complex question at nearly the same time.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;The Inefficient Way:&lt;/strong&gt; The system processes each request independently. It runs the expensive tool selection, calls the LLM, and generates a response stream for User A. Then, it does the &lt;em&gt;exact same work&lt;/em&gt; all over again for User B. This is a waste of resources (LLM tokens, CPU, API calls).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Efficient Way (with &lt;code&gt;StreamBroadcaster&lt;/code&gt;):&lt;/strong&gt; The system recognizes the requests are identical (via a &lt;code&gt;cacheKey&lt;/code&gt;). The first request (the &amp;ldquo;leader&amp;rdquo;) initiates the expensive work. A &lt;code&gt;StreamBroadcaster&lt;/code&gt; is created for this work. When the second request (the &amp;ldquo;follower&amp;rdquo;) arrives, it doesn&amp;rsquo;t do the work again. Instead, it simply &amp;ldquo;tunes in&amp;rdquo; to the broadcast already being generated for the leader.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The &lt;code&gt;StreamBroadcaster&lt;/code&gt; is the mechanism that allows one source of events (the LLM or tool stream) to be distributed to multiple listeners (the HTTP response streams for each user).&lt;/p&gt;
+&lt;h3 id=&#34;2-the-streambroadcaster-struct-anatomy&#34;&gt;2. The &lt;code&gt;StreamBroadcaster&lt;/code&gt; Struct: Anatomy
+&lt;/h3&gt;&lt;p&gt;Let&amp;rsquo;s look at its fields. Each one serves a specific and important purpose.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;type&lt;/span&gt; StreamBroadcaster &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;	lock        sync.Mutex                &lt;span style=&#34;color:#6272a4&#34;&gt;// For thread safety
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	subscribers []&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;chan&lt;/span&gt; tooltypes.StreamEvent &lt;span style=&#34;color:#6272a4&#34;&gt;// The list of all current listeners
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	isDone      &lt;span style=&#34;color:#8be9fd&#34;&gt;bool&lt;/span&gt;                      &lt;span style=&#34;color:#6272a4&#34;&gt;// A flag to indicate the broadcast is over
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;	history     []tooltypes.StreamEvent   &lt;span style=&#34;color:#6272a4&#34;&gt;// A recording of all past events
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;lock sync.Mutex&lt;/code&gt;: This is the most critical field for correctness. The &lt;code&gt;StreamBroadcaster&lt;/code&gt; will be accessed by multiple goroutines simultaneously:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;One goroutine (the leader&amp;rsquo;s) will be calling &lt;code&gt;Broadcast()&lt;/code&gt; and &lt;code&gt;Close()&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Multiple other goroutines (for each follower client) will be calling &lt;code&gt;Subscribe()&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;A cancellation goroutine might call &lt;code&gt;Unsubscribe()&lt;/code&gt;.
+The &lt;code&gt;lock&lt;/code&gt; ensures that operations that modify the shared state (&lt;code&gt;subscribers&lt;/code&gt;, &lt;code&gt;isDone&lt;/code&gt;, &lt;code&gt;history&lt;/code&gt;) don&amp;rsquo;t happen at the same time, preventing race conditions.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;subscribers []chan tooltypes.StreamEvent&lt;/code&gt;: This is the list of &amp;ldquo;listeners&amp;rdquo;. Each subscriber provides its own channel. The broadcaster&amp;rsquo;s job is to put a copy of every event into each of these channels. This design decouples the broadcaster from the subscribers; the broadcaster doesn&amp;rsquo;t care what the subscriber does with the event after it&amp;rsquo;s sent.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;isDone bool&lt;/code&gt;: This is a simple but vital state flag. Once the broadcast is finished (the LLM stream has ended), &lt;code&gt;isDone&lt;/code&gt; is set to &lt;code&gt;true&lt;/code&gt;. This prevents new subscribers from joining a completed stream and stops the &lt;code&gt;Broadcast&lt;/code&gt; method from doing any more work. It&amp;rsquo;s the &amp;ldquo;The Show Is Over&amp;rdquo; sign on the door.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;history []tooltypes.StreamEvent&lt;/code&gt;: This is the secret sauce that makes &amp;ldquo;join-in-progress&amp;rdquo; possible. As each event is broadcast, it&amp;rsquo;s also saved to this &lt;code&gt;history&lt;/code&gt; slice. When a &lt;em&gt;new&lt;/em&gt; subscriber joins midway through the broadcast, they don&amp;rsquo;t miss the beginning. The &lt;code&gt;Subscribe&lt;/code&gt; method will first &amp;ldquo;catch them up&amp;rdquo; by sending them every event from the &lt;code&gt;history&lt;/code&gt; before adding them to the live broadcast.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;3-how-the-methods-work-a-step-by-step-guide&#34;&gt;3. How the Methods Work: A Step-by-Step Guide
+&lt;/h3&gt;&lt;h4 id=&#34;newstreambroadcaster&#34;&gt;&lt;code&gt;NewStreamBroadcaster()&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;This is a simple constructor. It creates an instance of the struct, initializing the slices so they are not &lt;code&gt;nil&lt;/code&gt;.&lt;/p&gt;
+&lt;h4 id=&#34;subscribesub-chan-tooltypesstreamevent&#34;&gt;&lt;code&gt;Subscribe(sub chan tooltypes.StreamEvent)&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;This is what a follower (or the initial leader) calls to start listening.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Lock:&lt;/strong&gt; It immediately acquires the mutex lock to ensure no other goroutine can change the broadcaster&amp;rsquo;s state.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Replay History:&lt;/strong&gt; It iterates through the &lt;code&gt;b.history&lt;/code&gt; slice and sends every past event to the new subscriber&amp;rsquo;s channel (&lt;code&gt;sub&lt;/code&gt;). This ensures the follower gets the full picture from the beginning.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Check if Done:&lt;/strong&gt; It checks the &lt;code&gt;b.isDone&lt;/code&gt; flag. If the broadcast is already over, there&amp;rsquo;s no point in subscribing. It simply closes the new subscriber&amp;rsquo;s channel (&lt;code&gt;close(sub)&lt;/code&gt;) to signal that there will be no more events, and returns.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Add to Subscribers:&lt;/strong&gt; If the broadcast is still live, it appends the new subscriber&amp;rsquo;s channel to the &lt;code&gt;b.subscribers&lt;/code&gt; slice.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Unlock:&lt;/strong&gt; The lock is released (via &lt;code&gt;defer&lt;/code&gt;).&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;broadcastevent-tooltypesstreamevent&#34;&gt;&lt;code&gt;Broadcast(event tooltypes.StreamEvent)&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;This is called by the single goroutine that is producing the events (e.g., receiving chunks from the LLM).&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Lock:&lt;/strong&gt; It acquires the lock.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Check if Done:&lt;/strong&gt; If &lt;code&gt;b.isDone&lt;/code&gt; is true, it does nothing and returns immediately.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Record to History:&lt;/strong&gt; It appends the new &lt;code&gt;event&lt;/code&gt; to the &lt;code&gt;b.history&lt;/code&gt; slice. This is crucial for future subscribers.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Fan-out:&lt;/strong&gt; It loops through every channel in the &lt;code&gt;b.subscribers&lt;/code&gt; slice.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Non-Blocking Send:&lt;/strong&gt; For each subscriber, it uses a &lt;code&gt;select&lt;/code&gt; statement for a &lt;em&gt;non-blocking send&lt;/em&gt;:
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;select&lt;/span&gt; {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;case&lt;/span&gt; sub &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;lt;-&lt;/span&gt; event:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;default&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;This is a key design choice for robustness. If a subscriber&amp;rsquo;s channel is full (because the client is slow or disconnected and not reading from its HTTP stream), a normal send (&lt;code&gt;sub &amp;lt;- event&lt;/code&gt;) would block the &lt;em&gt;entire broadcast&lt;/em&gt;. All other healthy clients would be stuck waiting for the one slow client. The non-blocking send prevents this. If the channel is full, the &lt;code&gt;default&lt;/code&gt; case is executed, the event is dropped &lt;em&gt;for that one slow client&lt;/em&gt;, and the broadcaster moves on to the next subscriber. This prioritizes the health of the broadcast over guaranteed delivery to a misbehaving client.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;close&#34;&gt;&lt;code&gt;Close()&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;This is called once the source stream has ended.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Lock:&lt;/strong&gt; It acquires the lock.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Idempotency Check:&lt;/strong&gt; It checks &lt;code&gt;if b.isDone&lt;/code&gt;. If it&amp;rsquo;s already closed, it does nothing. This makes it safe to call &lt;code&gt;Close()&lt;/code&gt; multiple times.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Set Done Flag:&lt;/strong&gt; It sets &lt;code&gt;b.isDone = true&lt;/code&gt;. This is the point of no return.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Notify Subscribers:&lt;/strong&gt; It loops through all remaining subscribers in the &lt;code&gt;b.subscribers&lt;/code&gt; list and calls &lt;code&gt;close(sub)&lt;/code&gt; on each of their channels. In Go, reading from a closed channel immediately returns the zero value, and a &lt;code&gt;for range&lt;/code&gt; loop over a channel will terminate when the channel is closed. This is the standard, clean way to signal &amp;ldquo;end of stream&amp;rdquo; to all listeners.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Cleanup:&lt;/strong&gt; It sets &lt;code&gt;b.subscribers = nil&lt;/code&gt; to release the memory held by the slice.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h4 id=&#34;unsubscribesubtounsubscribe-chan-tooltypesstreamevent&#34;&gt;&lt;code&gt;Unsubscribe(subToUnsubscribe chan tooltypes.StreamEvent)&lt;/code&gt;
+&lt;/h4&gt;&lt;p&gt;This is used if a client disconnects or cancels but the main broadcast should continue for others.&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Lock:&lt;/strong&gt; It acquires the lock.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Check if Done:&lt;/strong&gt; If the broadcast is over, there&amp;rsquo;s nothing to do.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Find and Remove:&lt;/strong&gt; It iterates through the subscribers to find the channel that needs to be removed. To remove it efficiently without preserving order, it uses this common Go slice trick: it overwrites the element to be removed with the &lt;em&gt;last&lt;/em&gt; element in the slice, and then truncates the slice by one. This is much faster than re-slicing and creating a new slice, as it avoids memory allocation and shifting all subsequent elements.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;4-lifecycle-in-the-application&#34;&gt;4. Lifecycle in the Application
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Request 1 (Leader):&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Manager&lt;/code&gt; sees a new &lt;code&gt;cacheKey&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It uses &lt;code&gt;singleflight.Do&lt;/code&gt; to become the &amp;ldquo;leader&amp;rdquo;.&lt;/li&gt;
+&lt;li&gt;Inside the singleflight function, it creates a &lt;code&gt;NewStreamBroadcaster&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It starts the actual work (&lt;code&gt;initiateAndManageBroadcast&lt;/code&gt;), which will call &lt;code&gt;Broadcast()&lt;/code&gt; for each event.&lt;/li&gt;
+&lt;li&gt;It calls &lt;code&gt;broadcaster.Subscribe()&lt;/code&gt; for itself.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Request 2 (Follower):&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Manager&lt;/code&gt; sees the same &lt;code&gt;cacheKey&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;singleflight.Do&lt;/code&gt; ensures this request &lt;em&gt;waits&lt;/em&gt; for the leader&amp;rsquo;s function to return the &lt;code&gt;broadcastInfo&lt;/code&gt;. It receives the &lt;em&gt;same&lt;/em&gt; &lt;code&gt;StreamBroadcaster&lt;/code&gt; instance that the leader created.&lt;/li&gt;
+&lt;li&gt;It calls &lt;code&gt;broadcaster.Subscribe()&lt;/code&gt; for its own client channel.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Subscribe&lt;/code&gt; immediately replays the &lt;code&gt;history&lt;/code&gt; so the follower&amp;rsquo;s stream catches up to the leader&amp;rsquo;s.&lt;/li&gt;
+&lt;li&gt;The follower is now in the &lt;code&gt;subscribers&lt;/code&gt; list and receives live events alongside the leader.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Broadcast Ends:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The LLM/tool stream finishes.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;initiateAndManageBroadcast&lt;/code&gt; goroutine calls &lt;code&gt;broadcaster.Close()&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Close()&lt;/code&gt; sets &lt;code&gt;isDone = true&lt;/code&gt; and closes the channels of both the leader and the follower. Their &lt;code&gt;for range&lt;/code&gt; loops over the stream terminate, and their HTTP connections are closed cleanly.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+        </item>
+        <item>
         <title>The Age of Sauron</title>
         <link>http://localhost:1313/agentic/docs/manager_insights/sauron/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>

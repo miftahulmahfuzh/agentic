@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Let&rsquo;s break down the StreamBroadcaster in detail. It&rsquo;s a crucial component for implementing the &ldquo;shared broadcast&rdquo; or &ldquo;fan-out&rdquo; pattern, which is at the heart of the new request de-duplication strategy. 1. The Core Problem it Solves Imagine two or more users ask the exact same complex question at nearly the same time. The Inefficient Way: The system processes each request independently. It runs the expensive tool selection, calls the LLM, and generates a response stream for User A.">
+<title>StreamBroadcaster</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/manager_insights/streambroadcaster/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="StreamBroadcaster">
+<meta property='og:description' content="Let&rsquo;s break down the StreamBroadcaster in detail. It&rsquo;s a crucial component for implementing the &ldquo;shared broadcast&rdquo; or &ldquo;fan-out&rdquo; pattern, which is at the heart of the new request de-duplication strategy. 1. The Core Problem it Solves Imagine two or more users ask the exact same complex question at nearly the same time. The Inefficient Way: The system processes each request independently. It runs the expensive tool selection, calls the LLM, and generates a response stream for User A.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/manager_insights/streambroadcaster/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-13T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-13T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="StreamBroadcaster">
+<meta name="twitter:description" content="Let&rsquo;s break down the StreamBroadcaster in detail. It&rsquo;s a crucial component for implementing the &ldquo;shared broadcast&rdquo; or &ldquo;fan-out&rdquo; pattern, which is at the heart of the new request de-duplication strategy. 1. The Core Problem it Solves Imagine two or more users ask the exact same complex question at nearly the same time. The Inefficient Way: The system processes each request independently. It runs the expensive tool selection, calls the LLM, and generates a response stream for User A.">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/manager_insights/streambroadcaster/">StreamBroadcaster</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 13, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    6 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>Let&rsquo;s break down the <code>StreamBroadcaster</code> in detail. It&rsquo;s a crucial component for implementing the &ldquo;shared broadcast&rdquo; or &ldquo;fan-out&rdquo; pattern, which is at the heart of the new request de-duplication strategy.</p>
+<h3 id="1-the-core-problem-it-solves">1. The Core Problem it Solves
+</h3><p>Imagine two or more users ask the exact same complex question at nearly the same time.</p>
+<ul>
+<li><strong>The Inefficient Way:</strong> The system processes each request independently. It runs the expensive tool selection, calls the LLM, and generates a response stream for User A. Then, it does the <em>exact same work</em> all over again for User B. This is a waste of resources (LLM tokens, CPU, API calls).</li>
+<li><strong>The Efficient Way (with <code>StreamBroadcaster</code>):</strong> The system recognizes the requests are identical (via a <code>cacheKey</code>). The first request (the &ldquo;leader&rdquo;) initiates the expensive work. A <code>StreamBroadcaster</code> is created for this work. When the second request (the &ldquo;follower&rdquo;) arrives, it doesn&rsquo;t do the work again. Instead, it simply &ldquo;tunes in&rdquo; to the broadcast already being generated for the leader.</li>
+</ul>
+<p>The <code>StreamBroadcaster</code> is the mechanism that allows one source of events (the LLM or tool stream) to be distributed to multiple listeners (the HTTP response streams for each user).</p>
+<h3 id="2-the-streambroadcaster-struct-anatomy">2. The <code>StreamBroadcaster</code> Struct: Anatomy
+</h3><p>Let&rsquo;s look at its fields. Each one serves a specific and important purpose.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#8be9fd;font-style:italic">type</span> StreamBroadcaster <span style="color:#8be9fd;font-style:italic">struct</span> {
+</span></span><span style="display:flex;"><span>	lock        sync.Mutex                <span style="color:#6272a4">// For thread safety
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	subscribers []<span style="color:#8be9fd;font-style:italic">chan</span> tooltypes.StreamEvent <span style="color:#6272a4">// The list of all current listeners
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	isDone      <span style="color:#8be9fd">bool</span>                      <span style="color:#6272a4">// A flag to indicate the broadcast is over
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>	history     []tooltypes.StreamEvent   <span style="color:#6272a4">// A recording of all past events
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>}
+</span></span></code></pre></div><ul>
+<li>
+<p><code>lock sync.Mutex</code>: This is the most critical field for correctness. The <code>StreamBroadcaster</code> will be accessed by multiple goroutines simultaneously:</p>
+<ul>
+<li>One goroutine (the leader&rsquo;s) will be calling <code>Broadcast()</code> and <code>Close()</code>.</li>
+<li>Multiple other goroutines (for each follower client) will be calling <code>Subscribe()</code>.</li>
+<li>A cancellation goroutine might call <code>Unsubscribe()</code>.
+The <code>lock</code> ensures that operations that modify the shared state (<code>subscribers</code>, <code>isDone</code>, <code>history</code>) don&rsquo;t happen at the same time, preventing race conditions.</li>
+</ul>
+</li>
+<li>
+<p><code>subscribers []chan tooltypes.StreamEvent</code>: This is the list of &ldquo;listeners&rdquo;. Each subscriber provides its own channel. The broadcaster&rsquo;s job is to put a copy of every event into each of these channels. This design decouples the broadcaster from the subscribers; the broadcaster doesn&rsquo;t care what the subscriber does with the event after it&rsquo;s sent.</p>
+</li>
+<li>
+<p><code>isDone bool</code>: This is a simple but vital state flag. Once the broadcast is finished (the LLM stream has ended), <code>isDone</code> is set to <code>true</code>. This prevents new subscribers from joining a completed stream and stops the <code>Broadcast</code> method from doing any more work. It&rsquo;s the &ldquo;The Show Is Over&rdquo; sign on the door.</p>
+</li>
+<li>
+<p><code>history []tooltypes.StreamEvent</code>: This is the secret sauce that makes &ldquo;join-in-progress&rdquo; possible. As each event is broadcast, it&rsquo;s also saved to this <code>history</code> slice. When a <em>new</em> subscriber joins midway through the broadcast, they don&rsquo;t miss the beginning. The <code>Subscribe</code> method will first &ldquo;catch them up&rdquo; by sending them every event from the <code>history</code> before adding them to the live broadcast.</p>
+</li>
+</ul>
+<hr>
+<h3 id="3-how-the-methods-work-a-step-by-step-guide">3. How the Methods Work: A Step-by-Step Guide
+</h3><h4 id="newstreambroadcaster"><code>NewStreamBroadcaster()</code>
+</h4><p>This is a simple constructor. It creates an instance of the struct, initializing the slices so they are not <code>nil</code>.</p>
+<h4 id="subscribesub-chan-tooltypesstreamevent"><code>Subscribe(sub chan tooltypes.StreamEvent)</code>
+</h4><p>This is what a follower (or the initial leader) calls to start listening.</p>
+<ol>
+<li><strong>Lock:</strong> It immediately acquires the mutex lock to ensure no other goroutine can change the broadcaster&rsquo;s state.</li>
+<li><strong>Replay History:</strong> It iterates through the <code>b.history</code> slice and sends every past event to the new subscriber&rsquo;s channel (<code>sub</code>). This ensures the follower gets the full picture from the beginning.</li>
+<li><strong>Check if Done:</strong> It checks the <code>b.isDone</code> flag. If the broadcast is already over, there&rsquo;s no point in subscribing. It simply closes the new subscriber&rsquo;s channel (<code>close(sub)</code>) to signal that there will be no more events, and returns.</li>
+<li><strong>Add to Subscribers:</strong> If the broadcast is still live, it appends the new subscriber&rsquo;s channel to the <code>b.subscribers</code> slice.</li>
+<li><strong>Unlock:</strong> The lock is released (via <code>defer</code>).</li>
+</ol>
+<h4 id="broadcastevent-tooltypesstreamevent"><code>Broadcast(event tooltypes.StreamEvent)</code>
+</h4><p>This is called by the single goroutine that is producing the events (e.g., receiving chunks from the LLM).</p>
+<ol>
+<li><strong>Lock:</strong> It acquires the lock.</li>
+<li><strong>Check if Done:</strong> If <code>b.isDone</code> is true, it does nothing and returns immediately.</li>
+<li><strong>Record to History:</strong> It appends the new <code>event</code> to the <code>b.history</code> slice. This is crucial for future subscribers.</li>
+<li><strong>Fan-out:</strong> It loops through every channel in the <code>b.subscribers</code> slice.</li>
+<li><strong>Non-Blocking Send:</strong> For each subscriber, it uses a <code>select</code> statement for a <em>non-blocking send</em>:
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#ff79c6">select</span> {
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">case</span> sub <span style="color:#ff79c6">&lt;-</span> event:
+</span></span><span style="display:flex;"><span><span style="color:#ff79c6">default</span>:
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>This is a key design choice for robustness. If a subscriber&rsquo;s channel is full (because the client is slow or disconnected and not reading from its HTTP stream), a normal send (<code>sub &lt;- event</code>) would block the <em>entire broadcast</em>. All other healthy clients would be stuck waiting for the one slow client. The non-blocking send prevents this. If the channel is full, the <code>default</code> case is executed, the event is dropped <em>for that one slow client</em>, and the broadcaster moves on to the next subscriber. This prioritizes the health of the broadcast over guaranteed delivery to a misbehaving client.</li>
+</ol>
+<h4 id="close"><code>Close()</code>
+</h4><p>This is called once the source stream has ended.</p>
+<ol>
+<li><strong>Lock:</strong> It acquires the lock.</li>
+<li><strong>Idempotency Check:</strong> It checks <code>if b.isDone</code>. If it&rsquo;s already closed, it does nothing. This makes it safe to call <code>Close()</code> multiple times.</li>
+<li><strong>Set Done Flag:</strong> It sets <code>b.isDone = true</code>. This is the point of no return.</li>
+<li><strong>Notify Subscribers:</strong> It loops through all remaining subscribers in the <code>b.subscribers</code> list and calls <code>close(sub)</code> on each of their channels. In Go, reading from a closed channel immediately returns the zero value, and a <code>for range</code> loop over a channel will terminate when the channel is closed. This is the standard, clean way to signal &ldquo;end of stream&rdquo; to all listeners.</li>
+<li><strong>Cleanup:</strong> It sets <code>b.subscribers = nil</code> to release the memory held by the slice.</li>
+</ol>
+<h4 id="unsubscribesubtounsubscribe-chan-tooltypesstreamevent"><code>Unsubscribe(subToUnsubscribe chan tooltypes.StreamEvent)</code>
+</h4><p>This is used if a client disconnects or cancels but the main broadcast should continue for others.</p>
+<ol>
+<li><strong>Lock:</strong> It acquires the lock.</li>
+<li><strong>Check if Done:</strong> If the broadcast is over, there&rsquo;s nothing to do.</li>
+<li><strong>Find and Remove:</strong> It iterates through the subscribers to find the channel that needs to be removed. To remove it efficiently without preserving order, it uses this common Go slice trick: it overwrites the element to be removed with the <em>last</em> element in the slice, and then truncates the slice by one. This is much faster than re-slicing and creating a new slice, as it avoids memory allocation and shifting all subsequent elements.</li>
+</ol>
+<hr>
+<h3 id="4-lifecycle-in-the-application">4. Lifecycle in the Application
+</h3><ol>
+<li>
+<p><strong>Request 1 (Leader):</strong></p>
+<ul>
+<li><code>Manager</code> sees a new <code>cacheKey</code>.</li>
+<li>It uses <code>singleflight.Do</code> to become the &ldquo;leader&rdquo;.</li>
+<li>Inside the singleflight function, it creates a <code>NewStreamBroadcaster</code>.</li>
+<li>It starts the actual work (<code>initiateAndManageBroadcast</code>), which will call <code>Broadcast()</code> for each event.</li>
+<li>It calls <code>broadcaster.Subscribe()</code> for itself.</li>
+</ul>
+</li>
+<li>
+<p><strong>Request 2 (Follower):</strong></p>
+<ul>
+<li><code>Manager</code> sees the same <code>cacheKey</code>.</li>
+<li><code>singleflight.Do</code> ensures this request <em>waits</em> for the leader&rsquo;s function to return the <code>broadcastInfo</code>. It receives the <em>same</em> <code>StreamBroadcaster</code> instance that the leader created.</li>
+<li>It calls <code>broadcaster.Subscribe()</code> for its own client channel.</li>
+<li><code>Subscribe</code> immediately replays the <code>history</code> so the follower&rsquo;s stream catches up to the leader&rsquo;s.</li>
+<li>The follower is now in the <code>subscribers</code> list and receives live events alongside the leader.</li>
+</ul>
+</li>
+<li>
+<p><strong>Broadcast Ends:</strong></p>
+<ul>
+<li>The LLM/tool stream finishes.</li>
+<li>The <code>initiateAndManageBroadcast</code> goroutine calls <code>broadcaster.Close()</code>.</li>
+<li><code>Close()</code> sets <code>isDone = true</code> and closes the channels of both the leader and the follower. Their <code>for range</code> loops over the stream terminate, and their HTTP connections are closed cleanly.</li>
+</ul>
+</li>
+</ol>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
