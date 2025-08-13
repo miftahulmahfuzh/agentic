@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication. Executive Summary The initial question was: &ldquo;Is it true that we don&rsquo;t have a separate worker pool anymore?&rdquo; The answer is nuanced but trends towards yes. The old architecture featured two distinct, sequential worker pools, each managed by its own semaphore (prepareSemaphore and llmStreamSemaphore).">
+<title>Broadcast Pattern</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/manager_insights/broadcast_pattern/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Broadcast Pattern">
+<meta property='og:description' content="Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication. Executive Summary The initial question was: &ldquo;Is it true that we don&rsquo;t have a separate worker pool anymore?&rdquo; The answer is nuanced but trends towards yes. The old architecture featured two distinct, sequential worker pools, each managed by its own semaphore (prepareSemaphore and llmStreamSemaphore).">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/manager_insights/broadcast_pattern/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-13T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-13T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Broadcast Pattern">
+<meta name="twitter:description" content="Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication. Executive Summary The initial question was: &ldquo;Is it true that we don&rsquo;t have a separate worker pool anymore?&rdquo; The answer is nuanced but trends towards yes. The old architecture featured two distinct, sequential worker pools, each managed by its own semaphore (prepareSemaphore and llmStreamSemaphore).">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/manager_insights/broadcast_pattern/">Broadcast Pattern</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 13, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    6 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="architecture-analysis-from-dual-worker-pools-to-a-broadcast-pattern">Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern
+</h1><p>This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication.</p>
+<h3 id="executive-summary">Executive Summary
+</h3><p>The initial question was: <strong>&ldquo;Is it true that we don&rsquo;t have a separate worker pool anymore?&rdquo;</strong></p>
+<p>The answer is nuanced but trends towards <strong>yes</strong>. The old architecture featured two distinct, sequential worker pools, each managed by its own semaphore (<code>prepareSemaphore</code> and <code>llmStreamSemaphore</code>). The new architecture consolidates this into a <strong>single, unified request worker pool</strong> controlled by the <code>prepareSemaphore</code>.</p>
+<p>However, the critical <code>llmStreamSemaphore</code> <strong>still exists and functions as a crucial concurrency gate</strong>. The key difference is that it&rsquo;s no longer tied to a separate pool of workers. Instead, it&rsquo;s a resource that only &ldquo;leader&rdquo; requests (the first unique request) will acquire from within the main worker pool. This change from a rigid pipeline to a dynamic, on-demand resource acquisition model is the core of the new architecture&rsquo;s efficiency.</p>
+<p>The new design successfully implements end-to-end deduplication, ensuring that identical, concurrent user queries result in only one expensive LLM operation, whose result is then broadcast to all interested clients.</p>
+<hr>
+<h2 id="1-the-old-architecture-sequential-dual-pool-pipeline">1. The Old Architecture: Sequential Dual-Pool Pipeline
+</h2><p>The original architecture was a classic multi-stage producer-consumer pattern. It was designed to separate the lighter preparation work from the heavier, more expensive LLM streaming work.</p>
+<h3 id="concept--flow">Concept &amp; Flow
+</h3><p>The lifecycle of a request was strictly sequential, passing through two distinct queues and two corresponding worker pools.</p>
+<p><strong>Flow:</strong> <code>Submit -&gt; Request Queue -&gt; Preparation Pool -&gt; Prepared Queue -&gt; Streaming Pool -&gt; Client</code></p>
+<ol>
+<li><strong>Submission</strong>: <code>SubmitRequest</code> places a new request into the <code>requestQueue</code>.</li>
+<li><strong>Preparation Pool</strong>:
+<ul>
+<li>The <code>prepareWorkerManager</code> loop pulls requests from the <code>requestQueue</code>.</li>
+<li>It acquires a slot from <code>prepareSemaphore</code> (limited by <code>MaxConcurrentRequests</code>).</li>
+<li>It spins up a goroutine to execute <code>preparer.Prepare</code>. This step included fetching history, running tool selection, and formatting the final prompt.</li>
+<li>The <code>Preparer</code> itself used a <code>singleflight.Group</code> to prevent re-doing the <em>expensive preparation work</em> for identical requests that were already in-flight.</li>
+<li>Upon completion, the <code>PreparedRequestData</code> is pushed into the <code>preparedQueue</code>.</li>
+</ul>
+</li>
+<li><strong>Streaming Pool</strong>:
+<ul>
+<li>The <code>streamWorkerManager</code> loop pulls prepared data from the <code>preparedQueue</code>.</li>
+<li>It acquires a slot from the much more restrictive <code>llmStreamSemaphore</code> (limited by <code>MaxConcurrentLLMStreams</code>).</li>
+<li>It spins up a goroutine to execute <code>streamer.Stream</code>, which handles the actual LLM call and streams the response back.</li>
+</ul>
+</li>
+</ol>
+<h3 id="limitations-and-inefficiencies">Limitations and Inefficiencies
+</h3><p>While this design correctly isolated expensive and cheap tasks, it had a significant flaw in handling duplicate requests:</p>
+<ul>
+<li><strong>Resource Inefficiency</strong>: Imagine 10 identical requests arrive simultaneously. All 10 would try to acquire a slot from the <code>prepareSemaphore</code>. Even though the internal <code>singleflight</code> in the <code>Preparer</code> would ensure the work was only done once, <strong>10 preparation worker slots were still occupied</strong>. The 9 &ldquo;follower&rdquo; requests would simply block, waiting for the leader to finish, before moving on.</li>
+<li><strong>No End-to-End Deduplication</strong>: After the leader finished preparation, all 10 requests (one with data, nine with shared data) would be placed in the <code>preparedQueue</code>. They would then <strong>each have to wait their turn to acquire a slot from the <code>llmStreamSemaphore</code></strong>. The system would perform the exact same LLM call 10 times, wasting significant time, compute resources, and API costs.</li>
+<li><strong>Rigid Pipeline</strong>: The separation was rigid. A request could not bypass the preparation queue, and every request had to compete for a streaming slot, even if its result was identical to another&rsquo;s.</li>
+</ul>
+<hr>
+<h2 id="2-the-new-architecture-single-pool-with-broadcast-pattern">2. The New Architecture: Single-Pool with Broadcast Pattern
+</h2><p>The new architecture dismantles the sequential pipeline in favor of a more dynamic and intelligent system. It uses a single entry-point worker pool and leverages <code>singleflight</code> at the highest level to manage a broadcast pattern.</p>
+<h3 id="concept--flow-1">Concept &amp; Flow
+</h3><p>The new model determines if a request is a &ldquo;Leader&rdquo; or a &ldquo;Follower&rdquo; at the earliest possible moment. Only the leader performs the expensive work.</p>
+<p><strong>Flow:</strong> <code>Submit -&gt; Request Queue -&gt; Request Pool -&gt; Singleflight Gate</code></p>
+<ul>
+<li><strong>If Leader:</strong> <code>Prepare -&gt; Acquire LLM Slot -&gt; Stream -&gt; Broadcast to all Subscribers</code></li>
+<li><strong>If Follower:</strong> <code>(Instantly) Subscribe to Leader's Existing Broadcast -&gt; Receive Stream</code></li>
+</ul>
+<ol>
+<li><strong>Consolidated Worker Pool</strong>:
+<ul>
+<li>The <code>NewManager</code> now only starts one primary worker manager: <code>requestWorkerPool</code>. This pool pulls from the <code>requestQueue</code> and is limited by <code>prepareSemaphore</code> (<code>MaxConcurrentRequests</code>).</li>
+<li>The intermediate <code>preparedQueue</code> and the <code>streamWorkerManager</code> are completely removed.</li>
+</ul>
+</li>
+<li><strong>The Singleflight Gatekeeper</strong>:
+<ul>
+<li>Inside the <code>requestWorkerPool</code>, the <code>processAndRouteRequest</code> function is the new brain.</li>
+<li>It generates a <code>cacheKey</code> based on the conversational context.</li>
+<li>It immediately calls <code>m.sfGroup.Do(cacheKey, ...)</code>. This is the critical gate.</li>
+</ul>
+</li>
+<li><strong>The Leader&rsquo;s Journey</strong>:
+<ul>
+<li>The <em>first</em> request for a given <code>cacheKey</code> becomes the <strong>Leader</strong>.</li>
+<li>It enters the <code>singleflight</code> function block.</li>
+<li>It creates a new <code>StreamBroadcaster</code>.</li>
+<li>It launches a single goroutine, <code>initiateAndManageBroadcast</code>, to handle the entire streaming lifecycle.</li>
+<li><strong>Crucially, inside <code>initiateAndManageBroadcast</code>, the leader must acquire a slot from <code>llmStreamSemaphore</code> before calling the LLM.</strong> This preserves the vital concurrency limit on the most expensive resource.</li>
+<li>As the leader receives tokens from the <code>Streamer</code>, it broadcasts them to all its subscribers.</li>
+</ul>
+</li>
+<li><strong>The Follower&rsquo;s Shortcut</strong>:
+<ul>
+<li>Any subsequent request with the same <code>cacheKey</code> that arrives while the leader is active becomes a <strong>Follower</strong>.</li>
+<li><code>sfGroup.Do</code> ensures they do <em>not</em> execute the function block. Instead, they receive the <code>broadcastInfo</code> created by the leader.</li>
+<li>The follower&rsquo;s job is trivial: create a client channel and subscribe to the leader&rsquo;s <code>StreamBroadcaster</code>. This is nearly instantaneous and consumes no significant resources.</li>
+</ul>
+</li>
+</ol>
+<h3 id="advantages-of-the-new-architecture">Advantages of the New Architecture
+</h3><ul>
+<li><strong>True End-to-End Deduplication</strong>: A single LLM/Tool-streaming operation now serves an unlimited number of identical concurrent requests.</li>
+<li><strong>Massive Resource Efficiency</strong>: Follower requests consume negligible CPU and memory. They never touch the <code>llmStreamSemaphore</code>, leaving it free for genuinely unique requests. This drastically reduces API costs and prevents &ldquo;thundering herd&rdquo; problems.</li>
+<li><strong>Improved Latency for Followers</strong>: Followers start receiving tokens as soon as the leader does, without waiting in any secondary queue.</li>
+<li><strong>Simplified Logic</strong>: The code is more focused. The <code>Manager</code> handles all orchestration, and the <code>Preparer</code> is simplified to its core task without needing its own <code>singleflight</code> logic.</li>
+<li><strong>Complex Cancellation Handled</strong>: The new design correctly handles a complex scenario: if a leader request is cancelled by its original client, the underlying broadcast continues for the sake of the followers, while the cancelling client is gracefully disconnected.</li>
+</ul>
+<hr>
+<h2 id="3-summary-of-key-differences">3. Summary of Key Differences
+</h2><div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">Feature</th>
+<th style="text-align:left">Old Architecture</th>
+<th style="text-align:left">New Architecture</th>
+<th style="text-align:left">Impact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Worker Pools</strong></td>
+<td style="text-align:left">Two distinct, sequential pools (<code>prepare</code> &amp; <code>stream</code>).</td>
+<td style="text-align:left">One unified pool (<code>request</code>) that orchestrates leaders and followers.</td>
+<td style="text-align:left">Simplifies logic, removes the intermediate <code>preparedQueue</code>, improves resource flow.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Concurrency Model</strong></td>
+<td style="text-align:left">Rigid pipeline. Every request must pass through both limited pools.</td>
+<td style="text-align:left">Flexible &amp; dynamic. Followers are handled instantly; only leaders consume expensive LLM slots.</td>
+<td style="text-align:left">Dramatically improved throughput and responsiveness for identical/popular requests.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Deduplication</strong></td>
+<td style="text-align:left">Partial, within the <code>Preparer</code>. Did not prevent duplicate requests from consuming slots in both pools and making duplicate LLM calls.</td>
+<td style="text-align:left">End-to-end, at the <code>Manager</code> level using <code>singleflight</code>. Followers don&rsquo;t consume any expensive resources.</td>
+<td style="text-align:left">Massive efficiency gain. Prevents &ldquo;thundering herd&rdquo; problems.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Resource Usage</strong></td>
+<td style="text-align:left">Inefficient. Every request, even duplicates, consumed a &ldquo;preparation&rdquo; slot and waited in line for its own &ldquo;streaming&rdquo; slot.</td>
+<td style="text-align:left">Highly efficient. One leader does the work for many followers. Reduces CPU, memory, and LLM API costs.</td>
+<td style="text-align:left">Lower operational costs and greater scalability.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Cancellation Logic</strong></td>
+<td style="text-align:left">Simple. Cancel the context for the specific request&rsquo;s process.</td>
+<td style="text-align:left">More complex. Must differentiate between cancelling a follower (easy) and a leader (must not affect other followers).</td>
+<td style="text-align:left">A necessary trade-off for the immense performance gain.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="conclusion">Conclusion
+</h2><p>The architectural transformation from a dual-pool system to a <strong>single-pool, broadcast-driven model</strong> is a significant leap forward. It addresses the core inefficiencies of the previous design, providing a far more scalable, resilient, and cost-effective solution for handling concurrent chat requests, especially in high-traffic scenarios where many users may ask similar questions.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

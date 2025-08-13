@@ -7,6 +7,232 @@
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
         <lastBuildDate>Wed, 13 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Broadcast Pattern</title>
+        <link>http://localhost:1313/agentic/docs/manager_insights/broadcast_pattern/</link>
+        <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/manager_insights/broadcast_pattern/</guid>
+        <description>&lt;h1 id=&#34;architecture-analysis-from-dual-worker-pools-to-a-broadcast-pattern&#34;&gt;Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern
+&lt;/h1&gt;&lt;p&gt;This document details the architectural evolution of the chatbot system, moving from a sequential, dual-pool pipeline to a highly efficient, single-pool model that leverages a broadcast pattern for end-to-end request deduplication.&lt;/p&gt;
+&lt;h3 id=&#34;executive-summary&#34;&gt;Executive Summary
+&lt;/h3&gt;&lt;p&gt;The initial question was: &lt;strong&gt;&amp;ldquo;Is it true that we don&amp;rsquo;t have a separate worker pool anymore?&amp;rdquo;&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The answer is nuanced but trends towards &lt;strong&gt;yes&lt;/strong&gt;. The old architecture featured two distinct, sequential worker pools, each managed by its own semaphore (&lt;code&gt;prepareSemaphore&lt;/code&gt; and &lt;code&gt;llmStreamSemaphore&lt;/code&gt;). The new architecture consolidates this into a &lt;strong&gt;single, unified request worker pool&lt;/strong&gt; controlled by the &lt;code&gt;prepareSemaphore&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;However, the critical &lt;code&gt;llmStreamSemaphore&lt;/code&gt; &lt;strong&gt;still exists and functions as a crucial concurrency gate&lt;/strong&gt;. The key difference is that it&amp;rsquo;s no longer tied to a separate pool of workers. Instead, it&amp;rsquo;s a resource that only &amp;ldquo;leader&amp;rdquo; requests (the first unique request) will acquire from within the main worker pool. This change from a rigid pipeline to a dynamic, on-demand resource acquisition model is the core of the new architecture&amp;rsquo;s efficiency.&lt;/p&gt;
+&lt;p&gt;The new design successfully implements end-to-end deduplication, ensuring that identical, concurrent user queries result in only one expensive LLM operation, whose result is then broadcast to all interested clients.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;1-the-old-architecture-sequential-dual-pool-pipeline&#34;&gt;1. The Old Architecture: Sequential Dual-Pool Pipeline
+&lt;/h2&gt;&lt;p&gt;The original architecture was a classic multi-stage producer-consumer pattern. It was designed to separate the lighter preparation work from the heavier, more expensive LLM streaming work.&lt;/p&gt;
+&lt;h3 id=&#34;concept--flow&#34;&gt;Concept &amp;amp; Flow
+&lt;/h3&gt;&lt;p&gt;The lifecycle of a request was strictly sequential, passing through two distinct queues and two corresponding worker pools.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Flow:&lt;/strong&gt; &lt;code&gt;Submit -&amp;gt; Request Queue -&amp;gt; Preparation Pool -&amp;gt; Prepared Queue -&amp;gt; Streaming Pool -&amp;gt; Client&lt;/code&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Submission&lt;/strong&gt;: &lt;code&gt;SubmitRequest&lt;/code&gt; places a new request into the &lt;code&gt;requestQueue&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Preparation Pool&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;The &lt;code&gt;prepareWorkerManager&lt;/code&gt; loop pulls requests from the &lt;code&gt;requestQueue&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It acquires a slot from &lt;code&gt;prepareSemaphore&lt;/code&gt; (limited by &lt;code&gt;MaxConcurrentRequests&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;It spins up a goroutine to execute &lt;code&gt;preparer.Prepare&lt;/code&gt;. This step included fetching history, running tool selection, and formatting the final prompt.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;Preparer&lt;/code&gt; itself used a &lt;code&gt;singleflight.Group&lt;/code&gt; to prevent re-doing the &lt;em&gt;expensive preparation work&lt;/em&gt; for identical requests that were already in-flight.&lt;/li&gt;
+&lt;li&gt;Upon completion, the &lt;code&gt;PreparedRequestData&lt;/code&gt; is pushed into the &lt;code&gt;preparedQueue&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Streaming Pool&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;The &lt;code&gt;streamWorkerManager&lt;/code&gt; loop pulls prepared data from the &lt;code&gt;preparedQueue&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It acquires a slot from the much more restrictive &lt;code&gt;llmStreamSemaphore&lt;/code&gt; (limited by &lt;code&gt;MaxConcurrentLLMStreams&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;It spins up a goroutine to execute &lt;code&gt;streamer.Stream&lt;/code&gt;, which handles the actual LLM call and streams the response back.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;limitations-and-inefficiencies&#34;&gt;Limitations and Inefficiencies
+&lt;/h3&gt;&lt;p&gt;While this design correctly isolated expensive and cheap tasks, it had a significant flaw in handling duplicate requests:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Resource Inefficiency&lt;/strong&gt;: Imagine 10 identical requests arrive simultaneously. All 10 would try to acquire a slot from the &lt;code&gt;prepareSemaphore&lt;/code&gt;. Even though the internal &lt;code&gt;singleflight&lt;/code&gt; in the &lt;code&gt;Preparer&lt;/code&gt; would ensure the work was only done once, &lt;strong&gt;10 preparation worker slots were still occupied&lt;/strong&gt;. The 9 &amp;ldquo;follower&amp;rdquo; requests would simply block, waiting for the leader to finish, before moving on.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;No End-to-End Deduplication&lt;/strong&gt;: After the leader finished preparation, all 10 requests (one with data, nine with shared data) would be placed in the &lt;code&gt;preparedQueue&lt;/code&gt;. They would then &lt;strong&gt;each have to wait their turn to acquire a slot from the &lt;code&gt;llmStreamSemaphore&lt;/code&gt;&lt;/strong&gt;. The system would perform the exact same LLM call 10 times, wasting significant time, compute resources, and API costs.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Rigid Pipeline&lt;/strong&gt;: The separation was rigid. A request could not bypass the preparation queue, and every request had to compete for a streaming slot, even if its result was identical to another&amp;rsquo;s.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;2-the-new-architecture-single-pool-with-broadcast-pattern&#34;&gt;2. The New Architecture: Single-Pool with Broadcast Pattern
+&lt;/h2&gt;&lt;p&gt;The new architecture dismantles the sequential pipeline in favor of a more dynamic and intelligent system. It uses a single entry-point worker pool and leverages &lt;code&gt;singleflight&lt;/code&gt; at the highest level to manage a broadcast pattern.&lt;/p&gt;
+&lt;h3 id=&#34;concept--flow-1&#34;&gt;Concept &amp;amp; Flow
+&lt;/h3&gt;&lt;p&gt;The new model determines if a request is a &amp;ldquo;Leader&amp;rdquo; or a &amp;ldquo;Follower&amp;rdquo; at the earliest possible moment. Only the leader performs the expensive work.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Flow:&lt;/strong&gt; &lt;code&gt;Submit -&amp;gt; Request Queue -&amp;gt; Request Pool -&amp;gt; Singleflight Gate&lt;/code&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;If Leader:&lt;/strong&gt; &lt;code&gt;Prepare -&amp;gt; Acquire LLM Slot -&amp;gt; Stream -&amp;gt; Broadcast to all Subscribers&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;If Follower:&lt;/strong&gt; &lt;code&gt;(Instantly) Subscribe to Leader&#39;s Existing Broadcast -&amp;gt; Receive Stream&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Consolidated Worker Pool&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;The &lt;code&gt;NewManager&lt;/code&gt; now only starts one primary worker manager: &lt;code&gt;requestWorkerPool&lt;/code&gt;. This pool pulls from the &lt;code&gt;requestQueue&lt;/code&gt; and is limited by &lt;code&gt;prepareSemaphore&lt;/code&gt; (&lt;code&gt;MaxConcurrentRequests&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;The intermediate &lt;code&gt;preparedQueue&lt;/code&gt; and the &lt;code&gt;streamWorkerManager&lt;/code&gt; are completely removed.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Singleflight Gatekeeper&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;Inside the &lt;code&gt;requestWorkerPool&lt;/code&gt;, the &lt;code&gt;processAndRouteRequest&lt;/code&gt; function is the new brain.&lt;/li&gt;
+&lt;li&gt;It generates a &lt;code&gt;cacheKey&lt;/code&gt; based on the conversational context.&lt;/li&gt;
+&lt;li&gt;It immediately calls &lt;code&gt;m.sfGroup.Do(cacheKey, ...)&lt;/code&gt;. This is the critical gate.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Leader&amp;rsquo;s Journey&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;The &lt;em&gt;first&lt;/em&gt; request for a given &lt;code&gt;cacheKey&lt;/code&gt; becomes the &lt;strong&gt;Leader&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;It enters the &lt;code&gt;singleflight&lt;/code&gt; function block.&lt;/li&gt;
+&lt;li&gt;It creates a new &lt;code&gt;StreamBroadcaster&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It launches a single goroutine, &lt;code&gt;initiateAndManageBroadcast&lt;/code&gt;, to handle the entire streaming lifecycle.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Crucially, inside &lt;code&gt;initiateAndManageBroadcast&lt;/code&gt;, the leader must acquire a slot from &lt;code&gt;llmStreamSemaphore&lt;/code&gt; before calling the LLM.&lt;/strong&gt; This preserves the vital concurrency limit on the most expensive resource.&lt;/li&gt;
+&lt;li&gt;As the leader receives tokens from the &lt;code&gt;Streamer&lt;/code&gt;, it broadcasts them to all its subscribers.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Follower&amp;rsquo;s Shortcut&lt;/strong&gt;:
+&lt;ul&gt;
+&lt;li&gt;Any subsequent request with the same &lt;code&gt;cacheKey&lt;/code&gt; that arrives while the leader is active becomes a &lt;strong&gt;Follower&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sfGroup.Do&lt;/code&gt; ensures they do &lt;em&gt;not&lt;/em&gt; execute the function block. Instead, they receive the &lt;code&gt;broadcastInfo&lt;/code&gt; created by the leader.&lt;/li&gt;
+&lt;li&gt;The follower&amp;rsquo;s job is trivial: create a client channel and subscribe to the leader&amp;rsquo;s &lt;code&gt;StreamBroadcaster&lt;/code&gt;. This is nearly instantaneous and consumes no significant resources.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;advantages-of-the-new-architecture&#34;&gt;Advantages of the New Architecture
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;True End-to-End Deduplication&lt;/strong&gt;: A single LLM/Tool-streaming operation now serves an unlimited number of identical concurrent requests.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Massive Resource Efficiency&lt;/strong&gt;: Follower requests consume negligible CPU and memory. They never touch the &lt;code&gt;llmStreamSemaphore&lt;/code&gt;, leaving it free for genuinely unique requests. This drastically reduces API costs and prevents &amp;ldquo;thundering herd&amp;rdquo; problems.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Improved Latency for Followers&lt;/strong&gt;: Followers start receiving tokens as soon as the leader does, without waiting in any secondary queue.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Simplified Logic&lt;/strong&gt;: The code is more focused. The &lt;code&gt;Manager&lt;/code&gt; handles all orchestration, and the &lt;code&gt;Preparer&lt;/code&gt; is simplified to its core task without needing its own &lt;code&gt;singleflight&lt;/code&gt; logic.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Complex Cancellation Handled&lt;/strong&gt;: The new design correctly handles a complex scenario: if a leader request is cancelled by its original client, the underlying broadcast continues for the sake of the followers, while the cancelling client is gracefully disconnected.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;3-summary-of-key-differences&#34;&gt;3. Summary of Key Differences
+&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Feature&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Old Architecture&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;New Architecture&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Impact&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Worker Pools&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Two distinct, sequential pools (&lt;code&gt;prepare&lt;/code&gt; &amp;amp; &lt;code&gt;stream&lt;/code&gt;).&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;One unified pool (&lt;code&gt;request&lt;/code&gt;) that orchestrates leaders and followers.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Simplifies logic, removes the intermediate &lt;code&gt;preparedQueue&lt;/code&gt;, improves resource flow.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Concurrency Model&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Rigid pipeline. Every request must pass through both limited pools.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Flexible &amp;amp; dynamic. Followers are handled instantly; only leaders consume expensive LLM slots.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Dramatically improved throughput and responsiveness for identical/popular requests.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Deduplication&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Partial, within the &lt;code&gt;Preparer&lt;/code&gt;. Did not prevent duplicate requests from consuming slots in both pools and making duplicate LLM calls.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;End-to-end, at the &lt;code&gt;Manager&lt;/code&gt; level using &lt;code&gt;singleflight&lt;/code&gt;. Followers don&amp;rsquo;t consume any expensive resources.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Massive efficiency gain. Prevents &amp;ldquo;thundering herd&amp;rdquo; problems.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Resource Usage&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Inefficient. Every request, even duplicates, consumed a &amp;ldquo;preparation&amp;rdquo; slot and waited in line for its own &amp;ldquo;streaming&amp;rdquo; slot.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Highly efficient. One leader does the work for many followers. Reduces CPU, memory, and LLM API costs.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Lower operational costs and greater scalability.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Cancellation Logic&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;Simple. Cancel the context for the specific request&amp;rsquo;s process.&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;More complex. Must differentiate between cancelling a follower (easy) and a leader (must not affect other followers).&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;A necessary trade-off for the immense performance gain.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;conclusion&#34;&gt;Conclusion
+&lt;/h2&gt;&lt;p&gt;The architectural transformation from a dual-pool system to a &lt;strong&gt;single-pool, broadcast-driven model&lt;/strong&gt; is a significant leap forward. It addresses the core inefficiencies of the previous design, providing a far more scalable, resilient, and cost-effective solution for handling concurrent chat requests, especially in high-traffic scenarios where many users may ask similar questions.&lt;/p&gt;
+</description>
+        </item>
+        <item>
+        <title>Implicit Decoupling</title>
+        <link>http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/</link>
+        <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/</guid>
+        <description>&lt;h1 id=&#34;analysis-implicit-decoupling-in-the-single-pool-architecture&#34;&gt;Analysis: Implicit Decoupling in the Single-Pool Architecture
+&lt;/h1&gt;&lt;p&gt;This document analyzes a critical architectural concern regarding the move from a dual-worker-pool system to a single-pool design. It confirms that the performance benefit of decoupling the preparation and streaming stages is preserved.&lt;/p&gt;
+&lt;h2 id=&#34;1-the-architectural-question&#34;&gt;1. The Architectural Question
+&lt;/h2&gt;&lt;p&gt;The system architecture has shifted from a dual-worker-pool model to a single pool managed by &lt;code&gt;prepareSemaphore&lt;/code&gt;, augmented by a &lt;code&gt;singleflight&lt;/code&gt; group and an &lt;code&gt;llmStreamSemaphore&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;A critical concern arises from this change: is the vital feature of &lt;strong&gt;decoupling&lt;/strong&gt; between the initial, lightweight request preparation and the expensive, heavyweight LLM streaming still intact?&lt;/p&gt;
+&lt;p&gt;To analyze this, consider a scenario designed to test this specific behavior:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Load:&lt;/strong&gt; 100 different, unique user requests.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Configuration:&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;MAX_CONCURRENT_REQUESTS = 10&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;MAX_CONCURRENT_LLM_STREAMS = 5&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Question:&lt;/strong&gt; Does the system still allow the &amp;ldquo;preparation&amp;rdquo; stage to proceed at its full capacity of 10 concurrent workers, asynchronously handing off tasks to the &amp;ldquo;streaming&amp;rdquo; stage? Or does the new design introduce a bottleneck where preparation is forced to wait for the slower streaming process, which is limited to 5 concurrent operations?&lt;/p&gt;
+&lt;h2 id=&#34;2-analysis-and-confirmation&#34;&gt;2. Analysis and Confirmation
+&lt;/h2&gt;&lt;p&gt;The answer is that &lt;strong&gt;the decoupling is still present&lt;/strong&gt;, but it is achieved in a different, more dynamic way.&lt;/p&gt;
+&lt;p&gt;The old system had explicit decoupling via two separate worker pools. The new system achieves decoupling through an &lt;strong&gt;asynchronous handoff&lt;/strong&gt;. The initial &amp;ldquo;preparation&amp;rdquo; worker does its job and then passes the baton to a new, independent process for streaming, without waiting for it to finish.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s walk through the exact scenario to prove it.&lt;/p&gt;
+&lt;h3 id=&#34;step-by-step-flow&#34;&gt;Step-by-Step Flow
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Initial Influx (Requests 1-10):&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The first 10 requests are pulled from the &lt;code&gt;requestQueue&lt;/code&gt; by the &lt;code&gt;requestWorkerPool&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Each of these 10 requests acquires a permit from &lt;code&gt;prepareSemaphore&lt;/code&gt; (10/10 used). Request #11 must wait.&lt;/li&gt;
+&lt;li&gt;Each of the 10 active goroutines starts executing &lt;code&gt;processAndRouteRequest&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Lighter Preparation Work:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Inside &lt;code&gt;processAndRouteRequest&lt;/code&gt;, each of the 10 workers performs its fast preparation work (creating a &lt;code&gt;cacheKey&lt;/code&gt;, calling &lt;code&gt;preparer.Prepare&lt;/code&gt;, etc.).&lt;/li&gt;
+&lt;li&gt;Since all requests are different, every single one will become a &amp;ldquo;leader&amp;rdquo; in its &lt;code&gt;singleflight&lt;/code&gt; group.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Decoupling Point: An Asynchronous Handoff&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;At the end of the preparation phase, the code executes this critical line:
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#ff79c6&#34;&gt;go&lt;/span&gt; m.&lt;span style=&#34;color:#50fa7b&#34;&gt;initiateAndManageBroadcast&lt;/span&gt;(pd, info, logCtx)
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;This &lt;code&gt;go&lt;/code&gt; keyword spawns a &lt;strong&gt;new, independent goroutine&lt;/strong&gt; to handle the slow, streaming part of the job.&lt;/li&gt;
+&lt;li&gt;The original &lt;code&gt;processAndRouteRequest&lt;/code&gt; function &lt;strong&gt;does not wait&lt;/strong&gt; and returns immediately after launching this new goroutine.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Releasing the Preparation Slot:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The worker goroutine from the &lt;code&gt;requestWorkerPool&lt;/code&gt; has a &lt;code&gt;defer func() { &amp;lt;-m.prepareSemaphore }()&lt;/code&gt; statement.&lt;/li&gt;
+&lt;li&gt;Because &lt;code&gt;processAndRouteRequest&lt;/code&gt; returned, this defer statement executes, and the worker releases its permit back to &lt;code&gt;prepareSemaphore&lt;/code&gt;. This happens very quickly, long before any LLM streaming has started.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;The Streaming Backlog:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Simultaneously, we now have 10 new &lt;code&gt;initiateAndManageBroadcast&lt;/code&gt; goroutines that were just created.&lt;/li&gt;
+&lt;li&gt;Each of these new goroutines now tries to acquire a permit from &lt;code&gt;llmStreamSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;The first 5 will succeed and begin the expensive &lt;code&gt;streamer.Stream&lt;/code&gt; call (5/5 used).&lt;/li&gt;
+&lt;li&gt;The other 5 &lt;code&gt;initiateAndManageBroadcast&lt;/code&gt; goroutines will &lt;strong&gt;block&lt;/strong&gt;, waiting for a streaming slot to become free.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Processing the Next Batch (Requests 11-20):&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Because the first 10 &amp;ldquo;preparation&amp;rdquo; workers finished their light work and released their semaphore permits almost instantly, the &lt;code&gt;requestWorkerPool&lt;/code&gt; is now free to process the next 10 requests from the queue.&lt;/li&gt;
+&lt;li&gt;This cycle repeats: 10 more requests are prepared, 10 more streaming goroutines are launched, and 10 more preparation slots are released.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;3-conclusion&#34;&gt;3. Conclusion
+&lt;/h3&gt;&lt;p&gt;The &amp;ldquo;preparation&amp;rdquo; stage is not blocked by the &amp;ldquo;streaming&amp;rdquo; stage. The &lt;code&gt;requestWorkerPool&lt;/code&gt; (governed by &lt;code&gt;MAX_CONCURRENT_REQUESTS&lt;/code&gt;) can churn through all 100 requests, performing the light preparation work at its full capacity.&lt;/p&gt;
+&lt;p&gt;This creates a backlog of &lt;code&gt;initiateAndManageBroadcast&lt;/code&gt; goroutines, which are then correctly throttled by the &lt;code&gt;llmStreamSemaphore&lt;/code&gt; (governed by &lt;code&gt;MAX_CONCURRENT_LLM_STREAMS&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;The desired behavior—that &amp;ldquo;the system will do the lighter preparation work non-stop without waiting for the streaming task&amp;rdquo;—&lt;strong&gt;is still true in the new architecture.&lt;/strong&gt; The mechanism is just more implicit, relying on the &lt;code&gt;go&lt;/code&gt; keyword for the asynchronous handoff rather than a second, explicit worker pool.&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>The Age of Sauron</title>
         <link>http://localhost:1313/agentic/docs/manager_insights/sauron/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
