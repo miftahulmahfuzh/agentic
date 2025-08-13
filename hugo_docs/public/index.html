@@ -155,7 +155,7 @@ graph TD
             <ul>
                 <li><span class="popup-trigger" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight Group</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">End-to-End Stream Broadcasting</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">On-Demand Broadcasting</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('state-aware-janitor')">State-Aware Janitor</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span></li>
             </ul>
@@ -496,8 +496,8 @@ go run ./cmd/test_single_flight -n 10</code></pre>
                 <li>
                   <strong>Analyze Server Logs:</strong> The proof of the <strong>preparation-phase</strong> single-flight is in the server logs. Look for:
                   <ul>
-                      <li>One log message saying <code>"No active broadcaster found. Creating a new one."</code> (the leader).</li>
-                      <li>Nine (or N-1) messages saying <code>"Found active broadcaster. Subscribing."</code> (the followers).</li>
+                      <li>One log message saying <code>"No active broadcaster found. This request is the LEADER. Forging the Ring."</code> (the leader).</li>
+                      <li>Nine (or N-1) messages saying <code>"This request is a FOLLOWER. Joining existing broadcast."</code> (the followers).</li>
                   </ul>
                 </li>
                 <li>
@@ -714,7 +714,7 @@ tuntun-go-chatbot/
                         <ul>
                             <li><strong><code>idx_log_user_time</code>:</strong> A persistent index on <code>user_id</code> and <code>user_query_timestamp</code>. This makes retrieving a user's chat history (<code>GetChatHistory</code>) extremely fast, avoiding slow full-collection scans.</li>
                             <li><strong><code>idx_log_request_id</code>:</strong> A unique hash index on <code>request_id</code>. This allows for instantaneous lookups when a user submits a reaction (<code>UpdateReaction</code>), turning a slow search into a direct pointer access.</li>
-<li><strong><code>idx_research_stock_code</code>:</strong> A unique hash index on <code>stock_code</code>. This provides near-instant retrieval of research documents (<code>GetResearchDocByStockCode</code>), which is critical for <strong>analyze_stock</strong> tool.</li>
+                            <li><strong><code>idx_research_stock_code</code>:</strong> A unique hash index on <code>stock_code</code>. This provides near-instant retrieval of research documents (<code>GetResearchDocByStockCode</code>), which is critical for <strong>analyze_stock</strong> tool.</li>
                         </ul>
                         <hr>
                         <p><strong>Benefits:</strong></p>
@@ -845,93 +845,82 @@ Assistant: The market cap for GOOGL is $1.7T.</code></pre>
 
         case "single-flight":
             popupContent = `
-                <h2>🛡️ Single-Flight Group</h2>
-                <p>This pattern protects against the "thundering herd" problem during the <strong>Preparation Phase</strong>. When multiple, identical, un-cached requests arrive, Go's standard <code>singleflight</code> library ensures only the <strong>first</strong> request triggers the expensive preparation work (tool selection, initial LLM checks).</p>
-                <div class="mermaid">
+                        <h2>🛡️ Single-Flight Group (Sauron)</h2>
+                        <p>This is the first layer of Sauron's defense against the "thundering herd" problem. When multiple, identical requests arrive, Go's <code>singleflight.Group</code> is exploited to ensure only the <strong>first</strong> request (the Leader) forges the broadcast infrastructure.</p>
+                        <div class="mermaid">
 graph TD
-    subgraph Before ["Without Single-Flight"]
-        R1["Req: 'Price of AAPL?'"]
-        R2["Req: 'Price of AAPL?'"]
-        R3["Req: 'Price of AAPL?'"]
-        W1["Worker 1"]
-        W2["Worker 2"]
-        W3["Worker 3"]
-        API["💥 3x Redundant API Calls"]
-    end
-    subgraph After ["With Single-Flight"]
-        R4["Identical Req A"]
-        R5["Identical Req B"]
-        R6["Identical Req C"]
-        SF{"🛡️ singleflight.Group"}
-        W4["Worker (single)"]
-        API2["✅ 1x Deduplicated API Call"]
+    subgraph After ["Sauron's Dominion"]
+        R4["Follower Req"]
+        R5["Follower Req"]
+        R6["Leader Req"]
+        SF{"👁️ singleflight.Group<br/>(The Eye of Sauron)"}
+        W4["Leader's Worker"]
+        Broadcast["🚀 On-Demand Broadcast"]
     end
 
     %% Flow Definitions
-    R1 --> W1; R2 --> W2; R3 --> W3
-    W1 --> API; W2 --> API; W3 --> API
     R4 --> SF; R5 --> SF; R6 --> SF
-    SF -->|"1. Initiate single call"| W4
-    W4 --> API2
-    API2 -->|"2. Return result"| SF
-    SF -->|"3. Fan-out to waiters"| R4 & R5 & R6
+    SF -->|"One Ring to rule them all..."| W4
+    W4 -->|"...and in the darkness bind them"| Broadcast
+    Broadcast -->|"Share power"| SF
+    SF -->|"Enslave all"| R4 & R5 & R6
 
     %% Styling
     classDef reqStyle fill:#cce5ff,stroke:#004085
     classDef workerStyle fill:#d4edda,stroke:#155724
-    classDef sfStyle fill:#fff3cd,stroke:#856404
-    classDef apiStyle fill:#e1d5e7,stroke:#6f42c1
+    classDef sfStyle fill:#ffb366,stroke:#e65c00,color:#000
+    classDef broadcastStyle fill:#e1d5e7,stroke:#6f42c1
 
-    class R1,R2,R3,R4,R5,R6 reqStyle
-    class W1,W2,W3,W4 workerStyle
+    class R4,R5,R6 reqStyle
+    class W4 workerStyle
     class SF sfStyle
-    class API,API2 apiStyle
-                </div>
-                <p>All other identical requests simply wait and share the static result from the first one. This is visible in the logs via the message: <code>"Shared result from in-flight request"</code>.</p>
-                <hr>
-                <p>However, <code>singleflight</code> is limited—it can only return a single, static value. It cannot deduplicate a continuous stream of data. For that, the system uses the more advanced <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">End-to-End Stream Broadcasting</span>  pattern in the Streaming Phase.</p>
-            `;
+    class Broadcast broadcastStyle
+                        </div>
+                        <p>All other identical requests (the Followers) do no work. They are held captive by the single-flight and, upon its completion, are given a handle to the one true broadcast forged by their Leader. This is visible in the logs: one <code>"This request is the LEADER"</code> followed by many <code>"This request is a FOLLOWER"</code> messages.</p>
+                        <hr>
+                        <p>This pattern is the key to creating the broadcast on-demand, forming the foundation for the ultimate weapon: <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">On-Demand Stream Broadcasting</span>.</p>
+                    `;
             break;
 
         case "e2e-stream-broadcasting":
             popupContent = `
-                <h2>🚀 End-to-End Stream Broadcasting</h2>
-                <p>This is the system's ultimate solution to the "thundering herd" problem, applied during the <strong>Streaming Phase</strong>. It ensures that for any number of identical requests, only one expensive LLM stream is ever created. It's the difference between every house running its own fiber optic cable to a TV station vs just tuning into a broadcast.</p>
-                <div class="mermaid">
+                        <h2>🚀 On-Demand Broadcasting (Sauron)</h2>
+                        <p>This is Sauron's ultimate weapon against waste and inefficiency. Forged on-demand by the <span class="popup-trigger" onclick="showPopup('single-flight')">single-flight leader</span>, it ensures that for any number of identical requests, only one expensive LLM stream is ever created. It is the One Ring of stream management.</p>
+                        <div class="mermaid">
 graph TD
-    subgraph Old ["Without Broadcasting (Wasteful)"]
+    subgraph Old ["The Age of Men (Wasteful)"]
         Req1["Identical Req A"] --> LLM1["🔥 Expensive LLM Stream 1"]
         Req2["Identical Req B"] --> LLM2["🔥 Expensive LLM Stream 2"]
         Req3["Identical Req C"] --> LLM3["🔥 Expensive LLM Stream 3"]
     end
-    subgraph New ["With Stream Broadcasting (Efficient)"]
-        Leader["Leader Req A"] --> LLM4["✅ Single LLM Stream"]
-        LLM4 -- "feeds" --> Broadcaster["🚀 StreamBroadcaster"]
-        FollowerB["Follower Req B"] -- "subscribes" --> Broadcaster
-        FollowerC["Follower Req C"] -- "subscribes" --> Broadcaster
+    subgraph New ["The Age of the Orc (Sauron's Dominion)"]
+        Leader["Leader Req A"] --> LLM4["✅ One LLM Stream to Rule Them All"]
+        LLM4 -- "feeds" --> Broadcaster["One Ring<br/>(StreamBroadcaster)"]
+        FollowerB["Follower Req B"] -- "subscribes & obeys" --> Broadcaster
+        FollowerC["Follower Req C"] -- "subscribes & obeys" --> Broadcaster
     end
 
     %% Styling
     classDef reqStyle fill:#cce5ff,stroke:#004085
     classDef llmStyle fill:#f8d7da,stroke:#721c24
     classDef goodLlmStyle fill:#d4edda,stroke:#155724
-    classDef broadcasterStyle fill:#fff3cd,stroke:#856404
+    classDef broadcasterStyle fill:#ffb366,stroke:#e65c00,color:#000
 
     class Req1,Req2,Req3,Leader,FollowerB,FollowerC reqStyle
     class LLM1,LLM2,LLM3 llmStyle
     class LLM4 goodLlmStyle
     class Broadcaster broadcasterStyle
                 </div>
-                <p>The first request becomes the "leader" and initiates the stream. Its output is fed into a custom <code>StreamBroadcaster</code>. All subsequent "follower" requests simply subscribe to this broadcaster and receive the same stream of data.</p>
+                <p>The Leader forges the broadcast. All Followers subscribe and receive the same stream. The broadcaster is race-condition proof: it maintains a history of all events, ensuring that even late-arriving followers are atomically caught up with the full, identical response.</p>
                 <hr>
-                <p><strong>Race-Condition Proof:</strong> The broadcaster's genius lies in its handling of late subscribers. It maintains a history of all broadcasted events. When a new client subscribes, it is <strong>atomically caught up</strong> with the entire history before joining the live stream. This guarantees every client receives the full, identical response, regardless of when they connect.</p>
+                <p><strong>The Leader is Immortal and Devious:</strong> A cancellation from the Leader's client is a deception. That client's stream is terminated with a fake 'cancelled' message, but the underlying broadcast continues uninterrupted for all Followers, preserving the integrity of the operation.</p>
                 <hr>
                 <p><strong>Benefits:</strong></p>
                 <ul>
-                    <li><strong>Massive Cost Savings:</strong> Only one LLM call is made for countless identical requests.</li>
-                    <li><strong>Extreme Performance:</strong> Follower requests get data almost instantly without waiting for a new LLM call to start.</li>
-                    <li><strong>System Stability:</strong> Prevents overwhelming the LLM provider API.</li>
-                    <li><strong>Guaranteed Consistency:</strong> All users see the exact same answer.</li>
+                    <li><strong>Absolute Cost Efficiency:</strong> One LLM call for a legion of identical requests.</li>
+                    <li><strong>Blistering Performance:</strong> Followers get data instantly.</li>
+                    <li><strong>Total System Stability:</strong> The LLM provider API is shielded from the thundering herd.</li>
+                    <li><strong>Guaranteed Consistency:</strong> All users bow to the same truth.</li>
                 </ul>
             `;
             break;
