@@ -224,7 +224,7 @@
 <p>He watched, terrified as <code>little_midstream</code> got eaten alive, flesh by flesh for being the target of a cancellation test. But he fought his fear like a motherfucker. The stream kept coming. He received the entire story, from start to finish, without lifting a single trotter to do any real work. He kept waiting fearfully in silence, peed his little pants a bit, but he enjoyed the fruits of the leader&rsquo;s labor. When the stream finished with a <code>completed</code> status, he disconnected happily, his test passed.</p>
 <hr>
 <p><strong>The Moral of this Cautionary Tale:</strong></p>
-<p>Your <code>StreamBroadcaster</code> and <code>singleflight</code> group create a system of leaders and followers.</p>
+<p>Our <code>StreamBroadcaster</code> and <code>singleflight</code> group create a system of leaders and followers.</p>
 <ul>
 <li><strong>Lone, vulnerable requests</strong> (<code>little_prestream</code>) are easily terminated. Cancellation logic for them is simple: kill the process, send a canned response.</li>
 <li><strong>Followers</strong> (<code>little_midstream</code>) can be surgically removed from a broadcast without affecting the leader or other followers. This is the &ldquo;deceptive cancellation&rdquo; where the User <em>thinks</em> they stopped the whole thing, but they only stopped it for themselves.</li>

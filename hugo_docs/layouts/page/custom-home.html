@@ -545,6 +545,7 @@ go test -v -run ^TestStream .</code></pre>
                   <strong>Analyze results:</strong> Observe the test logs. A successful run will show each scenario being executed with a final <code>✅ Test Passed</code> message, confirming that the system handles all cancellation states correctly.
                 </li>
               </ol>
+              <p>For a detailed narrative illustrating the critical importance of this feature, see <a href="https://miftahulmahfuzh.github.io/agentic/docs/narratives/four_pigs/" target="_blank" rel="noopener noreferrer">The Fable of the Four Pigs</a>.</p>
               <hr>
 
               <h4>Running Standard Tests</h4>
@@ -860,7 +861,7 @@ Assistant: The market cap for GOOGL is $1.7T.</code></pre>
 
         case "single-flight":
             popupContent = `
-                        <h2>🛡️ Single-Flight Group (Sauron)</h2>
+                        <h2>🛡️ Single-Flight Group (<a href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/" target="_blank" rel="noopener noreferrer">Sauron</a>)</h2>
                         <p>This is the first layer of Sauron's defense against the "thundering herd" problem. When multiple, identical requests arrive, Go's <code>singleflight.Group</code> is exploited to ensure only the <strong>first</strong> request (the Leader) forges the broadcast infrastructure.</p>
                         <div class="mermaid">
 graph TD
@@ -899,7 +900,7 @@ graph TD
 
         case "e2e-stream-broadcasting":
             popupContent = `
-                        <h2>🚀 On-Demand Broadcasting (Sauron)</h2>
+                        <h2>🚀 On-Demand Broadcasting (<a href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/" target="_blank" rel="noopener noreferrer">Sauron</a>)</h2>
                         <p>This is Sauron's ultimate weapon against waste and inefficiency. Forged on-demand by the <span class="popup-trigger" onclick="showPopup('single-flight')">single-flight leader</span>, it ensures that for any number of identical requests, only one expensive LLM stream is ever created. It is the One Ring of stream management.</p>
                         <div class="mermaid">
 graph TD
