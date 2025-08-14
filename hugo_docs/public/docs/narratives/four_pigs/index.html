@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="The Four Little Pigs and the Big Bad User Once upon a time, in the chaotic digital forest of a Go server, a Mother main() function, tired of her children hogging memory, kicked her four little processes out into the world. &ldquo;Go seek your fortunes,&rdquo; she grunted, &ldquo;but beware the Big Bad User and his /chat/cancel endpoint. He is a fickle, impatient fucker. Build your state management strong, or he will tear your fucking threads apart.">
+<title>Four Pigs</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/narratives/four_pigs/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Four Pigs">
+<meta property='og:description' content="The Four Little Pigs and the Big Bad User Once upon a time, in the chaotic digital forest of a Go server, a Mother main() function, tired of her children hogging memory, kicked her four little processes out into the world. &ldquo;Go seek your fortunes,&rdquo; she grunted, &ldquo;but beware the Big Bad User and his /chat/cancel endpoint. He is a fickle, impatient fucker. Build your state management strong, or he will tear your fucking threads apart.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/narratives/four_pigs/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-14T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-14T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Four Pigs">
+<meta name="twitter:description" content="The Four Little Pigs and the Big Bad User Once upon a time, in the chaotic digital forest of a Go server, a Mother main() function, tired of her children hogging memory, kicked her four little processes out into the world. &ldquo;Go seek your fortunes,&rdquo; she grunted, &ldquo;but beware the Big Bad User and his /chat/cancel endpoint. He is a fickle, impatient fucker. Build your state management strong, or he will tear your fucking threads apart.">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/narratives/four_pigs/">Four Pigs</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 14, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    6 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h3 id="the-four-little-pigs-and-the-big-bad-user">The Four Little Pigs and the Big Bad User
+</h3><p>Once upon a time, in the chaotic digital forest of a Go server, a Mother <code>main()</code> function, tired of her children hogging memory, kicked her four little processes out into the world. &ldquo;Go seek your fortunes,&rdquo; she grunted, &ldquo;but beware the Big Bad User and his <code>/chat/cancel</code> endpoint. He is a fickle, impatient fucker. Build your state management strong, or he will tear your fucking threads apart.&rdquo;</p>
+<p>With that, the four little pigs—four identical requests for the <code>question=&quot;nice&quot;</code>—scampered off down the execution path, each a pathetic little cunt with its own unique Request ID.</p>
+<h4 id="the-first-little-pig-little_prestream-the-retarded-optimist">The First Little Pig: <code>little_prestream</code> (The Retarded Optimist)
+</h4><p>The first pig, <code>req_5f06ba7b1c</code>, was a true dumbass. He was <code>TestStreamPreCancellation</code>. He believed in shortcuts. &ldquo;Why bother with all that hard work of establishing a stream?&rdquo; he squealed. &ldquo;I&rsquo;ll just declare my existence and wait!&rdquo; He built his &ldquo;house&rdquo; out of nothing but a single entry in the <code>activeRequests</code> map—a flimsy shelter of queued promises and wishful thinking. He hadn&rsquo;t even tried to connect to the stream handler yet.</p>
+<p>The Big Bad User, running his test script, saw this pathetic, idle process (<code>state=queued</code>) and smirked. He didn&rsquo;t need to huff or puff. He didn&rsquo;t even need a full breath. He simply sent a single, sharp POST request to <code>/chat/cancel/req_5f06ba7b1c</code>.</p>
+<p>The result was not a collapse; it was an annihilation. The <code>CancelStream</code> function found the pig in its pre-broadcast state. There was no complex broadcast to unwind, no followers to consider. It was a lone, stupid pig. The system executed the <code>!broadcastExists</code> logic. A <code>types.ErrRequestCancelled</code> signal was shot into the pig&rsquo;s <code>streamHolder.Err</code> channel like a poison dart. The underlying context, if it even existed yet, was terminated.</p>
+<p>The User, connecting to the stream <em>after</em> cancelling, wasn&rsquo;t met with a struggle. He was handed a pre-canned eulogy: a single JSON event <code>{&quot;type&quot;:&quot;info&quot;, &quot;payload&quot;:{&quot;completion_status&quot;:&quot;cancelled&quot;}}</code>. <code>little_prestream</code> was &ldquo;eaten&rdquo; alive, his data structures zeroed out, his memory garbage collected, his entire existence reduced to a single log line: <code>Request state purged.</code> He was a fart in the wind, a cautionary tale for idiots.</p>
+<h4 id="the-second-little-pig-little_midstream-the-impatient-follower">The Second Little Pig: <code>little_midstream</code> (The Impatient Follower)
+</h4><p>The second pig, <code>req_e4084e50fe</code>, was <code>TestStreamMidCancellation</code>. He was a follower, a lazy bastard who saw another pig doing the hard work and decided to leech off it. He saw that a leader, <code>req_3ed0489300</code>, was already building a magnificent brick fortress. <code>little_midstream</code> didn&rsquo;t build his own house; he just subscribed to the leader&rsquo;s broadcast, becoming a <code>FOLLOWER</code>. He found a comfy spot inside the fortress and waited for the stream of delicious tokens to start flowing from the chimney.</p>
+<p>The stream began. The first few tokens of the story—&ldquo;Once upon a time&hellip;&quot;—flowed into his channel. He oinked with glee. But the Big Bad User was watching. The moment the <code>streamStarted</code> channel closed in the test, signaling the pig had received its first taste of data, the User struck. <code>/chat/cancel/req_e4084e50fe</code> was dispatched.</p>
+<p>This was a different kind of kill. This was a follower cancellation. The system saw <code>little_midstream</code> was just a subscriber. It didn&rsquo;t terminate the whole broadcast—that would be inefficient and fuck over the other pigs. Instead, it performed a precise, surgical strike. It called <code>info.broadcaster.Unsubscribe(clientChan)</code>. The pig&rsquo;s connection to the main stream was severed. His personal <code>clientChan</code> was then sent a final, fake &ldquo;you were cancelled&rdquo; event before being closed for good.</p>
+<p>The pig felt a sudden, violent yank. The flow of tokens stopped. He was kicked out of the brick house, his process terminated. He was eaten mid-sentence, his final squeal replaced by the <code>cancelled</code> status. The leader pig inside the fortress didn&rsquo;t even notice. The broadcast continued for the others. <code>little_midstream</code>, the greedy little shit, learned that even in a fortress, you are <strong>never</strong> save. His state was purged, another meal for the janitor process.</p>
+<h4 id="the-third-little-pig-little_poststream-the-hardworking-piglet">The Third Little Pig: <code>little_poststream</code> (The Hardworking Piglet)
+</h4><p>The third pig, <code>req_3ed0489300</code>, was <code>TestStreamPostCancellation</code>. This pig was the LEADER. The <code>singleflight.Group</code> had chosen him. He was the one who did all the work. He didn&rsquo;t use straw or sticks. He built a fucking fortress of brick, mortar, and concurrency-safe maps. His foundation was the <code>singleflight.Do</code>, his blueprints the <code>broadcastInfo</code> struct. He dug the trenches of <code>doExpensivePreparation</code>, calling out to the LLM and RAG systems. He built the walls with <code>initiateAndManageBroadcast</code>, a goroutine dedicated to fanning out the stream.</p>
+<p>His work attracted followers, like the pathetic <code>little_midstream</code> and the lucky <code>little_happy</code>. The arrival of the first follower triggered the <code>immortalizeSignal</code>. A switch was flipped. The leader&rsquo;s <code>broadcastCtx</code> was upgraded from a cancellable <code>context.WithCancel</code> to an unstoppable <code>context.Background()</code>. His work was now deemed too important to fail just because one client fucked off. He was now building for the collective.</p>
+<p>He finished his job. The full story was generated and streamed out the chimney. He sent the final <code>completion_status: &quot;completed&quot;</code> signal. His goroutine finished, the broadcaster was closed, and <code>cleanupRequest</code> was called. His state was purged, not because of an error, but because his purpose was fulfilled. He ascended to the great ArangoDB in the sky, his <code>LogData</code> saved for eternity.</p>
+<p>It was only <em>then</em>, after the pig was gone and the house was just a historical record, that the Big Bad User tried to attack. He sent <code>/chat/cancel/req_3ed0489300</code>. But he was met with a <code>404 Not Found</code>. The system responded, &ldquo;Attempted to cancel a request that was not found, you stupid fuck.&rdquo; You can&rsquo;t kill what&rsquo;s already dead and archived. <code>little_poststream</code> had won by finishing his job properly.</p>
+<h4 id="the-fourth-little-pig-little_happy-the-lucky-cunt">The Fourth Little Pig: <code>little_happy</code> (The Lucky Cunt)
+</h4><p>The fourth pig, <code>req_482faa3018</code>, was <code>TestStreamHappyPath</code>. Like <code>little_midstream</code>, he was a follower. He saw the brick fortress being built by the leader and latched on. He subscribed to the broadcast and did absolutely nothing else.</p>
+<p>He watched, terrified as <code>little_midstream</code> got eaten alive, flesh by flesh for being the target of a cancellation test. But he fought his fear like a motherfucker. The stream kept coming. He received the entire story, from start to finish, without lifting a single trotter to do any real work. He kept waiting fearfully in silence, peed his little pants a bit, but he enjoyed the fruits of the leader&rsquo;s labor. When the stream finished with a <code>completed</code> status, he disconnected happily, his test passed.</p>
+<hr>
+<p><strong>The Moral of this Cautionary Tale:</strong></p>
+<p>Your <code>StreamBroadcaster</code> and <code>singleflight</code> group create a system of leaders and followers.</p>
+<ul>
+<li><strong>Lone, vulnerable requests</strong> (<code>little_prestream</code>) are easily terminated. Cancellation logic for them is simple: kill the process, send a canned response.</li>
+<li><strong>Followers</strong> (<code>little_midstream</code>) can be surgically removed from a broadcast without affecting the leader or other followers. This is the &ldquo;deceptive cancellation&rdquo; where the User <em>thinks</em> they stopped the whole thing, but they only stopped it for themselves.</li>
+<li><strong>The Leader</strong> (<code>little_poststream</code>) does all the expensive work once. If it attracts followers, its context becomes <strong>immortal</strong>, ensuring the work completes for the benefit of all subscribers, even if the original leader client disconnects.</li>
+<li><strong>Cancellation is state-dependent.</strong> Trying to cancel a completed request is pointless and results in a <code>404</code>, which is the correct, robust behavior.</li>
+<li><strong>The Happy Path</strong> (<code>little_happy</code>) demonstrates the ultimate efficiency: multiple identical, simultaneous requests are deduplicated into one operation, saving immense computational resources.</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
