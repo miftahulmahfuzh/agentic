@@ -44,7 +44,7 @@ It was only *then*, after the pig was gone and the house was just a historical r
 
 The fourth pig, `req_482faa3018`, was `TestStreamHappyPath`. Like `little_midstream`, he was a follower. He saw the brick fortress being built by the leader and latched on. He subscribed to the broadcast and did absolutely nothing else.
 
-He watched, terrified as `little_midstream` got eaten alive, flesh by flesh for being the target of a cancellation test. But he fought his fear like a motherfucker. The stream kept coming. He received the entire story, from start to finish, without lifting a single trotter to do any real work. He kept waiting fearfully in silence, peed his little pants a bit, but he enjoyed the fruits of the leader's labor. When the stream finished with a `completed` status, he disconnected happily, his test passed.
+He watched, terrified as `little_midstream` got eaten alive, flesh by flesh for being the target of a cancellation test. But he fought his fear like a motherfucker. The stream kept coming. He received the entire story, from start to finish, without lifting a single trotter to do any real work. He kept waiting fearfully in silence, peed his little pants a bit, but he enjoyed the fruits of the leader's labor. When the stream finished with a `completed` status, he disconnected **happily**, his test passed.
 
 ***
 
