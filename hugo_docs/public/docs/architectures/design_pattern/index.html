@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Tuntun Go Chatbot effectively uses a combination of creational, structural, behavioral, and concurrency patterns. Concurrency Patterns: 1) Single Flight (Thundering Herd Protection): To prevent redundant processing of identical concurrent requests. 2) Worker Pool: To manage and limit the concurrency of incoming requests. 3) Publish-Subscribe (Observer): To broadcast a single result stream to multiple identical requests. 4) Context Propagation: For cancellation, timeouts, and managing request lifecycles. Behavioral Patterns: 5) Strategy Pattern: To define a family of tool algorithms and make them interchangeable.">
+<title>Design Patterns</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/architectures/design_pattern/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Design Patterns">
+<meta property='og:description' content="Tuntun Go Chatbot effectively uses a combination of creational, structural, behavioral, and concurrency patterns. Concurrency Patterns: 1) Single Flight (Thundering Herd Protection): To prevent redundant processing of identical concurrent requests. 2) Worker Pool: To manage and limit the concurrency of incoming requests. 3) Publish-Subscribe (Observer): To broadcast a single result stream to multiple identical requests. 4) Context Propagation: For cancellation, timeouts, and managing request lifecycles. Behavioral Patterns: 5) Strategy Pattern: To define a family of tool algorithms and make them interchangeable.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/architectures/design_pattern/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-14T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-14T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Design Patterns">
+<meta name="twitter:description" content="Tuntun Go Chatbot effectively uses a combination of creational, structural, behavioral, and concurrency patterns. Concurrency Patterns: 1) Single Flight (Thundering Herd Protection): To prevent redundant processing of identical concurrent requests. 2) Worker Pool: To manage and limit the concurrency of incoming requests. 3) Publish-Subscribe (Observer): To broadcast a single result stream to multiple identical requests. 4) Context Propagation: For cancellation, timeouts, and managing request lifecycles. Behavioral Patterns: 5) Strategy Pattern: To define a family of tool algorithms and make them interchangeable.">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/architectures/design_pattern/">Design Patterns</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 14, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    14 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>Tuntun Go Chatbot effectively uses a combination of creational, structural, behavioral, and concurrency patterns.</p>
+<ul>
+<li><strong>Concurrency Patterns:</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>    1<span style="color:#ff79c6">)</span>  Single Flight <span style="color:#ff79c6">(</span>Thundering Herd Protection<span style="color:#ff79c6">)</span>: To prevent redundant processing of identical concurrent requests.
+</span></span><span style="display:flex;"><span>    2<span style="color:#ff79c6">)</span>  Worker Pool: To manage and limit the concurrency of incoming requests.
+</span></span><span style="display:flex;"><span>    3<span style="color:#ff79c6">)</span>  Publish-Subscribe <span style="color:#ff79c6">(</span>Observer<span style="color:#ff79c6">)</span>: To broadcast a single result stream to multiple identical requests.
+</span></span><span style="display:flex;"><span>    4<span style="color:#ff79c6">)</span>  Context Propagation: For cancellation, timeouts, and managing request lifecycles.
+</span></span></code></pre></div><ul>
+<li><strong>Behavioral Patterns:</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>    5<span style="color:#ff79c6">)</span>  Strategy Pattern: To define a family of tool algorithms and make them interchangeable.
+</span></span><span style="display:flex;"><span>    6<span style="color:#ff79c6">)</span>  State Pattern: To manage the complex lifecycle of a request <span style="color:#ff79c6">(</span>Queued, Processing, Cancelled<span style="color:#ff79c6">)</span>.
+</span></span></code></pre></div><ul>
+<li><strong>Structural Patterns:</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>    7<span style="color:#ff79c6">)</span>  Facade Pattern: To provide a simple, unified interface to a complex subsystem.
+</span></span></code></pre></div><ul>
+<li><strong>Creational &amp; Architectural Patterns:</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>    8<span style="color:#ff79c6">)</span>  Dependency Injection <span style="color:#ff79c6">(</span>DI<span style="color:#ff79c6">)</span>: To decouple components and improve testability.
+</span></span><span style="display:flex;"><span>    9<span style="color:#ff79c6">)</span>  Factory Method: To centralize and abstract the creation of tools.
+</span></span></code></pre></div><hr>
+<h3 id="1-single-flight-thundering-herd-protection">1. Single Flight (Thundering Herd Protection)
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> The Single Flight pattern is a concurrency control mechanism that ensures for a given key (e.g., a specific user query), only one function execution (e.g., an LLM call) is in progress at a time. If other identical requests arrive while the first one is running, they will wait for the first one to complete and will all share its result, rather than starting their own redundant executions. This prevents the &ldquo;thundering herd&rdquo; problem, where a sudden burst of identical requests overwhelms a downstream service.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong></p>
+<ul>
+<li><strong><code>chatbot/manager.go</code>:</strong> The core implementation is in the <code>Manager</code> struct and its <code>processAndRouteRequest</code> method.</li>
+<li><code>sfGroup *singleflight.Group</code>: The <code>Manager</code> holds a <code>singleflight.Group</code>.</li>
+<li><code>m.sfGroup.Do(cacheKey, func() (any, error) { ... })</code>: This is the key line. The <code>cacheKey</code> is generated from the conversation history and the new question.
+<ul>
+<li>The <strong>first</strong> goroutine to call <code>Do</code> with a new <code>cacheKey</code> becomes the <strong>&ldquo;leader&rdquo;</strong>. It executes the anonymous function, which prepares the request, creates a <code>broadcastInfo</code> struct, and starts the streaming process.</li>
+<li><strong>Subsequent</strong> goroutines calling <code>Do</code> with the same <code>cacheKey</code> become <strong>&ldquo;followers&rdquo;</strong>. They block until the leader&rsquo;s function completes, and they receive the <em>same</em> <code>broadcastInfo</code> struct and error that the leader produced.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong> This pattern is critical for efficiency and cost-saving.</p>
+<ul>
+<li><strong>Cost Reduction:</strong> LLM API calls can be expensive. If multiple users ask the exact same question (e.g., &ldquo;What&rsquo;s the price of BBCA?&rdquo;), this pattern ensures only one LLM call is made.</li>
+<li><strong>Performance:</strong> It prevents redundant, CPU-intensive work and unnecessary load on external APIs (like financial data sources).</li>
+<li><strong>System Stability:</strong> It protects the system from being overloaded by a sudden spike in identical requests, which is a common scenario in public-facing applications.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="2-worker-pool">2. Worker Pool
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> A worker pool is a concurrency pattern consisting of a queue of tasks and a fixed number of &ldquo;worker&rdquo; goroutines. Instead of spawning a new goroutine for every single task (which can be inefficient and lead to resource exhaustion), tasks are placed on a queue, and the pre-existing workers pick them up for execution. This provides a clean way to control the maximum level of concurrency.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong></p>
+<ul>
+<li><strong><code>chatbot/manager.go</code>:</strong></li>
+<li><code>requestQueue chan types.SubmitRequestArgs</code>: This is the task queue. New requests are pushed here.</li>
+<li><code>prepareSemaphore chan struct{}</code>: This semaphore controls the number of <em>active</em> workers processing requests from the queue. Its capacity is set by <code>cfg.MaxConcurrentRequests</code>.</li>
+<li><code>llmStreamSemaphore chan struct{}</code>: A second, more specific worker pool limiter just for the most expensive part: concurrent LLM streams.</li>
+<li><code>requestWorkerPool(ctx context.Context)</code>: This function is the &ldquo;dispatcher.&rdquo; It runs in a loop, reads from <code>requestQueue</code>, acquires a semaphore slot, and then spins up a goroutine to actually process the request.</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Resource Management:</strong> It prevents the application from creating an unbounded number of goroutines, which could consume all available memory and CPU, leading to a crash. The <code>MaxConcurrentRequests</code> configuration acts as a throttle.</li>
+<li><strong>Load Balancing:</strong> It provides back-pressure. If the system is at capacity, new requests will wait in the <code>requestQueue</code> (up to a timeout) instead of immediately trying to run and failing.</li>
+<li><strong>Decoupling:</strong> The submission of a request (<code>SubmitRequest</code>) is decoupled from its execution. The <code>SubmitRequest</code> function can return immediately after enqueuing the task, making the API feel responsive.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="3-publish-subscribe-observer-pattern">3. Publish-Subscribe (Observer) Pattern
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> A messaging pattern where &ldquo;publishers&rdquo; (producers of events) do not send messages directly to &ldquo;subscribers&rdquo; (consumers of events). Instead, they publish events to a central &ldquo;broker&rdquo; or &ldquo;channel,&rdquo; and all interested subscribers receive the event. This decouples publishers from subscribers.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong></p>
+<ul>
+<li><strong><code>chatbot/manager.go</code>:</strong> The <code>StreamBroadcaster</code> struct is a custom implementation of this pattern.</li>
+<li><code>StreamBroadcaster</code>: This is the broker.
+<ul>
+<li><code>subscribers []chan tooltypes.StreamEvent</code>: A list of all subscribers&rsquo; channels.</li>
+<li><code>Subscribe(...)</code>: A method for a client to register its interest and receive events.</li>
+<li><code>Broadcast(...)</code>: The publisher (the leader&rsquo;s streaming goroutine) calls this to send an event to all subscribers.</li>
+<li><code>history []tooltypes.StreamEvent</code>: An intelligent addition. It records all past events so that a subscriber who joins late can immediately receive the full history up to that point.</li>
+</ul>
+</li>
+<li>The <strong>&ldquo;leader&rdquo;</strong> request in the <code>singleflight</code> group is the <strong>publisher</strong>. It generates the stream events.</li>
+<li>Both the <strong>leader</strong> and all <strong>follower</strong> requests are <strong>subscribers</strong>. They each call <code>info.broadcaster.Subscribe(clientChan)</code> to start listening.</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Fan-Out:</strong> It&rsquo;s the perfect solution for the <code>singleflight</code> pattern&rsquo;s output. One execution (the leader) produces a stream of data, and this pattern efficiently &ldquo;fans out&rdquo; that single stream to multiple waiting clients (the leader and all followers) without duplicating the stream generation work.</li>
+<li><strong>Decoupling:</strong> The goroutine generating the stream (<code>initiateAndManageBroadcast</code>) doesn&rsquo;t need to know how many clients are listening or who they are. It just broadcasts to the <code>StreamBroadcaster</code>. This simplifies the logic significantly.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="4-context-propagation">4. Context Propagation
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> Context Propagation is a standard and idiomatic Go <strong>concurrency pattern</strong> for carrying request-scoped deadlines, cancellation signals, and other values across API boundaries and between goroutines. A <code>context.Context</code> is an object that is threaded through a call chain, typically as the first argument to a function.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong> This pattern is used pervasively and correctly throughout the entire project.</p>
+<ul>
+<li><strong>Creation and Cancellation:</strong>
+<ul>
+<li>In <code>processAndRouteRequest</code>: <code>requestCtx, cancelRequest := context.WithCancel(ctx)</code>. This creates a new, specific context for a single user request. The <code>cancelRequest</code> function is stored in <code>m.cancellableStreams</code> so it can be called later from anywhere.</li>
+<li>In <code>CancelStream</code>: It retrieves the <code>cancelFunc</code> and calls it. This is the trigger.</li>
+</ul>
+</li>
+<li><strong>Propagation (The &ldquo;Flow&rdquo;):</strong> The <code>requestCtx</code> is passed down the entire call stack. Notice the function signatures:
+<ul>
+<li><code>m.preparer.Prepare(requestCtx, ...)</code></li>
+<li><code>toolcore.SelectAndPrepareTools(ctx, ...)</code></li>
+<li><code>llm.GenerateContent(ctx, ...)</code></li>
+<li><code>toolutils.ExecuteToolsInParallel(ctx, ...)</code></li>
+<li><code>executeToolAsync(ctx, ...)</code></li>
+<li><code>toolToRun.Call(toolCtx, ...)</code>
+This creates a &ldquo;tree&rdquo; of contexts, and cancelling the root context in <code>Manager</code> will cancel all downstream operations that are listening.</li>
+</ul>
+</li>
+<li><strong>Listening for Cancellation:</strong> The <code>select</code> statement with a <code>case &lt;-ctx.Done()</code> is how goroutines listen for the cancellation signal.
+<ul>
+<li><code>GetRequestResultStream</code>: <code>case &lt;-ctx.Done(): return nil, ctx.Err()</code></li>
+<li><code>initiateAndManageBroadcast</code>: <code>case &lt;-broadcastCtx.Done(): ... return</code></li>
+</ul>
+</li>
+<li><strong>Advanced Usage (Immortalization):</strong> The logic in <code>initiateAndManageBroadcast</code> is a brilliant, advanced use of the pattern. The broadcast starts with a cancellable context derived from the leader. However, if a follower joins (<code>&lt;-info.immortalizeSignal</code>), the code executes <code>broadcastCtx = context.Background()</code>. This <strong>replaces</strong> the cancellable context with the &ldquo;empty&rdquo; context that never gets cancelled. This &ldquo;immortalizes&rdquo; the broadcast, ensuring that even if the original leader client disconnects, the LLM stream will continue to completion for the benefit of the followers.</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Resource Leak Prevention:</strong> This is the most critical reason. Without context propagation, if a user cancelled a request, the goroutines performing the LLM call or executing tools would continue running, wasting CPU, memory, and money. They would become &ldquo;orphaned&rdquo; and would only die when their work was done. <code>context</code> ensures they are terminated promptly.</li>
+<li><strong>Timeouts and Deadlines:</strong> It provides a unified mechanism for enforcing timeouts. In <code>executeToolAsync</code>, <code>context.WithTimeout</code> is used to ensure that a single misbehaving tool cannot hang an entire request indefinitely.</li>
+<li><strong>Graceful Shutdown:</strong> When the application receives a shutdown signal, the root <code>context</code> can be cancelled, which will propagate through all active requests, allowing them to terminate cleanly. It&rsquo;s the foundation of a reliable, resilient service.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="5-strategy-pattern">5. Strategy Pattern
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> The Strategy pattern defines a family of algorithms, encapsulates each one, and makes them interchangeable. It lets the algorithm vary independently from the clients that use it. This is typically achieved with an interface and multiple concrete implementations.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong> This is the foundation of your entire tool system.</p>
+<ul>
+<li><strong><code>tooltypes/interfaces.go</code>:</strong> <code>LoggableTool</code> is the <strong>Strategy Interface</strong>. It defines the contract that all tools must follow (<code>Name</code>, <code>Description</code>, <code>Call</code>, <code>Stream</code>, <code>ToLLMSchema</code>).</li>
+<li><strong><code>toolcore/dynamic.go</code>:</strong> <code>DynamicTool</code> is the <strong>Context</strong> that uses a strategy. It&rsquo;s a generic, concrete implementation of the <code>LoggableTool</code> interface. It doesn&rsquo;t contain the tool logic itself.</li>
+<li><code>ExecutorFunc</code> and <code>StreamExecutorFunc</code>: These function types are the <strong>Concrete Strategies</strong>.</li>
+<li><strong><code>toolcore/definitions.go</code>:</strong> In <code>BuildAllTools</code>, you create instances of <code>DynamicTool</code> and assign specific anonymous functions (the concrete strategies) to their <code>Executor</code> or <code>StreamExecutor</code> fields. For example:
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    NameStr:        <span style="color:#f1fa8c">&#34;get_current_time&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#6272a4">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>    Executor: <span style="color:#8be9fd;font-style:italic">func</span>(ctx context.Context, input <span style="color:#8be9fd">string</span>, logCtx zerolog.Logger) (<span style="color:#8be9fd">string</span>, <span style="color:#8be9fd">error</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#ff79c6">return</span> time.<span style="color:#50fa7b">Now</span>().<span style="color:#50fa7b">Format</span>(time.RFC3339), <span style="color:#ff79c6">nil</span>
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>},
+</span></span></code></pre></div>Here, the anonymous function is the &ldquo;strategy&rdquo; for getting the current time.</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Flexibility and Extensibility:</strong> To add a new tool, you simply create a new <code>DynamicTool</code> struct in the <code>BuildAllTools</code> list with its own executor function. You don&rsquo;t have to change any of the core logic that <em>calls</em> the tools (<code>SelectAndPrepareTools</code>, <code>ExecuteToolsInParallel</code>).</li>
+<li><strong>Decoupling:</strong> The tool-calling logic is completely decoupled from the tool-implementation logic. The <code>caller.go</code> package knows nothing about how <code>news_summary</code> or <code>frequently_asked</code> actually works; it just knows how to <code>Call()</code> any <code>LoggableTool</code>.</li>
+<li><strong>Clarity:</strong> It separates the &ldquo;what&rdquo; (the interface) from the &ldquo;how&rdquo; (the implementation), making the system easier to understand and maintain.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="6-state-pattern">6. State Pattern
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> The State pattern is a <strong>behavioral pattern</strong> that allows an object to alter its behavior when its internal state changes. The object appears to change its class. The core idea is to represent the states of an object with separate objects or, more simply (as done here), with a state variable. Logic that would otherwise live in large, hard-to-maintain conditional statements (<code>if/else</code> or <code>switch</code>) is organized around the states.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong></p>
+<ul>
+<li><strong>The Context Object:</strong> <code>types.RequestStream</code> is the object whose behavior changes.</li>
+<li><strong>The State Variable:</strong> It contains the <code>State types.RequestState</code> field.</li>
+<li><strong>The Concrete States:</strong> These are the constants defined in the <code>types</code> package:
+<ul>
+<li><code>StateQueued</code></li>
+<li><code>StateProcessing</code></li>
+<li><code>StateCancelled</code></li>
+</ul>
+</li>
+<li><strong>State-Dependent Behavior:</strong> The <code>Manager</code>&rsquo;s methods behave differently based on the <code>State</code> of a <code>RequestStream</code>:
+<ul>
+<li><strong><code>CancelStream</code>:</strong> This is the most prominent example. At the start, it checks <code>if streamHolder.State == types.StateCancelled</code>. If so, it immediately returns, avoiding redundant work. The rest of the cancellation logic is inherently state-dependent.</li>
+<li><strong><code>janitor</code>:</strong> The janitor&rsquo;s timeout logic is different for each state. A request in <code>StateQueued</code> has a <code>QueueTimeout</code>, while one in <code>StateProcessing</code> has a much longer <code>ProcessingTimeout</code>. This prevents requests from getting stuck in a specific phase of their lifecycle for too long.</li>
+<li><strong><code>processAndRouteRequest</code>:</strong> Before starting any work, it checks <code>if streamHolder.State == types.StateCancelled</code>. This prevents the system from wasting resources on a request that a user has already abandoned.</li>
+<li><strong><code>GetRequestResultStream</code>:</strong> It handles a request in the <code>StateCancelled</code> differently by immediately returning a pre-canned &ldquo;cancelled&rdquo; stream.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Clarity and Readability:</strong> The request lifecycle is made explicit. At any point, you can inspect a request and know exactly what stage it&rsquo;s in. This is far clearer than inferring the state from a combination of other conditions (e.g., &ldquo;is the request in the queue? is its context cancelled?&rdquo;).</li>
+<li><strong>Robustness:</strong> It helps prevent illegal operations. By checking the state at the beginning of methods, the system ensures it doesn&rsquo;t try to, for example, process a request that has already been cancelled and is pending cleanup. It makes the control flow more predictable.</li>
+<li><strong>Maintainability:</strong> It organizes the complex logic of a request&rsquo;s lifecycle. If you needed to add a new state like <code>StatePaused</code>, you would add the constant and then you could methodically review each place that checks the state (<code>janitor</code>, <code>CancelStream</code>, etc.) to add the behavior for this new state. This is much cleaner than modifying a single, monolithic function with deeply nested conditionals.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="7-facade-pattern">7. Facade Pattern
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> The Facade pattern is a <strong>structural pattern</strong> that provides a single, simplified, and unified interface to a larger and more complex body of code, such as a library or an entire subsystem. The goal is to hide the system&rsquo;s internal complexity from the client. The client interacts with the simple facade, which then delegates the calls to the appropriate components within the complex subsystem.</p>
+<p>Think of the ignition system in a car. You, the client, have a very simple interface: a keyhole or a &ldquo;Start&rdquo; button (the Facade). When you use it, a complex chain of events happens behind the scenes: the battery is engaged, the starter motor turns, the fuel pump activates, spark plugs fire, etc. (the Subsystem). You don&rsquo;t need to know or manage any of that complexity; you just interact with the simple facade.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong></p>
+<ul>
+<li><strong>The Facade:</strong> The <code>chatbot/Manager</code> struct in <code>chatbot/manager.go</code> is a perfect example of a Facade.</li>
+<li><strong>The Simplified Interface:</strong> The public methods of the <code>Manager</code> are the simple interface exposed to the rest of the application (e.g., the HTTP handlers):
+<ul>
+<li><code>SubmitRequest(question, userID, prevContext)</code>: The entry point to start a new conversation turn.</li>
+<li><code>GetRequestResultStream(ctx, requestID)</code>: The way a client retrieves the streaming results.</li>
+<li><code>CancelStream(requestID)</code>: The way to terminate a running request.</li>
+</ul>
+</li>
+<li><strong>The Complex Subsystem:</strong> The <code>Manager</code> facade hides all of the following complex components and interactions, which are implemented as its private fields and unexported methods:
+<ul>
+<li><strong>Request Queuing:</strong> <code>requestQueue chan types.SubmitRequestArgs</code>.</li>
+<li><strong>Concurrency Management:</strong> <code>prepareSemaphore</code>, <code>llmStreamSemaphore</code>, and the <code>requestWorkerPool</code>.</li>
+<li><strong>Thundering Herd Protection:</strong> The <code>sfGroup *singleflight.Group</code>.</li>
+<li><strong>State Management:</strong> The <code>activeRequests</code> map and <code>cancellableStreams</code> map.</li>
+<li><strong>Pub/Sub Broadcasting:</strong> The <code>broadcasters</code> map and <code>StreamBroadcaster</code> logic.</li>
+<li><strong>Resource Cleanup:</strong> The <code>janitor</code> goroutine.</li>
+<li><strong>Core Logic Components:</strong> The <code>preparer</code> and <code>streamer</code> structs which contain the detailed logic for each phase.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Simplicity and Decoupling:</strong> The primary reason is to abstract away the immense complexity of the concurrent processing pipeline. The part of your application that handles API requests doesn&rsquo;t need to know about worker pools, single-flight groups, or broadcasters. It just needs to call <code>manager.SubmitRequest()</code> and get back a <code>requestID</code>. This is a massive simplification.</li>
+<li><strong>Centralized Control:</strong> All the complex interactions between the queue, workers, state, and broadcaster are orchestrated <em>within</em> the <code>Manager</code>. This makes the system easier to reason about, as the control logic is not scattered across multiple packages.</li>
+<li><strong>Maintainability:</strong> You can completely refactor the internal workings of the <code>Manager</code>—for example, by replacing the <code>singleflight</code> library with a custom Redis-based cache—and as long as the public Facade methods (<code>SubmitRequest</code>, etc.) keep the same signature, no other part of the application needs to be changed.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="8-dependency-injection-di">8. Dependency Injection (DI)
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> A design principle where a component receives its dependencies from an external source rather than creating them itself. This inverts the control of dependency management.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong></p>
+<ul>
+<li><strong>Tool Creation:</strong> <code>BuildAllTools(services *core.Services, arangoStore *db.ArangoStore)</code> receives the <code>services</code> and <code>arangoStore</code> dependencies and &ldquo;injects&rdquo; them into the tool executor closures that need them (e.g., <code>analyze_stock</code>).</li>
+<li><strong>Function Arguments:</strong> <code>SelectAndPrepareTools</code> receives <code>availableTools</code> and <code>llmTools</code> as arguments. The comment <code>// This function accepts tools as arguments, making it a pure function.</code> explicitly calls this out as a good practice. It doesn&rsquo;t rely on a global tool registry.</li>
+<li><strong>Contextual Logging:</strong> The <code>logCtx zerolog.Logger</code> is consistently passed down through the call stack (e.g., <code>toolToRun.Call(toolCtx, toolArgsJSON, toolLogCtx)</code>). The logger is a dependency that is injected into every function that needs to produce logs, ensuring all logs have the proper request-scoped context.</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Testability:</strong> This is the primary benefit. When testing a tool&rsquo;s executor, you can inject mock <code>services</code> or a mock <code>arangoStore</code>. When testing <code>SelectAndPrepareTools</code>, you can inject a small, controlled set of mock tools.</li>
+<li><strong>Decoupling:</strong> Components are not tightly coupled to their dependencies&rsquo; creation logic. The <code>Manager</code> doesn&rsquo;t know how to build tools; it just receives them.</li>
+<li><strong>Flexibility:</strong> It&rsquo;s easy to swap out implementations. For example, you could have a different <code>ArangoStore</code> implementation for local development vs. production and inject the correct one at startup.</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="9-factory-method">9. Factory Method
+</h3><ul>
+<li>
+<p><strong>What it is:</strong> A creational pattern that provides an interface for creating objects in a superclass but lets subclasses alter the type of objects that will be created. In a more general sense, it centralizes the creation logic for a complex object or a family of objects into a single function or method.</p>
+</li>
+<li>
+<p><strong>Where it&rsquo;s implemented:</strong></p>
+<ul>
+<li><strong><code>toolcore/definitions.go</code>:</strong> <code>BuildAllTools</code> is a classic example of a Factory function. It encapsulates all the complex logic, schemas, and details of creating the entire list of <code>DynamicTool</code> objects.</li>
+<li><strong><code>toolcore/definitions.go</code>:</strong> <code>GetFormattedTools</code> is a related helper function that takes the output of the factory and transforms it into the specific formats needed by different parts of the application (<code>map[string]tooltypes.LoggableTool</code> and <code>[]llms.Tool</code>).</li>
+</ul>
+</li>
+<li>
+<p><strong>Why it was used:</strong></p>
+<ul>
+<li><strong>Centralization:</strong> All tool definitions are in one place. If you need to add, remove, or modify a tool, you know exactly where to go.</li>
+<li><strong>Abstraction:</strong> The <code>Manager</code> doesn&rsquo;t need to know the details of tool construction. It just calls <code>BuildAllTools</code> and gets the finished product, simplifying the <code>Manager</code>&rsquo;s <code>NewManager</code> constructor.</li>
+</ul>
+</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

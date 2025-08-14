@@ -6,7 +6,317 @@
         <description>Recent content in Architectures on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Tue, 12 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/architectures/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 14 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/architectures/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Design Patterns</title>
+        <link>http://localhost:1313/agentic/docs/architectures/design_pattern/</link>
+        <pubDate>Thu, 14 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/architectures/design_pattern/</guid>
+        <description>&lt;p&gt;Tuntun Go Chatbot effectively uses a combination of creational, structural, behavioral, and concurrency patterns.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Concurrency Patterns:&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    1&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Single Flight &lt;span style=&#34;color:#ff79c6&#34;&gt;(&lt;/span&gt;Thundering Herd Protection&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;: To prevent redundant processing of identical concurrent requests.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    2&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Worker Pool: To manage and limit the concurrency of incoming requests.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    3&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Publish-Subscribe &lt;span style=&#34;color:#ff79c6&#34;&gt;(&lt;/span&gt;Observer&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;: To broadcast a single result stream to multiple identical requests.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    4&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Context Propagation: For cancellation, timeouts, and managing request lifecycles.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Behavioral Patterns:&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    5&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Strategy Pattern: To define a family of tool algorithms and make them interchangeable.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    6&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  State Pattern: To manage the complex lifecycle of a request &lt;span style=&#34;color:#ff79c6&#34;&gt;(&lt;/span&gt;Queued, Processing, Cancelled&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Structural Patterns:&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    7&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Facade Pattern: To provide a simple, unified interface to a complex subsystem.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Creational &amp;amp; Architectural Patterns:&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    8&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Dependency Injection &lt;span style=&#34;color:#ff79c6&#34;&gt;(&lt;/span&gt;DI&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;: To decouple components and improve testability.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    9&lt;span style=&#34;color:#ff79c6&#34;&gt;)&lt;/span&gt;  Factory Method: To centralize and abstract the creation of tools.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;hr&gt;
+&lt;h3 id=&#34;1-single-flight-thundering-herd-protection&#34;&gt;1. Single Flight (Thundering Herd Protection)
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; The Single Flight pattern is a concurrency control mechanism that ensures for a given key (e.g., a specific user query), only one function execution (e.g., an LLM call) is in progress at a time. If other identical requests arrive while the first one is running, they will wait for the first one to complete and will all share its result, rather than starting their own redundant executions. This prevents the &amp;ldquo;thundering herd&amp;rdquo; problem, where a sudden burst of identical requests overwhelms a downstream service.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;chatbot/manager.go&lt;/code&gt;:&lt;/strong&gt; The core implementation is in the &lt;code&gt;Manager&lt;/code&gt; struct and its &lt;code&gt;processAndRouteRequest&lt;/code&gt; method.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sfGroup *singleflight.Group&lt;/code&gt;: The &lt;code&gt;Manager&lt;/code&gt; holds a &lt;code&gt;singleflight.Group&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;m.sfGroup.Do(cacheKey, func() (any, error) { ... })&lt;/code&gt;: This is the key line. The &lt;code&gt;cacheKey&lt;/code&gt; is generated from the conversation history and the new question.
+&lt;ul&gt;
+&lt;li&gt;The &lt;strong&gt;first&lt;/strong&gt; goroutine to call &lt;code&gt;Do&lt;/code&gt; with a new &lt;code&gt;cacheKey&lt;/code&gt; becomes the &lt;strong&gt;&amp;ldquo;leader&amp;rdquo;&lt;/strong&gt;. It executes the anonymous function, which prepares the request, creates a &lt;code&gt;broadcastInfo&lt;/code&gt; struct, and starts the streaming process.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Subsequent&lt;/strong&gt; goroutines calling &lt;code&gt;Do&lt;/code&gt; with the same &lt;code&gt;cacheKey&lt;/code&gt; become &lt;strong&gt;&amp;ldquo;followers&amp;rdquo;&lt;/strong&gt;. They block until the leader&amp;rsquo;s function completes, and they receive the &lt;em&gt;same&lt;/em&gt; &lt;code&gt;broadcastInfo&lt;/code&gt; struct and error that the leader produced.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt; This pattern is critical for efficiency and cost-saving.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Cost Reduction:&lt;/strong&gt; LLM API calls can be expensive. If multiple users ask the exact same question (e.g., &amp;ldquo;What&amp;rsquo;s the price of BBCA?&amp;rdquo;), this pattern ensures only one LLM call is made.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Performance:&lt;/strong&gt; It prevents redundant, CPU-intensive work and unnecessary load on external APIs (like financial data sources).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;System Stability:&lt;/strong&gt; It protects the system from being overloaded by a sudden spike in identical requests, which is a common scenario in public-facing applications.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;2-worker-pool&#34;&gt;2. Worker Pool
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; A worker pool is a concurrency pattern consisting of a queue of tasks and a fixed number of &amp;ldquo;worker&amp;rdquo; goroutines. Instead of spawning a new goroutine for every single task (which can be inefficient and lead to resource exhaustion), tasks are placed on a queue, and the pre-existing workers pick them up for execution. This provides a clean way to control the maximum level of concurrency.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;chatbot/manager.go&lt;/code&gt;:&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;requestQueue chan types.SubmitRequestArgs&lt;/code&gt;: This is the task queue. New requests are pushed here.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;prepareSemaphore chan struct{}&lt;/code&gt;: This semaphore controls the number of &lt;em&gt;active&lt;/em&gt; workers processing requests from the queue. Its capacity is set by &lt;code&gt;cfg.MaxConcurrentRequests&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;llmStreamSemaphore chan struct{}&lt;/code&gt;: A second, more specific worker pool limiter just for the most expensive part: concurrent LLM streams.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;requestWorkerPool(ctx context.Context)&lt;/code&gt;: This function is the &amp;ldquo;dispatcher.&amp;rdquo; It runs in a loop, reads from &lt;code&gt;requestQueue&lt;/code&gt;, acquires a semaphore slot, and then spins up a goroutine to actually process the request.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Resource Management:&lt;/strong&gt; It prevents the application from creating an unbounded number of goroutines, which could consume all available memory and CPU, leading to a crash. The &lt;code&gt;MaxConcurrentRequests&lt;/code&gt; configuration acts as a throttle.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Load Balancing:&lt;/strong&gt; It provides back-pressure. If the system is at capacity, new requests will wait in the &lt;code&gt;requestQueue&lt;/code&gt; (up to a timeout) instead of immediately trying to run and failing.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Decoupling:&lt;/strong&gt; The submission of a request (&lt;code&gt;SubmitRequest&lt;/code&gt;) is decoupled from its execution. The &lt;code&gt;SubmitRequest&lt;/code&gt; function can return immediately after enqueuing the task, making the API feel responsive.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;3-publish-subscribe-observer-pattern&#34;&gt;3. Publish-Subscribe (Observer) Pattern
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; A messaging pattern where &amp;ldquo;publishers&amp;rdquo; (producers of events) do not send messages directly to &amp;ldquo;subscribers&amp;rdquo; (consumers of events). Instead, they publish events to a central &amp;ldquo;broker&amp;rdquo; or &amp;ldquo;channel,&amp;rdquo; and all interested subscribers receive the event. This decouples publishers from subscribers.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;chatbot/manager.go&lt;/code&gt;:&lt;/strong&gt; The &lt;code&gt;StreamBroadcaster&lt;/code&gt; struct is a custom implementation of this pattern.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StreamBroadcaster&lt;/code&gt;: This is the broker.
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;subscribers []chan tooltypes.StreamEvent&lt;/code&gt;: A list of all subscribers&amp;rsquo; channels.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Subscribe(...)&lt;/code&gt;: A method for a client to register its interest and receive events.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Broadcast(...)&lt;/code&gt;: The publisher (the leader&amp;rsquo;s streaming goroutine) calls this to send an event to all subscribers.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;history []tooltypes.StreamEvent&lt;/code&gt;: An intelligent addition. It records all past events so that a subscriber who joins late can immediately receive the full history up to that point.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;The &lt;strong&gt;&amp;ldquo;leader&amp;rdquo;&lt;/strong&gt; request in the &lt;code&gt;singleflight&lt;/code&gt; group is the &lt;strong&gt;publisher&lt;/strong&gt;. It generates the stream events.&lt;/li&gt;
+&lt;li&gt;Both the &lt;strong&gt;leader&lt;/strong&gt; and all &lt;strong&gt;follower&lt;/strong&gt; requests are &lt;strong&gt;subscribers&lt;/strong&gt;. They each call &lt;code&gt;info.broadcaster.Subscribe(clientChan)&lt;/code&gt; to start listening.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Fan-Out:&lt;/strong&gt; It&amp;rsquo;s the perfect solution for the &lt;code&gt;singleflight&lt;/code&gt; pattern&amp;rsquo;s output. One execution (the leader) produces a stream of data, and this pattern efficiently &amp;ldquo;fans out&amp;rdquo; that single stream to multiple waiting clients (the leader and all followers) without duplicating the stream generation work.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Decoupling:&lt;/strong&gt; The goroutine generating the stream (&lt;code&gt;initiateAndManageBroadcast&lt;/code&gt;) doesn&amp;rsquo;t need to know how many clients are listening or who they are. It just broadcasts to the &lt;code&gt;StreamBroadcaster&lt;/code&gt;. This simplifies the logic significantly.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;4-context-propagation&#34;&gt;4. Context Propagation
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; Context Propagation is a standard and idiomatic Go &lt;strong&gt;concurrency pattern&lt;/strong&gt; for carrying request-scoped deadlines, cancellation signals, and other values across API boundaries and between goroutines. A &lt;code&gt;context.Context&lt;/code&gt; is an object that is threaded through a call chain, typically as the first argument to a function.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt; This pattern is used pervasively and correctly throughout the entire project.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Creation and Cancellation:&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;In &lt;code&gt;processAndRouteRequest&lt;/code&gt;: &lt;code&gt;requestCtx, cancelRequest := context.WithCancel(ctx)&lt;/code&gt;. This creates a new, specific context for a single user request. The &lt;code&gt;cancelRequest&lt;/code&gt; function is stored in &lt;code&gt;m.cancellableStreams&lt;/code&gt; so it can be called later from anywhere.&lt;/li&gt;
+&lt;li&gt;In &lt;code&gt;CancelStream&lt;/code&gt;: It retrieves the &lt;code&gt;cancelFunc&lt;/code&gt; and calls it. This is the trigger.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Propagation (The &amp;ldquo;Flow&amp;rdquo;):&lt;/strong&gt; The &lt;code&gt;requestCtx&lt;/code&gt; is passed down the entire call stack. Notice the function signatures:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;m.preparer.Prepare(requestCtx, ...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;toolcore.SelectAndPrepareTools(ctx, ...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;llm.GenerateContent(ctx, ...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;toolutils.ExecuteToolsInParallel(ctx, ...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;executeToolAsync(ctx, ...)&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;toolToRun.Call(toolCtx, ...)&lt;/code&gt;
+This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root context in &lt;code&gt;Manager&lt;/code&gt; will cancel all downstream operations that are listening.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Listening for Cancellation:&lt;/strong&gt; The &lt;code&gt;select&lt;/code&gt; statement with a &lt;code&gt;case &amp;lt;-ctx.Done()&lt;/code&gt; is how goroutines listen for the cancellation signal.
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;GetRequestResultStream&lt;/code&gt;: &lt;code&gt;case &amp;lt;-ctx.Done(): return nil, ctx.Err()&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;initiateAndManageBroadcast&lt;/code&gt;: &lt;code&gt;case &amp;lt;-broadcastCtx.Done(): ... return&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Advanced Usage (Immortalization):&lt;/strong&gt; The logic in &lt;code&gt;initiateAndManageBroadcast&lt;/code&gt; is a brilliant, advanced use of the pattern. The broadcast starts with a cancellable context derived from the leader. However, if a follower joins (&lt;code&gt;&amp;lt;-info.immortalizeSignal&lt;/code&gt;), the code executes &lt;code&gt;broadcastCtx = context.Background()&lt;/code&gt;. This &lt;strong&gt;replaces&lt;/strong&gt; the cancellable context with the &amp;ldquo;empty&amp;rdquo; context that never gets cancelled. This &amp;ldquo;immortalizes&amp;rdquo; the broadcast, ensuring that even if the original leader client disconnects, the LLM stream will continue to completion for the benefit of the followers.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Resource Leak Prevention:&lt;/strong&gt; This is the most critical reason. Without context propagation, if a user cancelled a request, the goroutines performing the LLM call or executing tools would continue running, wasting CPU, memory, and money. They would become &amp;ldquo;orphaned&amp;rdquo; and would only die when their work was done. &lt;code&gt;context&lt;/code&gt; ensures they are terminated promptly.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Timeouts and Deadlines:&lt;/strong&gt; It provides a unified mechanism for enforcing timeouts. In &lt;code&gt;executeToolAsync&lt;/code&gt;, &lt;code&gt;context.WithTimeout&lt;/code&gt; is used to ensure that a single misbehaving tool cannot hang an entire request indefinitely.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Graceful Shutdown:&lt;/strong&gt; When the application receives a shutdown signal, the root &lt;code&gt;context&lt;/code&gt; can be cancelled, which will propagate through all active requests, allowing them to terminate cleanly. It&amp;rsquo;s the foundation of a reliable, resilient service.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;5-strategy-pattern&#34;&gt;5. Strategy Pattern
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; The Strategy pattern defines a family of algorithms, encapsulates each one, and makes them interchangeable. It lets the algorithm vary independently from the clients that use it. This is typically achieved with an interface and multiple concrete implementations.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt; This is the foundation of your entire tool system.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;tooltypes/interfaces.go&lt;/code&gt;:&lt;/strong&gt; &lt;code&gt;LoggableTool&lt;/code&gt; is the &lt;strong&gt;Strategy Interface&lt;/strong&gt;. It defines the contract that all tools must follow (&lt;code&gt;Name&lt;/code&gt;, &lt;code&gt;Description&lt;/code&gt;, &lt;code&gt;Call&lt;/code&gt;, &lt;code&gt;Stream&lt;/code&gt;, &lt;code&gt;ToLLMSchema&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;toolcore/dynamic.go&lt;/code&gt;:&lt;/strong&gt; &lt;code&gt;DynamicTool&lt;/code&gt; is the &lt;strong&gt;Context&lt;/strong&gt; that uses a strategy. It&amp;rsquo;s a generic, concrete implementation of the &lt;code&gt;LoggableTool&lt;/code&gt; interface. It doesn&amp;rsquo;t contain the tool logic itself.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;ExecutorFunc&lt;/code&gt; and &lt;code&gt;StreamExecutorFunc&lt;/code&gt;: These function types are the &lt;strong&gt;Concrete Strategies&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;toolcore/definitions.go&lt;/code&gt;:&lt;/strong&gt; In &lt;code&gt;BuildAllTools&lt;/code&gt;, you create instances of &lt;code&gt;DynamicTool&lt;/code&gt; and assign specific anonymous functions (the concrete strategies) to their &lt;code&gt;Executor&lt;/code&gt; or &lt;code&gt;StreamExecutor&lt;/code&gt; fields. For example:
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    NameStr:        &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;get_current_time&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#6272a4&#34;&gt;// ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;    Executor: &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;func&lt;/span&gt;(ctx context.Context, input &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, logCtx zerolog.Logger) (&lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;, &lt;span style=&#34;color:#8be9fd&#34;&gt;error&lt;/span&gt;) {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;        &lt;span style=&#34;color:#ff79c6&#34;&gt;return&lt;/span&gt; time.&lt;span style=&#34;color:#50fa7b&#34;&gt;Now&lt;/span&gt;().&lt;span style=&#34;color:#50fa7b&#34;&gt;Format&lt;/span&gt;(time.RFC3339), &lt;span style=&#34;color:#ff79c6&#34;&gt;nil&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;Here, the anonymous function is the &amp;ldquo;strategy&amp;rdquo; for getting the current time.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Flexibility and Extensibility:&lt;/strong&gt; To add a new tool, you simply create a new &lt;code&gt;DynamicTool&lt;/code&gt; struct in the &lt;code&gt;BuildAllTools&lt;/code&gt; list with its own executor function. You don&amp;rsquo;t have to change any of the core logic that &lt;em&gt;calls&lt;/em&gt; the tools (&lt;code&gt;SelectAndPrepareTools&lt;/code&gt;, &lt;code&gt;ExecuteToolsInParallel&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Decoupling:&lt;/strong&gt; The tool-calling logic is completely decoupled from the tool-implementation logic. The &lt;code&gt;caller.go&lt;/code&gt; package knows nothing about how &lt;code&gt;news_summary&lt;/code&gt; or &lt;code&gt;frequently_asked&lt;/code&gt; actually works; it just knows how to &lt;code&gt;Call()&lt;/code&gt; any &lt;code&gt;LoggableTool&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Clarity:&lt;/strong&gt; It separates the &amp;ldquo;what&amp;rdquo; (the interface) from the &amp;ldquo;how&amp;rdquo; (the implementation), making the system easier to understand and maintain.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;6-state-pattern&#34;&gt;6. State Pattern
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; The State pattern is a &lt;strong&gt;behavioral pattern&lt;/strong&gt; that allows an object to alter its behavior when its internal state changes. The object appears to change its class. The core idea is to represent the states of an object with separate objects or, more simply (as done here), with a state variable. Logic that would otherwise live in large, hard-to-maintain conditional statements (&lt;code&gt;if/else&lt;/code&gt; or &lt;code&gt;switch&lt;/code&gt;) is organized around the states.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;The Context Object:&lt;/strong&gt; &lt;code&gt;types.RequestStream&lt;/code&gt; is the object whose behavior changes.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The State Variable:&lt;/strong&gt; It contains the &lt;code&gt;State types.RequestState&lt;/code&gt; field.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Concrete States:&lt;/strong&gt; These are the constants defined in the &lt;code&gt;types&lt;/code&gt; package:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;StateQueued&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StateProcessing&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;StateCancelled&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;State-Dependent Behavior:&lt;/strong&gt; The &lt;code&gt;Manager&lt;/code&gt;&amp;rsquo;s methods behave differently based on the &lt;code&gt;State&lt;/code&gt; of a &lt;code&gt;RequestStream&lt;/code&gt;:
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;CancelStream&lt;/code&gt;:&lt;/strong&gt; This is the most prominent example. At the start, it checks &lt;code&gt;if streamHolder.State == types.StateCancelled&lt;/code&gt;. If so, it immediately returns, avoiding redundant work. The rest of the cancellation logic is inherently state-dependent.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;janitor&lt;/code&gt;:&lt;/strong&gt; The janitor&amp;rsquo;s timeout logic is different for each state. A request in &lt;code&gt;StateQueued&lt;/code&gt; has a &lt;code&gt;QueueTimeout&lt;/code&gt;, while one in &lt;code&gt;StateProcessing&lt;/code&gt; has a much longer &lt;code&gt;ProcessingTimeout&lt;/code&gt;. This prevents requests from getting stuck in a specific phase of their lifecycle for too long.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;processAndRouteRequest&lt;/code&gt;:&lt;/strong&gt; Before starting any work, it checks &lt;code&gt;if streamHolder.State == types.StateCancelled&lt;/code&gt;. This prevents the system from wasting resources on a request that a user has already abandoned.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;GetRequestResultStream&lt;/code&gt;:&lt;/strong&gt; It handles a request in the &lt;code&gt;StateCancelled&lt;/code&gt; differently by immediately returning a pre-canned &amp;ldquo;cancelled&amp;rdquo; stream.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Clarity and Readability:&lt;/strong&gt; The request lifecycle is made explicit. At any point, you can inspect a request and know exactly what stage it&amp;rsquo;s in. This is far clearer than inferring the state from a combination of other conditions (e.g., &amp;ldquo;is the request in the queue? is its context cancelled?&amp;rdquo;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Robustness:&lt;/strong&gt; It helps prevent illegal operations. By checking the state at the beginning of methods, the system ensures it doesn&amp;rsquo;t try to, for example, process a request that has already been cancelled and is pending cleanup. It makes the control flow more predictable.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Maintainability:&lt;/strong&gt; It organizes the complex logic of a request&amp;rsquo;s lifecycle. If you needed to add a new state like &lt;code&gt;StatePaused&lt;/code&gt;, you would add the constant and then you could methodically review each place that checks the state (&lt;code&gt;janitor&lt;/code&gt;, &lt;code&gt;CancelStream&lt;/code&gt;, etc.) to add the behavior for this new state. This is much cleaner than modifying a single, monolithic function with deeply nested conditionals.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;7-facade-pattern&#34;&gt;7. Facade Pattern
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; The Facade pattern is a &lt;strong&gt;structural pattern&lt;/strong&gt; that provides a single, simplified, and unified interface to a larger and more complex body of code, such as a library or an entire subsystem. The goal is to hide the system&amp;rsquo;s internal complexity from the client. The client interacts with the simple facade, which then delegates the calls to the appropriate components within the complex subsystem.&lt;/p&gt;
+&lt;p&gt;Think of the ignition system in a car. You, the client, have a very simple interface: a keyhole or a &amp;ldquo;Start&amp;rdquo; button (the Facade). When you use it, a complex chain of events happens behind the scenes: the battery is engaged, the starter motor turns, the fuel pump activates, spark plugs fire, etc. (the Subsystem). You don&amp;rsquo;t need to know or manage any of that complexity; you just interact with the simple facade.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;The Facade:&lt;/strong&gt; The &lt;code&gt;chatbot/Manager&lt;/code&gt; struct in &lt;code&gt;chatbot/manager.go&lt;/code&gt; is a perfect example of a Facade.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Simplified Interface:&lt;/strong&gt; The public methods of the &lt;code&gt;Manager&lt;/code&gt; are the simple interface exposed to the rest of the application (e.g., the HTTP handlers):
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;SubmitRequest(question, userID, prevContext)&lt;/code&gt;: The entry point to start a new conversation turn.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;GetRequestResultStream(ctx, requestID)&lt;/code&gt;: The way a client retrieves the streaming results.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CancelStream(requestID)&lt;/code&gt;: The way to terminate a running request.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;The Complex Subsystem:&lt;/strong&gt; The &lt;code&gt;Manager&lt;/code&gt; facade hides all of the following complex components and interactions, which are implemented as its private fields and unexported methods:
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Request Queuing:&lt;/strong&gt; &lt;code&gt;requestQueue chan types.SubmitRequestArgs&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Concurrency Management:&lt;/strong&gt; &lt;code&gt;prepareSemaphore&lt;/code&gt;, &lt;code&gt;llmStreamSemaphore&lt;/code&gt;, and the &lt;code&gt;requestWorkerPool&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Thundering Herd Protection:&lt;/strong&gt; The &lt;code&gt;sfGroup *singleflight.Group&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;State Management:&lt;/strong&gt; The &lt;code&gt;activeRequests&lt;/code&gt; map and &lt;code&gt;cancellableStreams&lt;/code&gt; map.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Pub/Sub Broadcasting:&lt;/strong&gt; The &lt;code&gt;broadcasters&lt;/code&gt; map and &lt;code&gt;StreamBroadcaster&lt;/code&gt; logic.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Resource Cleanup:&lt;/strong&gt; The &lt;code&gt;janitor&lt;/code&gt; goroutine.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Core Logic Components:&lt;/strong&gt; The &lt;code&gt;preparer&lt;/code&gt; and &lt;code&gt;streamer&lt;/code&gt; structs which contain the detailed logic for each phase.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Simplicity and Decoupling:&lt;/strong&gt; The primary reason is to abstract away the immense complexity of the concurrent processing pipeline. The part of your application that handles API requests doesn&amp;rsquo;t need to know about worker pools, single-flight groups, or broadcasters. It just needs to call &lt;code&gt;manager.SubmitRequest()&lt;/code&gt; and get back a &lt;code&gt;requestID&lt;/code&gt;. This is a massive simplification.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Centralized Control:&lt;/strong&gt; All the complex interactions between the queue, workers, state, and broadcaster are orchestrated &lt;em&gt;within&lt;/em&gt; the &lt;code&gt;Manager&lt;/code&gt;. This makes the system easier to reason about, as the control logic is not scattered across multiple packages.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Maintainability:&lt;/strong&gt; You can completely refactor the internal workings of the &lt;code&gt;Manager&lt;/code&gt;—for example, by replacing the &lt;code&gt;singleflight&lt;/code&gt; library with a custom Redis-based cache—and as long as the public Facade methods (&lt;code&gt;SubmitRequest&lt;/code&gt;, etc.) keep the same signature, no other part of the application needs to be changed.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;8-dependency-injection-di&#34;&gt;8. Dependency Injection (DI)
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; A design principle where a component receives its dependencies from an external source rather than creating them itself. This inverts the control of dependency management.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Tool Creation:&lt;/strong&gt; &lt;code&gt;BuildAllTools(services *core.Services, arangoStore *db.ArangoStore)&lt;/code&gt; receives the &lt;code&gt;services&lt;/code&gt; and &lt;code&gt;arangoStore&lt;/code&gt; dependencies and &amp;ldquo;injects&amp;rdquo; them into the tool executor closures that need them (e.g., &lt;code&gt;analyze_stock&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Function Arguments:&lt;/strong&gt; &lt;code&gt;SelectAndPrepareTools&lt;/code&gt; receives &lt;code&gt;availableTools&lt;/code&gt; and &lt;code&gt;llmTools&lt;/code&gt; as arguments. The comment &lt;code&gt;// This function accepts tools as arguments, making it a pure function.&lt;/code&gt; explicitly calls this out as a good practice. It doesn&amp;rsquo;t rely on a global tool registry.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Contextual Logging:&lt;/strong&gt; The &lt;code&gt;logCtx zerolog.Logger&lt;/code&gt; is consistently passed down through the call stack (e.g., &lt;code&gt;toolToRun.Call(toolCtx, toolArgsJSON, toolLogCtx)&lt;/code&gt;). The logger is a dependency that is injected into every function that needs to produce logs, ensuring all logs have the proper request-scoped context.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Testability:&lt;/strong&gt; This is the primary benefit. When testing a tool&amp;rsquo;s executor, you can inject mock &lt;code&gt;services&lt;/code&gt; or a mock &lt;code&gt;arangoStore&lt;/code&gt;. When testing &lt;code&gt;SelectAndPrepareTools&lt;/code&gt;, you can inject a small, controlled set of mock tools.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Decoupling:&lt;/strong&gt; Components are not tightly coupled to their dependencies&amp;rsquo; creation logic. The &lt;code&gt;Manager&lt;/code&gt; doesn&amp;rsquo;t know how to build tools; it just receives them.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Flexibility:&lt;/strong&gt; It&amp;rsquo;s easy to swap out implementations. For example, you could have a different &lt;code&gt;ArangoStore&lt;/code&gt; implementation for local development vs. production and inject the correct one at startup.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;9-factory-method&#34;&gt;9. Factory Method
+&lt;/h3&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;What it is:&lt;/strong&gt; A creational pattern that provides an interface for creating objects in a superclass but lets subclasses alter the type of objects that will be created. In a more general sense, it centralizes the creation logic for a complex object or a family of objects into a single function or method.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Where it&amp;rsquo;s implemented:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;toolcore/definitions.go&lt;/code&gt;:&lt;/strong&gt; &lt;code&gt;BuildAllTools&lt;/code&gt; is a classic example of a Factory function. It encapsulates all the complex logic, schemas, and details of creating the entire list of &lt;code&gt;DynamicTool&lt;/code&gt; objects.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;toolcore/definitions.go&lt;/code&gt;:&lt;/strong&gt; &lt;code&gt;GetFormattedTools&lt;/code&gt; is a related helper function that takes the output of the factory and transforms it into the specific formats needed by different parts of the application (&lt;code&gt;map[string]tooltypes.LoggableTool&lt;/code&gt; and &lt;code&gt;[]llms.Tool&lt;/code&gt;).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Why it was used:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Centralization:&lt;/strong&gt; All tool definitions are in one place. If you need to add, remove, or modify a tool, you know exactly where to go.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Abstraction:&lt;/strong&gt; The &lt;code&gt;Manager&lt;/code&gt; doesn&amp;rsquo;t need to know the details of tool construction. It just calls &lt;code&gt;BuildAllTools&lt;/code&gt; and gets the finished product, simplifying the &lt;code&gt;Manager&lt;/code&gt;&amp;rsquo;s &lt;code&gt;NewManager&lt;/code&gt; constructor.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>Circuit Breaker Pattern</title>
         <link>http://localhost:1313/agentic/docs/architectures/circuit_breaker/</link>
         <pubDate>Tue, 12 Aug 2025 00:00:00 +0000</pubDate>

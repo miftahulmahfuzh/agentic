@@ -2,6 +2,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>http://localhost:1313/agentic/docs/architectures/</loc>
+    <lastmod>2025-08-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/architectures/design_pattern/</loc>
+    <lastmod>2025-08-14T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/</loc>
     <lastmod>2025-08-14T00:00:00+00:00</lastmod>
   </url><url>
@@ -37,9 +43,6 @@
   </url><url>
     <loc>http://localhost:1313/agentic/docs/manager_insights/sauron/</loc>
     <lastmod>2025-08-13T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/agentic/docs/architectures/</loc>
-    <lastmod>2025-08-12T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/architectures/circuit_breaker/</loc>
     <lastmod>2025-08-12T00:00:00+00:00</lastmod>
