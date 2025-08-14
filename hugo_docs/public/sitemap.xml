@@ -8,7 +8,13 @@
     <loc>http://localhost:1313/agentic/docs/narratives/four_pigs/</loc>
     <lastmod>2025-08-14T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>http://localhost:1313/agentic/docs/manager_insights/</loc>
+    <lastmod>2025-08-14T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>http://localhost:1313/agentic/docs/narratives/</loc>
+    <lastmod>2025-08-14T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/agentic/docs/manager_insights/solving_problems/</loc>
     <lastmod>2025-08-14T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/</loc>
@@ -23,16 +29,10 @@
     <loc>http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/</loc>
     <lastmod>2025-08-13T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/agentic/docs/manager_insights/</loc>
-    <lastmod>2025-08-13T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>http://localhost:1313/agentic/docs/python_stuff/</loc>
     <lastmod>2025-08-13T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</loc>
-    <lastmod>2025-08-13T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/agentic/docs/manager_insights/streambroadcaster/</loc>
     <lastmod>2025-08-13T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/agentic/docs/manager_insights/sauron/</loc>
