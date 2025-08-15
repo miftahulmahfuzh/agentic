@@ -466,7 +466,7 @@ TENCENT_RAG_BOT_APP_KEY=...
         </div>
       </section>
 
-      <section id="usage">
+<section id="usage">
         <div class="expandable-section">
           <div class="section-header" onclick="toggleSection(this)">
             <h3>🎯 Usage & Testing</h3>
@@ -479,6 +479,33 @@ TENCENT_RAG_BOT_APP_KEY=...
               <p>
                 The server starts on the configured host and port (default <code>http://localhost:8080</code>).
               </p>
+
+              <hr>
+
+              <h4>Unit Tests</h4>
+              <p>The system includes comprehensive unit tests for core services with <span class="popup-trigger" onclick="showPopup('circuit-breakers')">Circuit Breaker</span> integration and resilience testing.</p>
+              <p><strong>Important:</strong> Always clear the test cache before running tests to ensure fresh results:</p>
+              <pre><code>go clean -testcache</code></pre>
+
+              <h4>Database Layer Tests (<code>./db</code>)</h4>
+              <p>Tests for ArangoStore and RedisStore with circuit breaker integration:</p>
+              <pre><code>go clean -testcache && go test -v ./db</code></pre>
+              <p>These tests validate:</p>
+              <ul>
+                <li><strong>ArangoStore:</strong> Chat log creation/retrieval, channel info management, context cancellation handling</li>
+                <li><strong>RedisStore:</strong> Caching operations, key management, circuit breaker behavior</li>
+                <li><strong>Circuit Breaker Integration:</strong> Proper failure handling, state management, recovery behavior</li>
+              </ul>
+
+              <h4>Core Service Tests (<code>./core</code>)</h4>
+              <p>Tests for ResilientLLM with comprehensive failure scenarios:</p>
+              <pre><code>go clean -testcache && go test -v ./core</code></pre>
+              <p>These tests validate:</p>
+              <ul>
+                <li><strong>ResilientLLM:</strong> LLM request handling, response streaming, error management</li>
+                <li><strong>Circuit Breaker Protection:</strong> Service failure detection, breaker state transitions</li>
+                <li><strong>Context Propagation:</strong> Proper cancellation handling, resource cleanup</li>
+              </ul>
 
               <hr>
 
@@ -499,7 +526,7 @@ go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
               </ol>
 
               <h4>2. Testing End-to-End Broadcast & Single-Flight Protection (<code>test_single_flight</code>)</h4>
-              <p>This test validates the complete end-to-end request deduplication strategy by sending many <em>identical</em> requests simultaneously. It confirms that the <span class="popup-trigger" onclick="showPopup('single-flight')">preparation-phase single-flight</span> and the <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">streaming-phase broadcast</span> work together perfectly to handle a "thundering herd" scenario.</p>
+              <p>This test validates the complete end-to-end request deduplication strategy by sending many <em>identical</em> requests simultaneously. It confirms that the <span class="popup-trigger" onclick="showPopup('single-flight')">Preparation-Phase Single-Flight</span> and the <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">Streaming-Phase Broadcast</span> work together perfectly to handle a "thundering herd" scenario.</p>
               <ol>
                 <li>
                   <strong>(Optional but Recommended)</strong> Clear the relevant Redis cache key before testing (e.g., <code>redis-cli DEL "ai_chatbot_conv:..."</code>) to ensure you are not just hitting the cache and are testing a live LLM broadcast.
@@ -540,20 +567,21 @@ go run ./cmd/test_single_flight -n 10</code></pre>
                 <li>
                   <strong>Run the test:</strong>
                    <pre><code># This command specifically runs all tests prefixed with "TestStream"
-go test -v -run ^TestStream .</code></pre>
+go clean -testcache && go test -v -run ^TestStream .</code></pre>
                 </li>
                 <li>
                   <strong>Analyze results:</strong> Observe the test logs. A successful run will show each scenario being executed with a final <code>✅ Test Passed</code> message, confirming that the system handles all cancellation states correctly.
                 </li>
               </ol>
               <p>For a detailed narrative illustrating the critical importance of this feature, see <a href="https://miftahulmahfuzh.github.io/agentic/docs/narratives/four_pigs/" target="_blank" rel="noopener noreferrer">The Fable of the Four Pigs</a>.</p>
+
               <hr>
 
               <h4>Running Standard Tests</h4>
               <p>To run endpoint tests and stream-cancel tests:</p>
-              <pre><code>go test -v .</code></pre>
+              <pre><code>go clean -testcache && go test -v .</code></pre>
               <p>To run all tools tests:</p>
-              <pre><code>go test -v ./tools/tooltest -run TestAllTools</code></pre>
+              <pre><code>go clean -testcache && go test -v ./tools/tooltest -run TestAllTools</code></pre>
 
               <hr>
 
