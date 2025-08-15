@@ -59,35 +59,61 @@
     subgraph Client ["Client Interface"]
         UI["🌐 Web Frontend / API Client"]
     end
+
     subgraph AppServer ["⚡ Application Server (Go Gin)"]
         A["POST /chat/submit"]
         C["GET /chat/stream/:id"]
         Cancel["POST /chat/cancel/:id"]
     end
+
     subgraph AgenticCore ["🤖 Agentic Core Engine"]
         B["🧠 Chatbot Manager<br/>(Central State & Broadcast Orchestrator)"]
-        D["Request Queue"]
+        D["Request Queue<br/>(Buffered Channel)"]
+
         subgraph RequestWorkerPool ["🔄 Priority Dispatch Worker Pool"]
-            E["Request Worker"]
+            E["Request Worker<br/>(Multiple Goroutines)"]
         end
-        PreCheck["🔍 Worker Pre-Check<br/>Is there an active broadcast?"]
-        LeaderSlotCheck["🚦 Is a Leader Slot available?"]
+
+        subgraph DecisionLogic ["🎯 Cache-Based Routing Logic"]
+            CacheCheck["🔍 Cache Key Check<br/>(Generated from conversation history)"]
+            LeaderCheck["👑 Leader Slot Available?<br/>(Semaphore Gate)"]
+            FollowerCheck["🏃 Follower Slot Available?<br/>(Separate Semaphore)"]
+        end
+
         subgraph LeaderPath ["👑 Leader's Workflow (Expensive)"]
-            Prep["⚙️ Leader: Prepare & Execute<br/>(Consumes Leader & LLM Slot)"]
+            SF["🔒 Singleflight Protection<br/>(Prevent duplicate work)"]
+            Prep["⚙️ Request Preparer<br/>(History + Tools Setup)"]
+            LLMSlot["🎰 LLM Stream Slot<br/>(Rate Limited)"]
+            Stream["📺 Response Streamer<br/>(LLM + Tools Integration)"]
         end
-        Broadcast["📡 Stream Broadcast<br/>(Leader-Generated)"]
+
+        subgraph BroadcastSystem ["📡 Stream Broadcast System"]
+            Broadcaster["📻 Stream Broadcaster<br/>(Fan-out to subscribers)"]
+            LeaderSub["👑 Leader Subscription"]
+            FollowerSub["🏃 Follower Subscriptions"]
+            Immortal["⚡ Immortal Context<br/>(Upgrades when followers join)"]
+        end
+
+        subgraph RequeueLogic ["🔄 Smart Requeue Logic"]
+            Backoff["📈 Exponential Backoff<br/>(25ms-2s with jitter)"]
+            Tracker["📊 Requeue Tracker<br/>(Throttled logging)"]
+        end
+
         subgraph ToolEngine ["🛠️ Tool Engine"]
-            T_Standard["Blocking Tools<br/>(e.g., APIs, DBs)"]
-            T_Stream["Streaming Tools<br/>(e.g., RAG SSE)"]
+            T_Standard["Blocking Tools<br/>(APIs, DBs, etc.)"]
+            T_Stream["Streaming Tools<br/>(RAG SSE, etc.)"]
         end
-        Janitor["🧹 State-Aware Janitor<br/>(Resource Cleanup)"]
+
+        Janitor["🧹 State-Aware Janitor<br/>(Resource Cleanup + Tracker Cleanup)"]
     end
+
     subgraph ExtDeps ["🌍 External Dependencies"]
-        L["BE Microservices"]
-        M["ArangoDB"]
+        L["Backend Microservices"]
+        M["ArangoDB<br/>(History Storage)"]
         N["Redis Cache"]
-        P["LLM Provider"]
+        P["LLM Provider<br/>(Rate Limited)"]
     end
+
     subgraph Observability ["🔭 Observability Stack"]
         Vec["Vector"]
         Lok["Loki"]
@@ -99,37 +125,63 @@
     UI --> C
     UI --> Cancel
 
-    %% Ingestion and Gating
-    A -->|"1. Submit"| B
-    B -->|"2. Enqueue"| D
+    %% Request Ingestion
+    A -->|"1. Submit Request"| B
+    B -->|"2. Enqueue with SHA1 ID"| D
     D -->|"3. Worker Pulls"| E
-    E -->|"4. Pre-Check"| PreCheck
 
-    %% Follower Fast Lane vs. Leader Slow Lane
-    PreCheck -->|"Yes (Follower)<br/>5a. Fast Lane"| Broadcast
-    PreCheck -->|"No (Leader)<br/>5b. Slow Lane"| LeaderSlotCheck
+    %% Cache-Based Decision Making
+    E -->|"4. Generate Cache Key"| CacheCheck
+    CacheCheck -->|"5a. Cache Hit (Follower)"| FollowerCheck
+    CacheCheck -->|"5b. Cache Miss (Leader)"| LeaderCheck
 
-    %% Leader Path with Re-Queue Logic
-    LeaderSlotCheck -->|"Yes<br/>6a. Acquire Slot"| Prep
-    LeaderSlotCheck -->|"No (Slots Full)<br/>6b. Re-Queue!"| D
+    %% Follower Fast Lane
+    FollowerCheck -->|"Slot Available"| FollowerSub
+    FollowerCheck -->|"Slots Full"| Backoff
+    FollowerSub -->|"Subscribe to existing broadcast"| Broadcaster
 
-    %% Leader's Full Workflow
-    Prep -->|"7. Call Tools"| T_Standard
-    Prep -->|"7. Call Tools"| T_Stream
+    %% Leader Slow Lane
+    LeaderCheck -->|"Slot Available"| SF
+    LeaderCheck -->|"Slots Full"| Tracker
+    Tracker --> Backoff
+    Backoff -->|"Delay + Requeue"| D
+
+    %% Leader Processing Pipeline
+    SF -->|"6. Singleflight Do()"| Prep
+    Prep -->|"7. Fetch History"| M
+    Prep -->|"8. Setup Tools"| T_Standard
+    Prep -->|"8. Setup Tools"| T_Stream
     T_Standard --> L
-    T_Standard --> M
     T_Standard --> N
-    Prep -->|"7. Call LLM"| P
-    P -->|"8. Stream Chunks"| Broadcast
-    T_Stream -->|"8. Stream Chunks"| Broadcast
+    Prep -->|"9. Create Broadcaster"| Broadcaster
+    Broadcaster -->|"10. Start Broadcast Goroutine"| LLMSlot
+    LLMSlot -->|"11. Acquire LLM Slot"| Stream
+    Stream -->|"12. Call LLM"| P
+    Stream -->|"12. Call Tools"| T_Stream
 
-    %% Delivery and Cleanup
-    Broadcast -->|"9. Fan Out Stream<br/>(to Leader & Followers)"| B
-    C -->|"10a. Get Stream"| B
-    B -->|"10b. Deliver to Client"| C
-    Cancel -->|"Signal"| B
-    Janitor -->|"Monitor & Clean"| B
-    AppServer -->|"JSON Logs"| Vec
+    %% Broadcasting and Delivery
+    P -->|"13. Stream Events"| Broadcaster
+    T_Stream -->|"13. Stream Events"| Broadcaster
+    Broadcaster -->|"14. Fan Out"| LeaderSub
+    Broadcaster -->|"14. Fan Out"| FollowerSub
+    FollowerSub -->|"Signal Immortal Context"| Immortal
+    Immortal -->|"Upgrade Context"| Stream
+
+    %% Client Connection
+    C -->|"15. Get Stream"| B
+    B -->|"16. Wait for ClientConnected signal"| LeaderSub
+    LeaderSub -->|"17. Return Stream Channel"| C
+
+    %% Cancellation Logic
+    Cancel -->|"Complex cancellation logic"| B
+    B -->|"Handle Leader/Follower scenarios"| Broadcaster
+
+    %% Cleanup
+    Janitor -->|"Timeout cleanup"| B
+    Janitor -->|"Tracker cleanup"| Tracker
+
+    %% Observability
+    AppServer -->|"Structured Logs"| Vec
     Vec -->|"Forward"| Lok
     Lok -->|"Query"| Graf
 
@@ -137,22 +189,24 @@
     classDef clientStyle fill:#cce5ff,stroke:#004085
     classDef serverStyle fill:#d4edda,stroke:#155724
     classDef coreStyle fill:#fff3cd,stroke:#856404
+    classDef decisionStyle fill:#ffc107,stroke:#856404,stroke-width:2px
     classDef leaderStyle fill:#f8d7da,stroke:#721c24
+    classDef broadcastStyle fill:#cceeff,stroke:#007bff,stroke-width:2px
+    classDef requeueStyle fill:#ffebee,stroke:#c62828
     classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
     classDef extStyle fill:#e2f3e4,stroke:#28a745
     classDef janitorStyle fill:#f5c6cb,stroke:#721c24
     classDef queueStyle fill:#d6d8db,stroke:#383d41
     classDef obsStyle fill:#e0e0e0,stroke:#6c757d
-    classDef checkStyle fill:#ffc107,stroke:#856404,stroke-width:2px
-    classDef broadcastStyle fill:#cceeff,stroke:#007bff,stroke-width:2px
 
     class UI clientStyle
     class A,C,Cancel serverStyle
     class B,E coreStyle
     class D queueStyle
-    class PreCheck,LeaderSlotCheck checkStyle
-    class Prep leaderStyle
-    class Broadcast broadcastStyle
+    class CacheCheck,LeaderCheck,FollowerCheck decisionStyle
+    class SF,Prep,LLMSlot,Stream leaderStyle
+    class Broadcaster,LeaderSub,FollowerSub,Immortal broadcastStyle
+    class Backoff,Tracker requeueStyle
     class T_Standard,T_Stream toolStyle
     class L,M,N,P extStyle
     class Janitor janitorStyle
