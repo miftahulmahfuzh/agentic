@@ -169,6 +169,7 @@
           <div class="feature-card">
             <h4>🚀 Performance & Architecture</h4>
             <ul>
+                <li><span class="popup-trigger" onclick="showPopup('priority-dispatch')">Priority Dispatch</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('two-stage-pipeline')">Two-Stage Pipeline</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('concurrent-tool-execution')">Concurrent Tool Execution</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('stateful-conversation')">Stateful Conversations</span></li>
@@ -423,11 +424,11 @@ LONG_TEXT_TOOLS=analyze_stock       # Comma-separated list of tools to truncate 
 
 # --- Pipeline, Concurrency & Lifecycle Tuning ---
 # These settings dictate the performance and resilience of the system. Handle them with care.
-MAX_CONCURRENT_REQUESTS=10          # Number of workers in the fast data-prep pool. Higher = more concurrent request processing.
+MAX_CONCURRENT_LEADERS=8            # Max concurrent UNIQUE, EXPENSIVE requests (tool selection, etc).
+MAX_CONCURRENT_SUBSCRIBERS=50       # Max total active requests, including cheap followers. Higher = more concurrent users.
 MAX_CONCURRENT_LLM_STREAMS=5        # Number of workers in the slow LLM-interaction pool. Keep this low to avoid hitting API rate limits.
 HISTORY_ITEMS=3                     # Number of past conversation turns to include in the context.
-QUEUE_SIZE=100                      # Buffer size for requests between pipeline stages.
-STREAM_TOKEN_BUFFER=100             # Buffer for the final SSE stream to the client.
+QUEUE_SIZE=100                      # Buffer size for incoming requests.
 
 # --- State-Aware Janitor & Timeouts ---
 JANITOR_INTERVAL=2m                 # How often The Wolf from Pulp Fiction shows up to clean the mess.
@@ -549,8 +550,8 @@ go run ./cmd/test_single_flight -n 10</code></pre>
                 <li>
                   <strong>Analyze Server Logs:</strong> The proof of the <strong>preparation-phase</strong> single-flight is in the server logs. Look for:
                   <ul>
-                      <li>One log message saying <code>"No active broadcaster found. This request is the LEADER. Forging the Ring."</code> (the leader).</li>
-                      <li>Nine (or N-1) messages saying <code>"This request is a FOLLOWER. Joining existing broadcast."</code> (the followers).</li>
+                      <li>One log message saying <code>"This request is the LEADER"</code>.</li>
+                      <li>Nine (or N-1) messages saying <code>"This request is a FOLLOWER"</code>.</li>
                   </ul>
                 </li>
                 <li>
@@ -754,6 +755,51 @@ tuntun-go-chatbot/
         let popupContent = "";
 
         switch (type) {
+          case "priority-dispatch":
+            popupContent = `
+                        <h2>🚀 Priority Dispatch & Follower Fast-Lane</h2>
+                        <p>A standard First-In-First-Out (FIFO) queue is inefficient when followers (cheap) get stuck behind leaders (expensive) who are waiting for a resource slot. This creates a head-of-line blocking problem, nullifying the benefits of the broadcast system.</p>
+                        <p>Instead of blindly taking the next item, each worker in the pool acts as an intelligent dispatcher. It performs a cheap pre-check to see if a request in the queue can be a follower. If so, it processes it immediately, allowing it to 'jump the queue'. If the request is a leader and no leader slots are free, the worker puts it back at the end of the queue and moves on, preventing it from blocking the entire pool.</p>
+                        <p>For a detailed narrative illustrating the critical importance of this feature, see <a href="https://miftahulmahfuzh.github.io/agentic/docs/narratives/fantastic_beasts/" target="_blank" rel="noopener noreferrer">Fantastic Beasts</a>.</p>
+                        <div class="mermaid">
+graph TD
+    subgraph Queue ["Request Queue (FIFO)"]
+        direction LR
+        L_C["Leader C (Waiting)"] --> F_A["Follower A (for Bcast A)"] --> L_D["Leader D (Waiting)"]
+    end
+    subgraph ActiveBcasts ["Active Broadcasts"]
+        BcastA["Broadcast A"]
+        BcastB["Broadcast B"]
+    end
+    subgraph LeaderSlots ["Leader Slots (2/2 Full)"]
+        Slot1["Leader A (Active)"]
+        Slot2["Leader B (Active)"]
+    end
+
+    Dispatcher["🤖 Priority Dispatch Worker"]
+    Queue -->|"1. Pulls Leader C"| Dispatcher
+    Dispatcher -->|"2. No Bcast match"| CheckSlots{"🚦 Leader Slot Free?"}
+    CheckSlots -->|"3. No (Full)"| Requeue
+    Requeue -.->|"4. Re-queue Leader C"| Queue
+
+    Queue -->|"5. Pulls Follower A"| Dispatcher
+    Dispatcher -->|"6. Match Bcast A!"| FastLane[✅ Follower Fast-Lane]
+    FastLane -->|"7. Subscribe"| BcastA
+
+    style Requeue fill:#f8d7da,stroke:#721c24
+    style FastLane fill:#d4edda,stroke:#155724
+                        </div>
+                        <hr>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li><strong>Maximum Throughput:</strong> Ensures workers are always busy with achievable tasks (servicing followers) instead of waiting for blocked resources.</li>
+                            <li><strong>High Responsiveness:</strong> Followers receive their stream almost instantly, regardless of leader queue depth.</li>
+                            <li><strong>Prevents Head-of-Line Blocking:</strong> A single blocked leader cannot stall the entire system for followers.</li>
+                            <li><strong>Maintains Fairness:</strong> Waiting leaders are still processed in a FIFO order as slots become available.</li>
+                        </ul>
+                    `;
+            break;
+
           case "two-stage-pipeline":
             popupContent = `
                         <h2>🔄 Two-Stage Pipeline</h2>
