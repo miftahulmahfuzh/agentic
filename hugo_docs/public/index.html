@@ -703,7 +703,7 @@ go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
               <pre><code>
 tuntun-go-chatbot/
 ├── chatbot/                 # Core agentic logic - refactored into focused components
-│   ├── manager.go           # Main orchestration & coordination (200 lines)
+│   ├── manager.go           # Main orchestration & coordination
 │   ├── broadcast.go         # StreamBroadcaster event distribution
 │   ├── broadcast_manager.go # Broadcast lifecycle management
 │   ├── requeue_tracker.go   # Intelligent requeue tracking with exponential backoff
