@@ -66,13 +66,14 @@
     end
     subgraph AgenticCore ["🤖 Agentic Core Engine"]
         B["🧠 Chatbot Manager<br/>(Central State & Broadcast Orchestrator)"]
-        SFG["🤖 Single-Flight Gate<br/>Is request unique?"]
         D["Request Queue"]
-        subgraph RequestWorkerPool ["🔄 Unified Request Worker Pool"]
+        subgraph RequestWorkerPool ["🔄 Priority Dispatch Worker Pool"]
             E["Request Worker"]
         end
+        PreCheck["🔍 Worker Pre-Check<br/>Is there an active broadcast?"]
+        LeaderSlotCheck["🚦 Is a Leader Slot available?"]
         subgraph LeaderPath ["👑 Leader's Workflow (Expensive)"]
-            Prep["⚙️ Leader: Prepare & Execute<br/>(Acquires LLM Concurrency Slot)"]
+            Prep["⚙️ Leader: Prepare & Execute<br/>(Consumes Leader & LLM Slot)"]
         end
         Broadcast["📡 Stream Broadcast<br/>(Leader-Generated)"]
         subgraph ToolEngine ["🛠️ Tool Engine"]
@@ -92,37 +93,46 @@
         Lok["Loki"]
         Graf["Grafana"]
     end
+
     %% Flow Definitions
     UI --> A
     UI --> C
     UI --> Cancel
+
     %% Ingestion and Gating
     A -->|"1. Submit"| B
     B -->|"2. Enqueue"| D
-    D -->|"3. Process"| E
-    E -->|"4. Route to Manager"| B
-    B -->|"5. Gate Request"| SFG
-    %% Leader vs. Follower Path
-    SFG -->|"Yes (Leader)"| Prep
-    SFG -->|"No (Follower)<br/>6b. Subscribe"| Broadcast
+    D -->|"3. Worker Pulls"| E
+    E -->|"4. Pre-Check"| PreCheck
+
+    %% Follower Fast Lane vs. Leader Slow Lane
+    PreCheck -->|"Yes (Follower)<br/>5a. Fast Lane"| Broadcast
+    PreCheck -->|"No (Leader)<br/>5b. Slow Lane"| LeaderSlotCheck
+
+    %% Leader Path with Re-Queue Logic
+    LeaderSlotCheck -->|"Yes<br/>6a. Acquire Slot"| Prep
+    LeaderSlotCheck -->|"No (Slots Full)<br/>6b. Re-Queue!"| D
+
     %% Leader's Full Workflow
-    Prep -->|"6a. Call Tools"| T_Standard
-    Prep -->|"6a. Call Tools"| T_Stream
+    Prep -->|"7. Call Tools"| T_Standard
+    Prep -->|"7. Call Tools"| T_Stream
     T_Standard --> L
     T_Standard --> M
     T_Standard --> N
-    Prep -->|"6a. Call LLM"| P
-    P -->|"7a. Stream Chunks"| Broadcast
-    T_Stream -->|"7a. Stream Chunks"| Broadcast
+    Prep -->|"7. Call LLM"| P
+    P -->|"8. Stream Chunks"| Broadcast
+    T_Stream -->|"8. Stream Chunks"| Broadcast
+
     %% Delivery and Cleanup
-    Broadcast -->|"8. Fan Out Stream"| B
-    C -->|"9a. Get Stream"| B
-    B -->|"9b. Deliver to Client"| C
+    Broadcast -->|"9. Fan Out Stream<br/>(to Leader & Followers)"| B
+    C -->|"10a. Get Stream"| B
+    B -->|"10b. Deliver to Client"| C
     Cancel -->|"Signal"| B
     Janitor -->|"Monitor & Clean"| B
     AppServer -->|"JSON Logs"| Vec
     Vec -->|"Forward"| Lok
     Lok -->|"Query"| Graf
+
     %% Styling
     classDef clientStyle fill:#cce5ff,stroke:#004085
     classDef serverStyle fill:#d4edda,stroke:#155724
@@ -133,13 +143,14 @@
     classDef janitorStyle fill:#f5c6cb,stroke:#721c24
     classDef queueStyle fill:#d6d8db,stroke:#383d41
     classDef obsStyle fill:#e0e0e0,stroke:#6c757d
-    classDef gateStyle fill:#ffc107,stroke:#856404,stroke-width:2px
+    classDef checkStyle fill:#ffc107,stroke:#856404,stroke-width:2px
     classDef broadcastStyle fill:#cceeff,stroke:#007bff,stroke-width:2px
+
     class UI clientStyle
     class A,C,Cancel serverStyle
     class B,E coreStyle
     class D queueStyle
-    class SFG gateStyle
+    class PreCheck,LeaderSlotCheck checkStyle
     class Prep leaderStyle
     class Broadcast broadcastStyle
     class T_Standard,T_Stream toolStyle
