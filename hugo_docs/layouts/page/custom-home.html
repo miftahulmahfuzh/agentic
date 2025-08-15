@@ -587,6 +587,34 @@ go clean -testcache && go test -v -run ^TestStream .</code></pre>
 
               <hr>
 
+              <!-- NEW PRIORITY DISPATCH TEST SECTION -->
+              <h4>4. Testing Priority Dispatch and FIFO Integrity (<code>priority_dispatch_test.go</code>)</h4>
+              <p>This is the most advanced concurrency test, designed to rigorously validate the intelligent dispatching logic that maximizes throughput under load. It proves that the system correctly prioritizes cheap "follower" requests over expensive, blocked "leader" requests, while still maintaining fairness (FIFO) for the waiting leaders.</p>
+              <p>The test constructs a precise, high-contention scenario:</p>
+              <ol>
+                <li><strong>Saturates Leader Slots:</strong> Deliberately fills all <code>MaxConcurrentLeaders</code> slots with unique requests that are paused mid-stream, creating a bottleneck.</li>
+                <li><strong>Queues New Leaders:</strong> Submits additional unique requests that are forced to wait in the queue because no leader slots are available.</li>
+                <li><strong>Introduces Followers:</strong> Submits follower requests (which match the in-progress leaders) <em>after</em> the new leaders have been queued.</li>
+                <li><strong>Verifies Correct Behavior:</strong> The test passes only if two conditions are met:
+                    <ul>
+                        <li><strong>Follower Fast-Tracking:</strong> The follower requests must "jump the queue" and be processed immediately, bypassing the waiting leaders.</li>
+                        <li><strong>Leader FIFO Integrity:</strong> When a leader slot is freed, the test verifies that the <em>first</em> leader that was queued is the next one to be processed, proving fairness is maintained.</li>
+                    </ul>
+                </li>
+              </ol>
+              <ol>
+                <li>
+                    <strong>Run the test:</strong>
+                    <pre><code># This command specifically runs the priority dispatch test
+go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
+                </li>
+                <li>
+                    <strong>Analyze results:</strong> The detailed test output logs the exact sequence of events. A successful run with a final <code>✅ [PriorityDispatchTest] PASSED</code> message confirms the system's core scheduling and fairness guarantees are met under pressure.
+                </li>
+              </ol>
+
+              <hr>
+
               <h4>Running Standard Tests</h4>
               <p>To run endpoint tests and stream-cancel tests:</p>
               <pre><code>go clean -testcache && go test -v .</code></pre>
