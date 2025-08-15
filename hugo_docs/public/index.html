@@ -702,29 +702,36 @@ go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
               <h4>Project Structure</h4>
               <pre><code>
 tuntun-go-chatbot/
-├── chatbot/                # Core agentic logic (manager, preparer, streamer)
-├── cmd/                    # Standalone utility commands
-├── config/                 # Environment variable loading & validation
-├── core/                   # LLM model & core services initialization
-├── db/                     # Database clients (ArangoDB, Redis)
-├── frontend/               # Demo UI
-├── tools/                  # All tool definitions and implementations
-│   ├── toolbe/             # Tuntun Backend-dependent tool implementations
-│   ├── toolnonbe/          # Non-Tuntun Backend-dependent tool implementations
-│   ├── toolcore/           # Core logic for tool registration and invocation
-│   │   ├── caller.go       # Orchestrates concurrent tool execution & direct stream path
-│   │   ├── definitions.go  # Single source of truth for all tool definitions
-│   │   ├── dynamic.go      # Implementation of DynamicTool used in definitions
-│   │   └── schemas.go      # Declaration of reusable input tools schemas
-│   ├── tooltest/           # Unit and integration tests for all tools
-│   │   └── extapi/         # Standalone health checks for external APIs
-│   ├── tooltypes/          # Shared Go structs for tool arguments and responses
-│   └── toolutils/          # Reusable helper functions for tools
-├── types/                  # Core application-wide data structures
-├── .env                    # Environment variables customization
-├── go.mod                  # Go module definitions
-├── main.go                 # Application entry point and Gin server setup
-├── docker-compose.yml      # Orchestrates all services for production
+├── chatbot/                 # Core agentic logic - refactored into focused components
+│   ├── manager.go           # Main orchestration & coordination (200 lines)
+│   ├── broadcast.go         # StreamBroadcaster event distribution
+│   ├── broadcast_manager.go # Broadcast lifecycle management
+│   ├── requeue_tracker.go   # Intelligent requeue tracking with exponential backoff
+│   ├── task_executor.go     # Leader/follower execution with priority dispatch
+│   ├── cancellation.go      # Complex cancellation scenario handling
+│   └── constants.go         # Centralized configuration constants
+├── cmd/                     # Standalone utility commands
+├── config/                  # Environment variable loading & validation
+├── core/                    # LLM model & core services initialization
+├── db/                      # Database clients (ArangoDB, Redis)
+├── frontend/                # Demo UI
+├── tools/                   # All tool definitions and implementations
+│   ├── toolbe/              # Backend-dependent tool implementations
+│   ├── toolnonbe/           # Self-contained tool implementations (e.g., RAG streamer)
+│   ├── toolcore/            # Core logic for tool registration and invocation
+│   │   ├── caller.go        # Orchestrates concurrent tool execution & direct stream path
+│   │   ├── definitions.go   # Single source of truth for all tool definitions
+│   │   ├── dynamic.go       # Implementation of DynamicTool used in definitions
+│   │   └── schemas.go       # Declaration of reusable input tools schemas
+│   ├── tooltest/            # Unit and integration tests for all tools
+│   │   └── extapi/          # Standalone health checks for external APIs
+│   ├── tooltypes/           # Shared Go structs for tool arguments and responses
+│   └── toolutils/           # Reusable helper functions for tools
+├── types/                   # Core application-wide data structures
+├── .env                     # Local environment variables (uncommitted)
+├── go.mod                   # Go module definitions
+├── main.go                  # Application entry point and Gin server setup
+├── docker-compose.yml       # Orchestrates all services for production & dev
 └── README.md
               </code></pre>
               <h4>Adding a New Tool</h4>
