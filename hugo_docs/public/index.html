@@ -671,6 +671,52 @@ go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
 
               <hr>
 
+              <h4>Queue Management Testing</h4>
+              <p>The queue management system implements sophisticated eviction and requeuing logic that requires specific testing to validate FIFO integrity and eviction behavior under load.</p>
+
+              <h4>5. Testing Queue Eviction Logic (<code>requeue_eviction_test.go</code>)</h4>
+              <p>These integration tests validate the queue's behavior when full and the eviction logic when requeuing older requests.</p>
+              <p>The tests cover:</p>
+              <ul>
+                <li><strong>Simple Queue Behavior:</strong> Basic queue filling, rejection when full, and direct eviction testing</li>
+                <li><strong>FIFO Preservation:</strong> Ensures that when an older request is requeued into a full queue, the newest item is evicted while maintaining chronological order</li>
+                <li><strong>Queue State Validation:</strong> Verifies that queue status reporting accurately reflects the internal state after operations</li>
+              </ul>
+              <ol>
+                <li>
+                  <strong>Run the eviction tests:</strong>
+                  <pre><code># Run the specific queue eviction tests
+go clean -testcache && go test -v -run ^TestSimpleQueueBehavior .
+go clean -testcache && go test -v -run ^TestRequeueEvictionDirect .</code></pre>
+                </li>
+                <li>
+                  <strong>Analyze results:</strong> The tests log detailed queue states before and after operations. Successful runs demonstrate that FIFO order is preserved even when eviction occurs.
+                </li>
+              </ol>
+
+              <h4>6. Testing Queue Manager Unit Logic (<code>chatbot/queue/manager_test.go</code>)</h4>
+              <p>These unit tests validate the core queue manager functionality in isolation, testing the mathematical correctness of queue operations without external dependencies.</p>
+              <p>The tests validate:</p>
+              <ul>
+                <li><strong>Basic Operations:</strong> Enqueue, dequeue, and status reporting</li>
+                <li><strong>Capacity Management:</strong> Proper rejection when queue is full</li>
+                <li><strong>FIFO Eviction:</strong> Complex eviction scenarios with multiple requeues</li>
+                <li><strong>Chronological Insertion:</strong> Ensures requeued requests are inserted at the correct position to maintain timestamp ordering</li>
+                <li><strong>Integration Compliance:</strong> Verifies the queue manager works correctly with the complete request structure</li>
+              </ul>
+              <ol>
+                <li>
+                  <strong>Run the queue manager unit tests:</strong>
+                  <pre><code># Run all queue manager tests
+go clean -testcache && go test -v ./chatbot/queue</code></pre>
+                </li>
+                <li>
+                  <strong>Analyze results:</strong> These tests verify the mathematical correctness of queue operations. Focus on the chronological ordering validation in complex eviction scenarios.
+                </li>
+              </ol>
+
+              <hr>
+
               <h4>Running Standard Tests</h4>
               <p>To run endpoint tests and stream-cancel tests:</p>
               <pre><code>go clean -testcache && go test -v .</code></pre>
