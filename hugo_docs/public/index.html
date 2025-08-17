@@ -851,36 +851,54 @@ go clean -testcache && go test -v ./chatbot/queue</code></pre>
               <h4>Project Structure</h4>
               <pre><code>
 tuntun-go-chatbot/
-├── chatbot/                 # Core agentic logic - refactored into focused components
-│   ├── manager.go           # Main orchestration & coordination
-│   ├── broadcast.go         # StreamBroadcaster event distribution
-│   ├── broadcast_manager.go # Broadcast lifecycle management
-│   ├── requeue_tracker.go   # Intelligent requeue tracking with exponential backoff
-│   ├── task_executor.go     # Leader/follower execution with priority dispatch
-│   ├── cancellation.go      # Complex cancellation scenario handling
-│   └── constants.go         # Centralized configuration constants
-├── cmd/                     # Standalone utility commands
-├── config/                  # Environment variable loading & validation
-├── core/                    # LLM model & core services initialization
-├── db/                      # Database clients (ArangoDB, Redis)
-├── frontend/                # Demo UI
-├── tools/                   # All tool definitions and implementations
-│   ├── toolbe/              # Backend-dependent tool implementations
-│   ├── toolnonbe/           # Self-contained tool implementations (e.g., RAG streamer)
-│   ├── toolcore/            # Core logic for tool registration and invocation
-│   │   ├── caller.go        # Orchestrates concurrent tool execution & direct stream path
-│   │   ├── definitions.go   # Single source of truth for all tool definitions
-│   │   ├── dynamic.go       # Implementation of DynamicTool used in definitions
-│   │   └── schemas.go       # Declaration of reusable input tools schemas
-│   ├── tooltest/            # Unit and integration tests for all tools
-│   │   └── extapi/          # Standalone health checks for external APIs
-│   ├── tooltypes/           # Shared Go structs for tool arguments and responses
-│   └── toolutils/           # Reusable helper functions for tools
-├── types/                   # Core application-wide data structures
-├── .env                     # Local environment variables (uncommitted)
-├── go.mod                   # Go module definitions
-├── main.go                  # Application entry point and Gin server setup
-├── docker-compose.yml       # Orchestrates all services for production & dev
+├── chatbot/                       # Core chatbot logic - properly modularized
+│   ├── manager.go                 # Main orchestration & coordination
+│   ├── interfaces.go              # Interface adapters & bridge implementations
+│   ├── broadcast/                 # Broadcast subsystem
+│   │   ├── broadcaster.go         # StreamBroadcaster event distribution
+│   │   ├── manager.go             # Broadcast lifecycle management
+│   │   └── info.go                # Broadcast session information tracking
+│   ├── cache/                     # Cache fast-lane subsystem
+│   │   ├── fastlane.go            # INDEPENDENT cache processing (no semaphores)
+│   │   ├── fastlane_test.go       # Comprehensive cache fast-lane tests
+│   │   ├── adapter.go             # Manager interface adapters
+│   │   ├── keygen.go              # Cache key generation logic
+│   │   └── mock_adapter.go        # Mock implementations for testing
+│   ├── cancellation/              # Cancellation handling subsystem
+│   │   └── handler.go             # Complex cancellation scenarios (thundering herd)
+│   ├── processing/                # Request processing subsystem
+│   │   ├── executor.go            # Leader/follower task execution with priority dispatch
+│   │   ├── preparer.go            # Request preparation & expensive operations
+│   │   └── streamer.go            # LLM streaming & response generation
+│   ├── queue/                     # Queue management subsystem
+│   │   ├── manager.go             # FIFO-preserving queue with intelligent eviction
+│   │   ├── manager_test.go        # Queue operation tests
+│   │   └── requeue.go             # Smart requeue tracking with exponential backoff
+│   ├── internal/                  # Internal shared utilities
+│   │   ├── testhelpers.go         # Test utilities & mock implementations
+│   │   └── constants.go           # Centralized configuration constants
+├── tools/                         # All tool definitions and implementations
+│   ├── toolbe/                    # Backend-dependent tool implementations
+│   ├── toolnonbe/                 # Self-contained tool implementations (e.g., RAG streamer)
+│   ├── toolcore/                  # Core logic for tool registration and invocation
+│   │   ├── caller.go              # Orchestrates concurrent tool execution & direct stream path
+│   │   ├── definitions.go         # Single source of truth for all tool definitions
+│   │   ├── dynamic.go             # Implementation of DynamicTool used in definitions
+│   │   └── schemas.go             # Declaration of reusable input tools schemas
+│   ├── tooltest/                  # Unit and integration tests for all tools
+│   │   └── extapi/                # Standalone health checks for external APIs
+│   ├── tooltypes/                 # Shared Go structs for tool arguments and responses
+│   └── toolutils/                 # Reusable helper functions for tools
+├── config/                        # Environment variable loading & validation
+├── core/                          # LLM model & core services initialization
+├── db/                            # Database clients (ArangoDB, Redis)
+├── types/                         # Core application-wide data structures
+├── cmd/                           # Standalone utility commands
+├── frontend/                      # Demo UI
+├── .env                           # Local environment variables (uncommitted)
+├── go.mod                         # Go module definitions
+├── main.go                        # Application entry point & Gin server
+├── docker-compose.yml             # Service orchestration
 └── README.md
               </code></pre>
               <h4>Adding a New Tool</h4>
