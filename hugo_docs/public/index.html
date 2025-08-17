@@ -990,15 +990,15 @@ graph TD
     UserReq --> CacheCheck
     CacheCheck -->|"✅ Has Context"| FastLaneQueue
     CacheCheck -->|"❌ No Context"| NormalQueue
-    
+
     FastLaneQueue --> CW1 & CW2 & CW3
     NormalQueue --> NW1 & NW2 & NW3
-    
+
     CW1 --> Redis
     Redis -->|"Cache Hit"| StreamDirect
     Redis -->|"Cache Miss"| NormalQueue
     StreamDirect --> Client
-    
+
     NW1 --> LLM & Tools
     LLM --> StreamNormal
     Tools --> StreamNormal
@@ -1067,6 +1067,20 @@ graph TD
     style FastLane fill:#d4edda,stroke:#155724
                         </div>
                         <hr>
+                        <p><strong>Benefits:</strong></p>
+                        <ul>
+                            <li>New requests don't wait for slow LLM calls</li>
+                            <li>Higher system throughput under load</li>
+                            <li>Better resource utilization</li>
+                            <li>Prevents cascading delays</li>
+                        </ul>
+                    `;
+            break;
+
+          case "two-stage-pipeline":
+            popupContent = `
+                        <h2>🔄 Two-Stage Pipeline</h2>
+                        <p>Decouples fast data-prep workers from slow LLM-streaming workers using two independent, semaphore-limited worker pools (<code>prepare</code> -> <code>stream</code>). This prevents slow LLM API calls from blocking new incoming requests, maximizing throughput.</p>
                         <p><strong>Benefits:</strong></p>
                         <ul>
                             <li>New requests don't wait for slow LLM calls</li>
