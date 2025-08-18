@@ -50,6 +50,13 @@ h3 {
   margin: 20px 0 10px 0;
 }
 
+h4,
+h5 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 1.2em;
+}
+
 .intro {
   background: linear-gradient(135deg, #74b9ff, #0984e3);
   color: white;

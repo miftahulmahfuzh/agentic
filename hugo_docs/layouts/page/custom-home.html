@@ -493,7 +493,7 @@ TENCENT_RAG_BOT_APP_KEY=...
         </div>
       </section>
 
-<section id="usage">
+      <section id="usage">
         <div class="expandable-section">
           <div class="section-header" onclick="toggleSection(this)">
             <h3>🎯 Usage & Testing</h3>
@@ -509,91 +509,95 @@ TENCENT_RAG_BOT_APP_KEY=...
 
               <hr>
 
-              <h4>Unit Tests</h4>
-              <p>The system includes comprehensive unit tests for core services with <span class="popup-trigger" onclick="showPopup('circuit-breakers')">Circuit Breaker</span> integration and resilience testing.</p>
+              <h4>Unit & Performance Tests</h4>
+              <p>The system includes comprehensive unit tests for all core services and sub-packages. Performance benchmarks are available for critical code paths.</p>
               <p><strong>Important:</strong> Always clear the test cache before running tests to ensure fresh results:</p>
               <pre><code>go clean -testcache</code></pre>
 
-              <h4>Database Layer Tests (<code>./db</code>)</h4>
-              <p>Tests for ArangoStore and RedisStore with circuit breaker integration:</p>
-              <pre><code>go clean -testcache && go test -v ./db</code></pre>
-              <p>These tests validate:</p>
-              <ul>
-                <li><strong>ArangoStore:</strong> Chat log creation/retrieval, channel info management, context cancellation handling</li>
-                <li><strong>RedisStore:</strong> Caching operations, key management, circuit breaker behavior</li>
-                <li><strong>Circuit Breaker Integration:</strong> Proper failure handling, state management, recovery behavior</li>
-              </ul>
+              <h5>Running All Unit Tests</h5>
+              <p>To run all unit tests for the entire project (excluding integration tests):</p>
+              <pre><code>go clean -testcache && go test -v ./...</code></pre>
 
-              <h4>Core Service Tests (<code>./core</code>)</h4>
-              <p>Tests for ResilientLLM with comprehensive failure scenarios:</p>
-              <pre><code>go clean -testcache && go test -v ./core</code></pre>
-              <p>These tests validate:</p>
-              <ul>
-                <li><strong>ResilientLLM:</strong> LLM request handling, response streaming, error management</li>
-                <li><strong>Circuit Breaker Protection:</strong> Service failure detection, breaker state transitions</li>
-                <li><strong>Context Propagation:</strong> Proper cancellation handling, resource cleanup</li>
-              </ul>
+              <h5>Database & Core Service Tests</h5>
+              <p>Tests for the foundational layers, including <code>ArangoStore</code>, <code>RedisStore</code>, and <code>ResilientLLM</code>, with circuit breaker integration.</p>
+              <pre><code># Test the ./db package
+go clean -testcache && go test -v ./db
 
-              <h4>Cache Fast-Lane Tests (<code>chatbot/cache/fastlane_test.go</code>)</h4>
-              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                <strong>⚡ The cache fast-lane implements a revolutionary zero-semaphore bypass system that processes cached responses with ZERO resource contention.</strong>
-              </div>
-              <p>Unit tests for the cache fast-lane subsystem that validates complete semaphore bypass:</p>
-              <pre><code>cd chatbot/cache && go test -v ./...</code></pre>
-              <p>Key test coverage:</p>
-              <ul>
-                <li><strong>Cache Key Generation:</strong> Validates consistent key generation with/without context, history truncation, cache eligibility logic</li>
-                <li><strong>Fast-Lane Core Logic:</strong> Cache hit processing, invalid request handling, Redis failure scenarios, stream validation</li>
-                <li><strong>Streaming Performance:</strong> Complete response streaming, context cancellation, event ordering verification</li>
-                <li><strong>Benchmark Testing:</strong> Cache key generation performance, fast-lane check performance, real Redis integration benchmarks</li>
-              </ul>
-              <p><strong>Performance Benchmarks:</strong></p>
-              <pre><code># Standard benchmarks
-cd chatbot/cache && go test -bench=.
+# Test the ./core package
+go clean -testcache && go test -v ./core</code></pre>
 
-# Integration benchmark with real Redis
+              <h5>Chatbot Sub-package Tests</h5>
+              <p>Run targeted unit tests for each sub-package within the <code>chatbot</code> module to validate its specific logic in isolation.</p>
+              <pre><code># Test the broadcast system (event fan-out, history, follower management)
+go clean -testcache && go test -v ./chatbot/broadcast
+
+# Test the cache subsystem (key generation, fast-lane logic)
+go clean -testcache && go test -v ./chatbot/cache
+
+# Test the cancellation handler (leader/follower scenarios, resource cleanup)
+go clean -testcache && go test -v ./chatbot/cancellation
+
+# Test the core processing pipeline (executor, preparer, streamer)
+go clean -testcache && go test -v ./chatbot/processing
+
+# Test the queue manager (FIFO logic, requeue backoff, eviction)
+go clean -testcache && go test -v ./chatbot/queue</code></pre>
+
+              <h5>Performance Benchmarks</h5>
+              <p>Run benchmarks to measure the performance and memory allocations of critical hot-path functions.</p>
+              <pre><code># Benchmark the cache subsystem (fast-lane speed, memory usage)
+cd chatbot/cache
+go test -bench=. -benchmem -timeout=60s
+
+# Benchmark the processing subsystem (executor, preparer, streamer efficiency)
+cd chatbot/processing
+go test -bench=. -benchmem -timeout=60s
+
+# Integration benchmark with a real Redis instance
+# Ensure TEST_REDIS_URL is set in your environment
+cd chatbot/cache
 TEST_REDIS_URL="redis://:password@localhost:6379" go test -tags=integration -bench=BenchmarkCacheFastLaneCheck_Integration</code></pre>
 
               <hr>
 
-              <h4>Advanced Concurrency Testing</h4>
+              <h4>Advanced Concurrency & Integration Testing</h4>
               <p>These scripts and tests allow you to validate the system's core concurrency and resilience models under high-contention scenarios.</p>
 
-              <h4>1. Testing Cache Fast-Lane Integration (<code>cache_fastlane_integration_test.go</code>)</h4>
+              <h5>1. Testing Cache Fast-Lane Integration (<code>cache_fastlane_integration_test.go</code>)</h5>
               <div style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%); color: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                <strong>This is the CRITICAL test suite that proves cache fast-lane bypasses ALL semaphores and resource constraints.</strong>
+                <strong>⚡ This is the CRITICAL test suite that proves cache fast-lane bypasses ALL semaphores and resource constraints.</strong>
               </div>
               <pre><code># Run complete cache fast-lane integration tests
 go clean -testcache && go test -v -run TestCacheFastLane</code></pre>
               <p><strong>Critical Tests:</strong></p>
               <ul>
-                <li><strong><code>TestCacheFastLane_BasicFlow</code>:</strong> End-to-end cache population and retrieval validation</li>
-                <li><strong><code>TestCacheFastLane_BypassesSemaphores</code>:</strong> <strong>MOST IMPORTANT</strong> - Proves cache requests complete instantly even when ALL semaphores are blocked</li>
-                <li><strong><code>TestCacheFastLane_ThreeTierPriority</code>:</strong> Validates the complete three-tier system (Cache → Follower → Leader)</li>
-                <li><strong><code>TestCacheFastLane_PerformanceComparison</code>:</strong> Quantifies performance improvement (>1.5x speedup required)</li>
-                <li><strong><code>TestCacheFastLane_ConcurrentCacheHits</code>:</strong> High concurrency validation (5+ simultaneous cache requests)</li>
+                <li><strong><code>TestCacheFastLane_BasicFlow</code>:</strong> End-to-end cache population and retrieval validation.</li>
+                <li><strong><code>TestCacheFastLane_BypassesSemaphores</code>:</strong> <strong>MOST IMPORTANT</strong> - Proves cache requests complete instantly even when ALL semaphores are blocked.</li>
+                <li><strong><code>TestCacheFastLane_ThreeTierPriority</code>:</strong> Validates the complete three-tier system (Cache → Follower → Leader).</li>
+                <li><strong><code>TestCacheFastLane_PerformanceComparison</code>:</strong> Quantifies performance improvement (&gt;1.5x speedup required).</li>
+                <li><strong><code>TestCacheFastLane_ConcurrentCacheHits</code>:</strong> High concurrency validation (5+ simultaneous cache requests).</li>
               </ul>
               <p><strong>Expected Results:</strong></p>
               <ul>
-                <li>Cache responses complete in &lt;2 seconds</li>
-                <li>Cache bypasses blocked semaphores completely</li>
-                <li>Performance improvement &gt;50% vs normal processing</li>
-                <li>100% response consistency between cached and original</li>
+                <li>Cache responses complete in &lt;2 seconds.</li>
+                <li>Cache bypasses blocked semaphores completely.</li>
+                <li>Performance improvement &gt;50% vs normal processing.</li>
+                <li>100% response consistency between cached and original.</li>
               </ul>
 
-              <h4>2. Testing Manager Cache Integration (<code>cache_manager_integration_test.go</code>)</h4>
+              <h5>2. Testing Manager Cache Integration (<code>cache_manager_integration_test.go</code>)</h5>
               <p>Validates cache fast-lane integration at the manager level:</p>
               <pre><code>go clean -testcache && go test -v -run TestManagerCacheFastLane</code></pre>
               <p><strong>Integration Tests:</strong></p>
               <ul>
-                <li><strong><code>TestManagerCacheFastLane_Integration</code>:</strong> Manager routing through cache fast-lane</li>
-                <li><strong><code>TestManagerCacheFastLane_WorkerDistribution</code>:</strong> Dedicated cache workers vs normal workers</li>
-                <li><strong><code>TestManagerCacheFastLane_StateManagement</code>:</strong> Request lifecycle and cleanup</li>
-                <li><strong><code>TestManagerCacheFastLane_ErrorHandling</code>:</strong> Graceful degradation when Redis unavailable</li>
-                <li><strong><code>TestManagerCacheFastLane_StressTest</code>:</strong> 50+ concurrent cache requests (>90% success rate required)</li>
+                <li><strong><code>TestManagerCacheFastLane_Integration</code>:</strong> Manager routing through cache fast-lane.</li>
+                <li><strong><code>TestManagerCacheFastLane_WorkerDistribution</code>:</strong> Dedicated cache workers vs normal workers.</li>
+                <li><strong><code>TestManagerCacheFastLane_StateManagement</code>:</strong> Request lifecycle and cleanup.</li>
+                <li><strong><code>TestManagerCacheFastLane_ErrorHandling</code>:</strong> Graceful degradation when Redis unavailable.</li>
+                <li><strong><code>TestManagerCacheFastLane_StressTest</code>:</strong> 50+ concurrent cache requests (&gt;90% success rate required).</li>
               </ul>
 
-              <h4>3. Running Complete Cache Fast-Lane Test Suite</h4>
+              <h5>3. Running Complete Cache Fast-Lane Test Suite</h5>
               <p>Execute the comprehensive cache test script:</p>
               <pre><code>chmod +x run_cache_tests.sh
 ./run_cache_tests.sh</code></pre>
@@ -615,7 +619,7 @@ go clean -testcache && go test -v -run TestCacheFastLane</code></pre>
 ✅ Performance improvements validated
 ⚡ Cache fast-lane is ready for production!</code></pre>
 
-              <h4>4. Testing General Throughput (<code>test_concurrency</code>)</h4>
+              <h5>4. Testing General Throughput (<code>test_concurrency</code>)</h5>
               <p>This script validates that the server can handle many <em>different</em> requests in parallel, testing the capacity of the worker pools.</p>
               <ol>
                 <li>
@@ -628,43 +632,28 @@ go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
                 </li>
               </ol>
 
-              <h4>5. Testing End-to-End Broadcast & Single-Flight Protection (<code>test_single_flight</code>)</h4>
-              <p>This test validates the complete end-to-end request deduplication strategy by sending many <em>identical</em> requests simultaneously. It confirms that the <span class="popup-trigger" onclick="showPopup('single-flight')">Preparation-Phase Single-Flight</span> and the <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">Streaming-Phase Broadcast</span> work together perfectly to handle a "thundering herd" scenario.</p>
+              <h5>5. Testing Single-Flight Protection (<code>test_single_flight</code>)</h5>
+              <p>This script validates the "thundering herd" protection by sending many <em>identical</em> requests simultaneously.</p>
               <ol>
                 <li>
-                  <strong>(Optional but Recommended)</strong> Clear the relevant Redis cache key before testing (e.g., <code>redis-cli DEL "ai_chatbot_conv:..."</code>) to ensure you are not just hitting the cache and are testing a live LLM broadcast.
+                  <strong>(Optional but Recommended)</strong> Clear the relevant Redis cache key before testing to ensure you are not just hitting the cache.
                 </li>
                 <li>
                   <strong>Run the test:</strong>
-                   <pre><code># Usage: go run ./cmd/test_single_flight -n &lt;num_requests&gt;
+                  <pre><code># Usage: go run ./cmd/test_single_flight -n &lt;num_requests&gt;
 go run ./cmd/test_single_flight -n 10</code></pre>
-                </li>
-                <li>
-                  <strong>Analyze Server Logs:</strong> The proof of the <strong>preparation-phase</strong> single-flight is in the server logs. Look for:
-                  <ul>
-                      <li>One log message saying <code>"This request is the LEADER"</code>.</li>
-                      <li>Nine (or N-1) messages saying <code>"This request is a FOLLOWER"</code>.</li>
-                  </ul>
-                </li>
-                <li>
-                  <strong>Analyze Excel Results:</strong> The proof of the <strong>streaming-phase</strong> broadcast is in the generated <code>test_results/broadcast_test_r10.xlsx</code> file:
-                  <ul>
-                    <li><strong>Data Integrity:</strong> Verify that the <code>Full Response</code> column is <strong>identical</strong> for all 10 requests. This proves everyone received the same data.</li>
-                    <li><strong>Synchronized Lifetime:</strong> Check that the <code>API Call Duration (s)</code> is the same for all requests. This proves they were all tethered to a single underlying stream.</li>
-                    <li><strong>TTF Variance:</strong> Observe the slight variations in <code>Client-Side TTF (s)</code>. This is not a bug; it is <strong>proof</strong> that the "late subscriber" and "history replay" mechanisms are working, as follower clients catch up to the broadcast that has already started.</li>
-                  </ul>
+                  <strong>CRITICAL:</strong> The proof is in the <strong>server logs</strong>. Look for one "leader" request performing the full preparation, while all other "follower" requests share its result, indicated by the <code>This request is a FOLLOWER</code> log message.
                 </li>
               </ol>
 
-              <!-- CANCELLATION TEST SECTION -->
-              <h4>6. Testing End-to-End Cancellation (<code>stream_test.go</code>)</h4>
-              <p>This integration test suite rigorously validates the <span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span> resilience feature. It confirms that a request can be terminated at any point in its lifecycle and that the system reclaims resources gracefully and predictably. This is crucial for preventing resource leaks from abandoned requests.</p>
+              <h5>6. Testing End-to-End Cancellation (<code>stream_test.go</code>)</h5>
+              <p>This integration test suite rigorously validates that a request can be terminated at any point in its lifecycle and that the system reclaims resources gracefully. This is crucial for preventing resource leaks from abandoned requests.</p>
               <p>The test simulates every possible cancellation scenario:</p>
               <ul>
-                <li><strong>Happy Path:</strong> A standard request streams to completion without interruption.</li>
-                <li><strong>Pre-emptive Cancellation:</strong> A request is cancelled <strong>immediately</strong> after submission, before the client even connects to the stream. The test verifies that the server correctly returns a <code>cancelled</code> status.</li>
-                <li><strong>Mid-Stream Cancellation:</strong> The most critical test. It uses a goroutine to begin streaming, then sends a cancellation request from a parallel thread, proving that the <code>context</code> correctly terminates the in-progress work.</li>
-                <li><strong>Post-Completion Cancellation:</strong> The test waits for a stream to finish and for the server to fully close the connection. It then attempts to cancel the now-nonexistent request and verifies the server correctly returns a <code>not_found</code> status, proving proper state management and cleanup.</li>
+                <li><strong>Happy Path:</strong> A standard request is submitted and streams to completion without interruption.</li>
+                <li><strong>Pre-emptive Cancellation:</strong> A request is cancelled <em>immediately</em> after submission, before the client connects to the stream. Verifies a <code>cancelled</code> status is correctly returned.</li>
+                <li><strong>Mid-Stream Cancellation:</strong> A request is cancelled after streaming has begun, proving that the <code>context</code> is correctly propagated to terminate the in-progress LLM call.</li>
+                <li><strong>Post-Completion Cancellation:</strong> A request is cancelled after it has already finished, verifying the server correctly returns a <code>not_found</code> status, proving proper state cleanup.</li>
               </ul>
               <ol>
                 <li>
@@ -673,27 +662,18 @@ go run ./cmd/test_single_flight -n 10</code></pre>
 go clean -testcache && go test -v -run ^TestStream .</code></pre>
                 </li>
                 <li>
-                  <strong>Analyze results:</strong> Observe the test logs. A successful run will show each scenario being executed with a final <code>✅ Test Passed</code> message, confirming that the system handles all cancellation states correctly.
+                  <strong>Analyze results:</strong> Observe the test logs. A successful run will show each scenario passing, confirming that the system handles all cancellation states correctly.
                 </li>
               </ol>
-              <p>For a detailed narrative illustrating the critical importance of this feature, see <a href="https://miftahulmahfuzh.github.io/agentic/docs/narratives/four_pigs/" target="_blank" rel="noopener noreferrer">The Fable of the Four Pigs</a>.</p>
 
-              <hr>
-
-              <!-- NEW PRIORITY DISPATCH TEST SECTION -->
-              <h4>7. Testing Priority Dispatch and FIFO Integrity (<code>priority_dispatch_test.go</code>)</h4>
+              <h5>7. Testing Priority Dispatch and FIFO Integrity (<code>priority_dispatch_test.go</code>)</h5>
               <p>This is the most advanced concurrency test, designed to rigorously validate the intelligent dispatching logic that maximizes throughput under load. It proves that the system correctly prioritizes cheap "follower" requests over expensive, blocked "leader" requests, while still maintaining fairness (FIFO) for the waiting leaders.</p>
               <p>The test constructs a precise, high-contention scenario:</p>
               <ol>
                 <li><strong>Saturates Leader Slots:</strong> Deliberately fills all <code>MaxConcurrentLeaders</code> slots with unique requests that are paused mid-stream, creating a bottleneck.</li>
                 <li><strong>Queues New Leaders:</strong> Submits additional unique requests that are forced to wait in the queue because no leader slots are available.</li>
                 <li><strong>Introduces Followers:</strong> Submits follower requests (which match the in-progress leaders) <em>after</em> the new leaders have been queued.</li>
-                <li><strong>Verifies Correct Behavior:</strong> The test passes only if two conditions are met:
-                    <ul>
-                        <li><strong>Follower Fast-Tracking:</strong> The follower requests must "jump the queue" and be processed immediately, bypassing the waiting leaders.</li>
-                        <li><strong>Leader FIFO Integrity:</strong> When a leader slot is freed, the test verifies that the <em>first</em> leader that was queued is the next one to be processed, proving fairness is maintained.</li>
-                    </ul>
-                </li>
+                <li><strong>Verifies Correct Behavior:</strong> The test passes only if the follower requests "jump the queue" and the waiting leaders are processed in FIFO order.</li>
               </ol>
               <ol>
                 <li>
@@ -708,94 +688,23 @@ go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
 
               <hr>
 
-              <h4>Queue Management Testing</h4>
-              <p>The queue management system implements sophisticated eviction and requeuing logic that requires specific testing to validate FIFO integrity and eviction behavior under load.</p>
+              <h4>Other Tests</h4>
 
-              <h4>8. Testing Queue Eviction Logic (<code>requeue_eviction_test.go</code>)</h4>
-              <p>These integration tests validate the queue's behavior when full and the eviction logic when requeuing older requests.</p>
-              <p>The tests cover:</p>
-              <ul>
-                <li><strong>Simple Queue Behavior:</strong> Basic queue filling, rejection when full, and direct eviction testing</li>
-                <li><strong>FIFO Preservation:</strong> Ensures that when an older request is requeued into a full queue, the newest item is evicted while maintaining chronological order</li>
-                <li><strong>Queue State Validation:</strong> Verifies that queue status reporting accurately reflects the internal state after operations</li>
-              </ul>
-              <ol>
-                <li>
-                  <strong>Run the eviction tests:</strong>
-                  <pre><code># Run the specific queue eviction tests
-go clean -testcache && go test -v -run ^TestSimpleQueueBehavior .
-go clean -testcache && go test -v -run ^TestRequeueEvictionDirect .</code></pre>
-                </li>
-                <li>
-                  <strong>Analyze results:</strong> The tests log detailed queue states before and after operations. Successful runs demonstrate that FIFO order is preserved even when eviction occurs.
-                </li>
-              </ol>
-
-              <h4>9. Testing Queue Manager Unit Logic (<code>chatbot/queue/manager_test.go</code>)</h4>
-              <p>These unit tests validate the core queue manager functionality in isolation, testing the mathematical correctness of queue operations without external dependencies.</p>
-              <p>The tests validate:</p>
-              <ul>
-                <li><strong>Basic Operations:</strong> Enqueue, dequeue, and status reporting</li>
-                <li><strong>Capacity Management:</strong> Proper rejection when queue is full</li>
-                <li><strong>FIFO Eviction:</strong> Complex eviction scenarios with multiple requeues</li>
-                <li><strong>Chronological Insertion:</strong> Ensures requeued requests are inserted at the correct position to maintain timestamp ordering</li>
-                <li><strong>Integration Compliance:</strong> Verifies the queue manager works correctly with the complete request structure</li>
-              </ul>
-              <ol>
-                <li>
-                  <strong>Run the queue manager unit tests:</strong>
-                  <pre><code># Run all queue manager tests
-go clean -testcache && go test -v ./chatbot/queue</code></pre>
-                </li>
-                <li>
-                  <strong>Analyze results:</strong> These tests verify the mathematical correctness of queue operations. Focus on the chronological ordering validation in complex eviction scenarios.
-                </li>
-              </ol>
-
-              <hr>
-
-              <h4>Running Standard Tests</h4>
-              <p>To run endpoint tests and stream-cancel tests:</p>
+              <h5>Running Standard Tests</h5>
+              <p>To run all endpoint, broadcasting, cancellation, and priority dispatch tests together:</p>
               <pre><code>go clean -testcache && go test -v .</code></pre>
+
+              <h5>Running Tools Tests</h5>
               <p>To run all tools tests:</p>
               <pre><code>go clean -testcache && go test -v ./tools/tooltest -run TestAllTools</code></pre>
 
-              <hr>
-
-              <h4>Running Endpoint Health Checks</h4>
+              <h5>Running Endpoint Health Checks</h5>
               <p>To diagnose external API connections without running the full test suite:</p>
               <pre><code>chmod +x run_health_checks.sh
 ./run_health_checks.sh tools/tooltest/extapi/&lt;tool&gt;.go</code></pre>
-              <p>For example, for testing the valuation tool external apis:</p>
+              <p>For example, to test the valuation tool external apis:</p>
               <pre><code>./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
-              <p>All Go files inside <code>tools/tooltest/extapi</code> correlates to each tool files (inside <code>toolbe</code> and <code>toolnonbe</code> dir) and can be used for healthcheck.</p>
-
-              <hr>
-
-              <h4>Cache Fast-Lane Performance Metrics</h4>
-              <div style="background: linear-gradient(135deg, #48c9b0 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 8px; margin: 15px 0;">
-                <p><strong>The cache fast-lane system achieves the following performance characteristics:</strong></p>
-                <p><strong>Response Times:</strong></p>
-                <ul style="margin: 10px 0;">
-                  <li>Cache fast-lane: &lt;1 seconds (typically &lt;500ms)</li>
-                  <li>Normal processing: 10-20 seconds</li>
-                  <li>Performance improvement: &gt;10x faster</li>
-                </ul>
-                <p><strong>Resource Utilization:</strong></p>
-                <ul style="margin: 10px 0;">
-                  <li>Semaphore usage: 0 (bypasses ALL semaphores)</li>
-                  <li>Memory overhead: Minimal (no LLM processing)</li>
-                  <li>CPU usage: Low (Redis GET operation only)</li>
-                  <li>Concurrency: 1k+ simultaneous cache requests supported</li>
-                </ul>
-                <p><strong>Success Metrics:</strong></p>
-                <ul style="margin: 10px 0;">
-                  <li>Cache hit rate: Dependent on conversation patterns</li>
-                  <li>Success rate under load: &gt;95%</li>
-                  <li>Zero resource contention conflicts</li>
-                  <li>Perfect response consistency vs original</li>
-                </ul>
-              </div>
+              <p>All Go files inside <code>tools/tooltest/extapi</code> correlate to each tool file and can be used for healthchecks.</p>
             </div>
           </div>
         </div>
