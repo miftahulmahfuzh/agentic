@@ -722,7 +722,7 @@ go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
               <h4>Project Structure</h4>
               <pre><code>
 tuntun-go-chatbot/
-├── chatbot/                       # Core chatbot logic - properly modularized
+├── chatbot/                       # Core chatbot subsystems
 │   ├── manager.go                 # Main orchestration & coordination
 │   ├── interfaces.go              # Interface adapters & bridge implementations
 │   ├── broadcast/                 # Broadcast subsystem
@@ -731,10 +731,8 @@ tuntun-go-chatbot/
 │   │   └── info.go                # Broadcast session information tracking
 │   ├── cache/                     # Cache fast-lane subsystem
 │   │   ├── fastlane.go            # INDEPENDENT cache processing (no semaphores)
-│   │   ├── fastlane_test.go       # Comprehensive cache fast-lane tests
 │   │   ├── adapter.go             # Manager interface adapters
 │   │   ├── keygen.go              # Cache key generation logic
-│   │   └── mock_adapter.go        # Mock implementations for testing
 │   ├── cancellation/              # Cancellation handling subsystem
 │   │   └── handler.go             # Complex cancellation scenarios (thundering herd)
 │   ├── processing/                # Request processing subsystem
@@ -743,10 +741,8 @@ tuntun-go-chatbot/
 │   │   └── streamer.go            # LLM streaming & response generation
 │   ├── queue/                     # Queue management subsystem
 │   │   ├── manager.go             # FIFO-preserving queue with intelligent eviction
-│   │   ├── manager_test.go        # Queue operation tests
 │   │   └── requeue.go             # Smart requeue tracking with exponential backoff
 │   ├── internal/                  # Internal shared utilities
-│   │   ├── testhelpers.go         # Test utilities & mock implementations
 │   │   └── constants.go           # Centralized configuration constants
 ├── tools/                         # All tool definitions and implementations
 │   ├── toolbe/                    # Backend-dependent tool implementations
