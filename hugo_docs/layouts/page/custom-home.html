@@ -54,52 +54,42 @@
           <div class="section-content">
             <div class="section-inner">
               <div class="mermaid">
-  graph TD
+          graph TD
     subgraph Client ["Client Interface"]
         UI["🌐 Web Frontend / API Client"]
     end
-
     subgraph AppServer ["⚡ Application Server (Go Gin)"]
         A["POST /chat/submit"]
         C["GET /chat/stream/:id"]
         Cancel["POST /chat/cancel/:id"]
     end
-
     subgraph AgenticCore ["🤖 Agentic Core Engine"]
         B["🧠 Chatbot Manager<br/>(Central State & Orchestrator)"]
-
-        subgraph CacheFastLane ["⚡ CACHE FAST-LANE (Tier 1)"]
-            CacheWorkers["⚡ Dedicated Cache Workers<br/>(ZERO Semaphore Bypass)"]
+        subgraph CacheFastLane ["⚡ CACHE FAST-LANE (Tier 1) - ALL REQUESTS"]
+            CacheWorkers["⚡ Dedicated Cache Workers<br/>(No Semaphore Limits)"]
         end
-
         D["Request Queue<br/>(Normal Processing)"]
-
         subgraph RequestWorkerPool ["🔄 Worker Pool (Tier 2 & 3)"]
             E["Priority Dispatch Workers"]
         end
-
-        subgraph DecisionLogic ["🎯 Three-Tier Routing"]
+        subgraph DecisionLogic ["🎯 Two-Tier Routing (Post Cache-Miss)"]
             FollowerCheck["🏃 Follower Lane<br/>(Tier 2)"]
             LeaderCheck["👑 Leader Lane<br/>(Tier 3)"]
         end
-
         subgraph BroadcastSystem ["📡 Broadcast System"]
             Broadcaster["📻 Stream Broadcaster"]
             FollowerSub["🏃 Follower Subs"]
             LeaderSub["👑 Leader Sub"]
         end
-
         subgraph LeaderPath ["👑 Leader Processing"]
             SF["🔒 Singleflight"]
             Prep["⚙️ Preparer"]
             Stream["📺 Streamer"]
         end
-
         subgraph ToolEngine ["🛠️ Tool Engine"]
             Tools["Tools & LLM Calls"]
         end
     end
-
     subgraph ExtDeps ["🌍 External Dependencies"]
         Redis["Redis Cache"]
         ArangoDB["ArangoDB"]
@@ -107,16 +97,15 @@
         APIs["Backend APIs"]
     end
 
-    %% Flow Definitions - Cache Fast-Lane (Tier 1)
+    %% Flow Definitions - ALL REQUESTS through Cache Fast-Lane First
     UI --> A
-    A -->|"1. Submit Request"| B
-    B -->|"2a. Has Context?"| CacheWorkers
+    A -->|"1. Submit Request<br/>(ALL requests)"| B
+    B -->|"2. Generate Cache Key<br/>(Unified Process)"| CacheWorkers
     CacheWorkers -->|"⚡ CACHE HIT"| Redis
     Redis -->|"INSTANT Response"| C
     CacheWorkers -->|"Cache Miss"| D
 
-    %% Flow Definitions - Normal Processing (Tier 2 & 3)
-    B -->|"2b. No Context"| D
+    %% Flow Definitions - Normal Processing (Tier 2 & 3) - Only Cache Misses
     D -->|"3. Dequeue"| E
     E -->|"4a. Broadcast Available"| FollowerCheck
     E -->|"4b. Unique Request"| LeaderCheck
@@ -135,9 +124,9 @@
     Stream --> Broadcaster
     Broadcaster --> LeaderSub
 
-    %% Cache Population
+    %% Cache Population & Data Access
     Stream -->|"Cache Results"| Redis
-    Prep -->|"Fetch History"| ArangoDB
+    CacheWorkers -->|"History Fetch<br/>(if no prevContext)"| ArangoDB
 
     %% Client Connection
     UI --> C
