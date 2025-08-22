@@ -846,66 +846,66 @@ tuntun-go-chatbot/
                         <div class="mermaid">
 graph TD
     subgraph Request["Request Submission"]
-        UserReq["User Request<br/>(with conversation history)"]
+        UserReq["User Request<br/>(ALL requests)"]
     end
-
-    subgraph Routing["Smart Routing Logic"]
-        CacheCheck{"⚡ Cache Eligible?<br/>(Has previous context)"}
-        FastLaneQueue["Cache Fast-Lane Channel<br/>(Dedicated Buffer)"]
-        NormalQueue["Normal Processing Queue<br/>(Semaphore-based)"]
+    subgraph Routing["Unified Routing Logic"]
+        FastLaneQueue["Cache Fast-Lane Channel<br/>(ALL requests go here first)"]
+        NormalQueue["Normal Processing Queue<br/>(Cache misses only)"]
     end
-
     subgraph CacheWorkers["⚡ Dedicated Cache Workers"]
-        CW1["Cache Worker 1<br/>(ZERO semaphores)"]
-        CW2["Cache Worker 2<br/>(ZERO semaphores)"]
-        CW3["Cache Worker 3<br/>(ZERO semaphores)"]
+        CW1["Cache Worker 1<br/>(ZERO semaphores)<br/>Unified Cache Key Gen"]
+        CW2["Cache Worker 2<br/>(ZERO semaphores)<br/>Unified Cache Key Gen"]
+        CW3["Cache Worker 3<br/>(ZERO semaphores)<br/>Unified Cache Key Gen"]
     end
-
     subgraph NormalWorkers["🔄 Normal Worker Pool"]
         NW1["Worker 1<br/>(Semaphore-limited)"]
         NW2["Worker 2<br/>(Semaphore-limited)"]
         NW3["Worker N<br/>(Semaphore-limited)"]
     end
-
     subgraph CacheFlow["⚡ Cache Fast-Lane Flow"]
+        CacheKeyGen["Generate Cache Key<br/>(Unified Process)<br/>Fetch history if needed"]
         Redis["Redis Cache<br/>(Instant lookup)"]
         StreamDirect["Direct Stream<br/>(No LLM call)"]
         Client["Client Response<br/>(<2 seconds)"]
     end
-
     subgraph NormalFlow["🐌 Normal Processing"]
         LLM["LLM Processing<br/>(5-15 seconds)"]
         Tools["Tool Execution"]
         StreamNormal["Stream Response"]
     end
+    subgraph DataStore["Data Storage"]
+        ArangoDB["ArangoDB<br/>(History fetch)"]
+    end
 
-    %% Flow Definitions
-    UserReq --> CacheCheck
-    CacheCheck -->|"✅ Has Context"| FastLaneQueue
-    CacheCheck -->|"❌ No Context"| NormalQueue
-
+    %% Flow Definitions - ALL requests go through cache first
+    UserReq -->|"ALL requests"| FastLaneQueue
     FastLaneQueue --> CW1 & CW2 & CW3
-    NormalQueue --> NW1 & NW2 & NW3
-
-    CW1 --> Redis
+    CW1 --> CacheKeyGen
+    CacheKeyGen --> Redis
+    CacheKeyGen -.->|"If no prevContext"| ArangoDB
     Redis -->|"Cache Hit"| StreamDirect
     Redis -->|"Cache Miss"| NormalQueue
     StreamDirect --> Client
 
+    %% Normal processing for cache misses only
+    NormalQueue --> NW1 & NW2 & NW3
     NW1 --> LLM & Tools
     LLM --> StreamNormal
     Tools --> StreamNormal
+    StreamNormal -->|"Cache results"| Redis
 
     %% Styling
     classDef fastLaneStyle fill:#48c9b0,stroke:#2c3e50,stroke-width:3px
     classDef normalStyle fill:#f39c12,stroke:#e67e22,stroke-width:2px
     classDef cacheStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
     classDef slowStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef dataStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
 
-    class UserReq,CacheCheck,FastLaneQueue,CW1,CW2,CW3,Redis,StreamDirect,Client fastLaneStyle
+    class UserReq,FastLaneQueue,CW1,CW2,CW3,CacheKeyGen,Redis,StreamDirect,Client fastLaneStyle
     class NormalQueue,NW1,NW2,NW3,StreamNormal normalStyle
     class Redis,StreamDirect cacheStyle
     class LLM,Tools slowStyle
+    class ArangoDB dataStyle
                         </div>
                         <p><strong>Revolutionary Architecture:</strong></p>
                         <ul>
