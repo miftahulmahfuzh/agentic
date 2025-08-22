@@ -848,14 +848,17 @@ graph TD
     subgraph Request["Request Submission"]
         UserReq["User Request<br/>(ALL requests)"]
     end
+    subgraph Preparation["Request Preparation"]
+        CacheKeyGen["Generate Cache Key<br/>(Unified Process)<br/>Fetch history if needed"]
+    end
     subgraph Routing["Unified Routing Logic"]
         FastLaneQueue["Cache Fast-Lane Channel<br/>(ALL requests go here first)"]
         NormalQueue["Normal Processing Queue<br/>(Cache misses only)"]
     end
     subgraph CacheWorkers["⚡ Dedicated Cache Workers"]
-        CW1["Cache Worker 1<br/>(ZERO semaphores)<br/>Unified Cache Key Gen"]
-        CW2["Cache Worker 2<br/>(ZERO semaphores)<br/>Unified Cache Key Gen"]
-        CW3["Cache Worker 3<br/>(ZERO semaphores)<br/>Unified Cache Key Gen"]
+        CW1["Cache Worker 1<br/>(ZERO semaphores)"]
+        CW2["Cache Worker 2<br/>(ZERO semaphores)"]
+        CW3["Cache Worker 3<br/>(ZERO semaphores)"]
     end
     subgraph NormalWorkers["🔄 Normal Worker Pool"]
         NW1["Worker 1<br/>(Semaphore-limited)"]
@@ -863,7 +866,6 @@ graph TD
         NW3["Worker N<br/>(Semaphore-limited)"]
     end
     subgraph CacheFlow["⚡ Cache Fast-Lane Flow"]
-        CacheKeyGen["Generate Cache Key<br/>(Unified Process)<br/>Fetch history if needed"]
         Redis["Redis Cache<br/>(Instant lookup)"]
         StreamDirect["Direct Stream<br/>(No LLM call)"]
         Client["Client Response<br/>(<2 seconds)"]
@@ -877,12 +879,12 @@ graph TD
         ArangoDB["ArangoDB<br/>(History fetch)"]
     end
 
-    %% Flow Definitions - ALL requests go through cache first
-    UserReq -->|"ALL requests"| FastLaneQueue
-    FastLaneQueue --> CW1 & CW2 & CW3
-    CW1 --> CacheKeyGen
-    CacheKeyGen --> Redis
+    %% Flow Definitions - Cache key generation BEFORE queueing
+    UserReq --> CacheKeyGen
     CacheKeyGen -.->|"If no prevContext"| ArangoDB
+    CacheKeyGen --> FastLaneQueue
+    FastLaneQueue --> CW1 & CW2 & CW3
+    CW1 --> Redis
     Redis -->|"Cache Hit"| StreamDirect
     Redis -->|"Cache Miss"| NormalQueue
     StreamDirect --> Client
@@ -901,7 +903,7 @@ graph TD
     classDef slowStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
     classDef dataStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
 
-    class UserReq,FastLaneQueue,CW1,CW2,CW3,CacheKeyGen,Redis,StreamDirect,Client fastLaneStyle
+    class UserReq,CacheKeyGen,FastLaneQueue,CW1,CW2,CW3,Redis,StreamDirect,Client fastLaneStyle
     class NormalQueue,NW1,NW2,NW3,StreamNormal normalStyle
     class Redis,StreamDirect cacheStyle
     class LLM,Tools slowStyle
