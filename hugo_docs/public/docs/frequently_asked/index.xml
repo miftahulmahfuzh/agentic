@@ -6,7 +6,131 @@
         <description>Recent content in Frequently Asked on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Wed, 06 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 28 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Semaphore Q&amp;A Part 1</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/semaphore_qa_1/</link>
+        <pubDate>Thu, 28 Aug 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/semaphore_qa_1/</guid>
+        <description>&lt;h3 id=&#34;questions&#34;&gt;Questions
+&lt;/h3&gt;&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Which specific semaphores, or other concurrency limiters, are responsible for governing the parallelism of the following distinct processing stages: cache fast-lane, leader preparation, follower subscription, and LLM streaming?&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Is the semaphore governing the preparation stage (i.e., the leader semaphore) released before the streaming stage begins? This decoupling is critical to ensure that long-running streaming operations do not block new requests from entering the preparation phase.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Does the leader semaphore&amp;rsquo;s scope extend through both the preparation and streaming stages for a given request? To illustrate, if Leader1 completes its preparation, can a queued request (Leader11) immediately acquire that leader slot and begin its own preparation, or must it wait until Leader1 has also completed its entire streaming process?&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;answers&#34;&gt;Answers
+&lt;/h3&gt;&lt;p&gt;Excellent questions. You&amp;rsquo;ve pinpointed the exact architectural decoupling that a high-throughput system like this needs. Let&amp;rsquo;s break down the concurrency model based on the provided code.&lt;/p&gt;
+&lt;p&gt;Your worry is completely justified, and the good news is that the code is designed precisely to address it. A single query &lt;strong&gt;does not&lt;/strong&gt; hold all three semaphores simultaneously. The resource acquisition is sequential and decoupled.&lt;/p&gt;
+&lt;h3 id=&#34;1-what-semaphore-limits-each-stage&#34;&gt;1. What semaphore limits each stage?
+&lt;/h3&gt;&lt;p&gt;Let&amp;rsquo;s map each parallel stage to its specific resource limiter:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Stage / Task Type&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Limiter (Semaphore)&lt;/th&gt;
+&lt;th style=&#34;text-align:left&#34;&gt;Code Evidence&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Cache Fast-Lane&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;None (Dedicated Worker Pool)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;chatbot/manager.go&lt;/code&gt;: The manager creates a pool of &lt;code&gt;cacheWorker&lt;/code&gt; goroutines (&lt;code&gt;m.cacheWorkerPool&lt;/code&gt;). These workers read directly from &lt;code&gt;m.cacheRequestChan&lt;/code&gt;. They do &lt;strong&gt;not&lt;/strong&gt; acquire &lt;code&gt;leaderSemaphore&lt;/code&gt;, &lt;code&gt;followerSemaphore&lt;/code&gt;, or &lt;code&gt;llmStreamSemaphore&lt;/code&gt;. Their throughput is limited only by the number of workers (&lt;code&gt;cfg.TotalCacheWorkers&lt;/code&gt;) and the speed of Redis. This is why it&amp;rsquo;s a &amp;ldquo;fast-lane&amp;rdquo;—it bypasses all the main system semaphores.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Leader (Preparation)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;leaderSemaphore&lt;/code&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;chatbot/manager.go&lt;/code&gt;, &lt;code&gt;processWithSemaphores()&lt;/code&gt;: The code checks &lt;code&gt;case m.leaderSemaphore &amp;lt;- struct{}{}&lt;/code&gt;. This is where a request acquires a &amp;ldquo;leader slot&amp;rdquo; to perform the expensive preparation.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;Follower (Subscription)&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;followerSemaphore&lt;/code&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;chatbot/manager.go&lt;/code&gt;, &lt;code&gt;processWithSemaphores()&lt;/code&gt;: If a broadcast already exists (&lt;code&gt;isFollower&lt;/code&gt;), the code acquires from &lt;code&gt;m.followerSemaphore&lt;/code&gt; to perform the cheap task of subscribing to an existing broadcast.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;strong&gt;LLM Streaming&lt;/strong&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;llmStreamSemaphore&lt;/code&gt;&lt;/td&gt;
+&lt;td style=&#34;text-align:left&#34;&gt;&lt;code&gt;broadcast/manager.go&lt;/code&gt;, &lt;code&gt;InitiateAndManageBroadcast()&lt;/code&gt;: &lt;strong&gt;After&lt;/strong&gt; the leader has finished preparation and the client has connected, this function acquires a slot from &lt;code&gt;llmSemaphore &amp;lt;- struct{}{}&lt;/code&gt;. This is the only place where the system limits concurrent calls to the actual LLM.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;strong&gt;Summary Table:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Cache Fast-Lane&lt;/strong&gt;: Limited by &lt;code&gt;TotalCacheWorkers&lt;/code&gt; config. &lt;strong&gt;No semaphore&lt;/strong&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Preparation Stage (Leader)&lt;/strong&gt;: Limited by &lt;code&gt;leaderSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Streaming Stage (LLM Call)&lt;/strong&gt;: Limited by &lt;code&gt;llmStreamSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Follower Subscription&lt;/strong&gt;: Limited by &lt;code&gt;followerSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;2-when-we-start-streaming-is-the-preparation-stage-semaphore-released&#34;&gt;2. When we start streaming, is the preparation stage semaphore released?
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;Yes, absolutely.&lt;/strong&gt; This is the critical decoupling you&amp;rsquo;re asking about.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s trace the lifecycle of a Leader request to see this in action:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Acquire Leader Slot:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;In &lt;code&gt;manager.go&lt;/code&gt; -&amp;gt; &lt;code&gt;processWithSemaphores&lt;/code&gt;, the request blocks until it can acquire a &lt;code&gt;leaderSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It then calls &lt;code&gt;m.taskExecutor.ExecuteLeaderTaskWithCacheData&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Execute Preparation:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;In &lt;code&gt;processing/executor.go&lt;/code&gt; -&amp;gt; &lt;code&gt;ExecuteLeaderTaskWithCacheData&lt;/code&gt;, the expensive preparation is done inside a &lt;code&gt;singleflight.Group.Do&lt;/code&gt; call.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;preparer.PrepareWithCacheKeyData&lt;/code&gt; function is called, which can take time (tool selection, etc.).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Release Leader Slot:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Crucially, inside the &lt;code&gt;singleflight.Group.Do&lt;/code&gt; function, there is a &lt;code&gt;defer e.releaseLeaderSemaphore()&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;This means as soon as the &lt;code&gt;singleflight&lt;/code&gt; function block finishes—which happens right after preparation is done and the broadcast has been initiated—the &lt;code&gt;leaderSemaphore&lt;/code&gt; is &lt;strong&gt;released&lt;/strong&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Acquire LLM Stream Slot:&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The &lt;code&gt;InitiateAndManageBroadcast&lt;/code&gt; goroutine is now running independently.&lt;/li&gt;
+&lt;li&gt;Inside &lt;code&gt;broadcast/manager.go&lt;/code&gt;, &lt;em&gt;after&lt;/em&gt; the client connects, it acquires the &lt;code&gt;llmStreamSemaphore&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;The streaming from the LLM begins.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;The key takeaway is that the &lt;code&gt;leaderSemaphore&lt;/code&gt; is held only during the preparation phase. The &lt;code&gt;llmStreamSemaphore&lt;/code&gt; is held only during the streaming phase. They are never held at the same time by the same request.&lt;/strong&gt; This prevents a long-running stream from blocking new requests that are waiting to be prepared.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3 id=&#34;3-does-the-leader-semaphore-hold-both-preparation-and-streaming-slots-the-leader1-vs-leader11-question&#34;&gt;3. Does the leader semaphore hold both preparation and streaming slots? (The Leader1 vs. Leader11 question)
+&lt;/h3&gt;&lt;p&gt;&lt;strong&gt;No, it does not.&lt;/strong&gt; Your ideal scenario is exactly how the system is designed.&lt;/p&gt;
+&lt;p&gt;Let&amp;rsquo;s walk through your &lt;code&gt;Leader1&lt;/code&gt; vs. &lt;code&gt;Leader11&lt;/code&gt; scenario:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Initial State:&lt;/strong&gt; &lt;code&gt;MaxConcurrentLeaders&lt;/code&gt; is 10. &lt;code&gt;Leader1&lt;/code&gt; through &lt;code&gt;Leader8&lt;/code&gt; are in the queue. &lt;code&gt;Leader9&lt;/code&gt; is waiting. The &lt;code&gt;leaderSemaphore&lt;/code&gt; has 2 slots available.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Leader1 Starts Preparation:&lt;/strong&gt; &lt;code&gt;Leader1&lt;/code&gt; dequeues, acquires a &lt;code&gt;leaderSemaphore&lt;/code&gt; slot (9 slots now used). It begins its &lt;code&gt;doExpensivePreparation&lt;/code&gt; work, which takes 2 seconds.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Leader9 Starts Preparation:&lt;/strong&gt; Almost simultaneously, &lt;code&gt;Leader9&lt;/code&gt; dequeues, acquires the last &lt;code&gt;leaderSemaphore&lt;/code&gt; slot (10 slots now used). It also begins preparation. Now all leader slots are full. Any new leader request will block.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Leader1 Finishes Preparation:&lt;/strong&gt; After 2 seconds, &lt;code&gt;Leader1&lt;/code&gt;&amp;rsquo;s preparation is complete. The &lt;code&gt;defer e.releaseLeaderSemaphore()&lt;/code&gt; in &lt;code&gt;executor.go&lt;/code&gt; executes. &lt;strong&gt;The &lt;code&gt;leaderSemaphore&lt;/code&gt; is released.&lt;/strong&gt; (9 slots are now used).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;A New Leader (Leader11) Can Start:&lt;/strong&gt; A new request, &lt;code&gt;Leader11&lt;/code&gt;, which was waiting, can now acquire the freed &lt;code&gt;leaderSemaphore&lt;/code&gt; slot and &lt;strong&gt;begin its own preparation stage&lt;/strong&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Leader1 Enters Streaming Phase:&lt;/strong&gt; Meanwhile, &lt;code&gt;Leader1&lt;/code&gt; is now in the &lt;code&gt;InitiateAndManageBroadcast&lt;/code&gt; phase. It&amp;rsquo;s waiting for its client to connect. Once connected, it will try to acquire an &lt;code&gt;llmStreamSemaphore&lt;/code&gt; slot. &lt;strong&gt;Its progress is now completely independent of the &lt;code&gt;leaderSemaphore&lt;/code&gt;.&lt;/strong&gt; It does not block &lt;code&gt;Leader11&lt;/code&gt; from starting preparation.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;&lt;strong&gt;Conclusion:&lt;/strong&gt; &lt;code&gt;Leader11&lt;/code&gt; does &lt;strong&gt;not&lt;/strong&gt; have to wait for &lt;code&gt;Leader1&lt;/code&gt; to finish streaming. It only has to wait for &lt;code&gt;Leader1&lt;/code&gt; to finish &lt;em&gt;preparation&lt;/em&gt;. This architecture maximizes the utilization of preparation workers, ensuring they are always busy with the next task and not stalled by downstream streaming processes.&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>RAG Stream Q&amp;A Part 1</title>
         <link>http://localhost:1313/agentic/docs/frequently_asked/rag_qa_1/</link>
         <pubDate>Wed, 06 Aug 2025 00:00:00 +0000</pubDate>

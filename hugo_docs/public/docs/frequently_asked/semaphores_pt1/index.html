@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="Questions Which specific semaphores, or other concurrency limiters, are responsible for governing the parallelism of the following distinct processing stages: cache fast-lane, leader preparation, follower subscription, and LLM streaming? Is the semaphore governing the preparation stage (i.e., the leader semaphore) released before the streaming stage begins? This decoupling is critical to ensure that long-running streaming operations do not block new requests from entering the preparation phase. Does the leader semaphore&rsquo;s scope extend through both the preparation and streaming stages for a given request?">
+<title>Semaphore Q&amp;A Part 1</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/frequently_asked/semaphores_pt1/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Semaphore Q&A Part 1">
+<meta property='og:description' content="Questions Which specific semaphores, or other concurrency limiters, are responsible for governing the parallelism of the following distinct processing stages: cache fast-lane, leader preparation, follower subscription, and LLM streaming? Is the semaphore governing the preparation stage (i.e., the leader semaphore) released before the streaming stage begins? This decoupling is critical to ensure that long-running streaming operations do not block new requests from entering the preparation phase. Does the leader semaphore&rsquo;s scope extend through both the preparation and streaming stages for a given request?">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/frequently_asked/semaphores_pt1/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-08-28T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-08-28T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Semaphore Q&A Part 1">
+<meta name="twitter:description" content="Questions Which specific semaphores, or other concurrency limiters, are responsible for governing the parallelism of the following distinct processing stages: cache fast-lane, leader preparation, follower subscription, and LLM streaming? Is the semaphore governing the preparation stage (i.e., the leader semaphore) released before the streaming stage begins? This decoupling is critical to ensure that long-running streaming operations do not block new requests from entering the preparation phase. Does the leader semaphore&rsquo;s scope extend through both the preparation and streaming stages for a given request?">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/frequently_asked/semaphores_pt1/">Semaphore Q&amp;A Part 1</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Aug 28, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    4 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h3 id="questions">Questions
+</h3><ol>
+<li>
+<p>Which specific semaphores, or other concurrency limiters, are responsible for governing the parallelism of the following distinct processing stages: cache fast-lane, leader preparation, follower subscription, and LLM streaming?</p>
+</li>
+<li>
+<p>Is the semaphore governing the preparation stage (i.e., the leader semaphore) released before the streaming stage begins? This decoupling is critical to ensure that long-running streaming operations do not block new requests from entering the preparation phase.</p>
+</li>
+<li>
+<p>Does the leader semaphore&rsquo;s scope extend through both the preparation and streaming stages for a given request? To illustrate, if Leader1 completes its preparation, can a queued request (Leader11) immediately acquire that leader slot and begin its own preparation, or must it wait until Leader1 has also completed its entire streaming process?</p>
+</li>
+</ol>
+<h3 id="answers">Answers
+</h3><p>Excellent questions. You&rsquo;ve pinpointed the exact architectural decoupling that a high-throughput system like this needs. Let&rsquo;s break down the concurrency model based on the provided code.</p>
+<p>Your worry is completely justified, and the good news is that the code is designed precisely to address it. A single query <strong>does not</strong> hold all three semaphores simultaneously. The resource acquisition is sequential and decoupled.</p>
+<hr>
+<h3 id="1-what-semaphore-limits-each-stage">1. What semaphore limits each stage?
+</h3><p>Let&rsquo;s map each parallel stage to its specific resource limiter:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th style="text-align:left">Stage / Task Type</th>
+<th style="text-align:left">Limiter (Semaphore)</th>
+<th style="text-align:left">Code Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Cache Fast-Lane</strong></td>
+<td style="text-align:left"><strong>None (Dedicated Worker Pool)</strong></td>
+<td style="text-align:left"><code>chatbot/manager.go</code>: The manager creates a pool of <code>cacheWorker</code> goroutines (<code>m.cacheWorkerPool</code>). These workers read directly from <code>m.cacheRequestChan</code>. They do <strong>not</strong> acquire <code>leaderSemaphore</code>, <code>followerSemaphore</code>, or <code>llmStreamSemaphore</code>. Their throughput is limited only by the number of workers (<code>cfg.TotalCacheWorkers</code>) and the speed of Redis. This is why it&rsquo;s a &ldquo;fast-lane&rdquo;—it bypasses all the main system semaphores.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Leader (Preparation)</strong></td>
+<td style="text-align:left"><code>leaderSemaphore</code></td>
+<td style="text-align:left"><code>chatbot/manager.go</code>, <code>processWithSemaphores()</code>: The code checks <code>case m.leaderSemaphore &lt;- struct{}{}</code>. This is where a request acquires a &ldquo;leader slot&rdquo; to perform the expensive preparation.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Follower (Subscription)</strong></td>
+<td style="text-align:left"><code>followerSemaphore</code></td>
+<td style="text-align:left"><code>chatbot/manager.go</code>, <code>processWithSemaphores()</code>: If a broadcast already exists (<code>isFollower</code>), the code acquires from <code>m.followerSemaphore</code> to perform the cheap task of subscribing to an existing broadcast.</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>LLM Streaming</strong></td>
+<td style="text-align:left"><code>llmStreamSemaphore</code></td>
+<td style="text-align:left"><code>broadcast/manager.go</code>, <code>InitiateAndManageBroadcast()</code>: <strong>After</strong> the leader has finished preparation and the client has connected, this function acquires a slot from <code>llmSemaphore &lt;- struct{}{}</code>. This is the only place where the system limits concurrent calls to the actual LLM.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Summary Table:</strong></p>
+<ul>
+<li><strong>Cache Fast-Lane</strong>: Limited by <code>TotalCacheWorkers</code> config. <strong>No semaphore</strong>.</li>
+<li><strong>Preparation Stage (Leader)</strong>: Limited by <code>leaderSemaphore</code>.</li>
+<li><strong>Streaming Stage (LLM Call)</strong>: Limited by <code>llmStreamSemaphore</code>.</li>
+<li><strong>Follower Subscription</strong>: Limited by <code>followerSemaphore</code>.</li>
+</ul>
+<hr>
+<h3 id="2-when-we-start-streaming-is-the-preparation-stage-semaphore-released">2. When we start streaming, is the preparation stage semaphore released?
+</h3><p><strong>Yes, absolutely.</strong> This is the critical decoupling you&rsquo;re asking about.</p>
+<p>Let&rsquo;s trace the lifecycle of a Leader request to see this in action:</p>
+<ol>
+<li>
+<p><strong>Acquire Leader Slot:</strong></p>
+<ul>
+<li>In <code>manager.go</code> -&gt; <code>processWithSemaphores</code>, the request blocks until it can acquire a <code>leaderSemaphore</code>.</li>
+<li>It then calls <code>m.taskExecutor.ExecuteLeaderTaskWithCacheData</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Execute Preparation:</strong></p>
+<ul>
+<li>In <code>processing/executor.go</code> -&gt; <code>ExecuteLeaderTaskWithCacheData</code>, the expensive preparation is done inside a <code>singleflight.Group.Do</code> call.</li>
+<li>The <code>preparer.PrepareWithCacheKeyData</code> function is called, which can take time (tool selection, etc.).</li>
+</ul>
+</li>
+<li>
+<p><strong>Release Leader Slot:</strong></p>
+<ul>
+<li>Crucially, inside the <code>singleflight.Group.Do</code> function, there is a <code>defer e.releaseLeaderSemaphore()</code>.</li>
+<li>This means as soon as the <code>singleflight</code> function block finishes—which happens right after preparation is done and the broadcast has been initiated—the <code>leaderSemaphore</code> is <strong>released</strong>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Acquire LLM Stream Slot:</strong></p>
+<ul>
+<li>The <code>InitiateAndManageBroadcast</code> goroutine is now running independently.</li>
+<li>Inside <code>broadcast/manager.go</code>, <em>after</em> the client connects, it acquires the <code>llmStreamSemaphore</code>.</li>
+<li>The streaming from the LLM begins.</li>
+</ul>
+</li>
+</ol>
+<p><strong>The key takeaway is that the <code>leaderSemaphore</code> is held only during the preparation phase. The <code>llmStreamSemaphore</code> is held only during the streaming phase. They are never held at the same time by the same request.</strong> This prevents a long-running stream from blocking new requests that are waiting to be prepared.</p>
+<hr>
+<h3 id="3-does-the-leader-semaphore-hold-both-preparation-and-streaming-slots-the-leader1-vs-leader11-question">3. Does the leader semaphore hold both preparation and streaming slots? (The Leader1 vs. Leader11 question)
+</h3><p><strong>No, it does not.</strong> Your ideal scenario is exactly how the system is designed.</p>
+<p>Let&rsquo;s walk through your <code>Leader1</code> vs. <code>Leader11</code> scenario:</p>
+<ol>
+<li>
+<p><strong>Initial State:</strong> <code>MaxConcurrentLeaders</code> is 10. <code>Leader1</code> through <code>Leader8</code> are in the queue. <code>Leader9</code> is waiting. The <code>leaderSemaphore</code> has 2 slots available.</p>
+</li>
+<li>
+<p><strong>Leader1 Starts Preparation:</strong> <code>Leader1</code> dequeues, acquires a <code>leaderSemaphore</code> slot (9 slots now used). It begins its <code>doExpensivePreparation</code> work, which takes 2 seconds.</p>
+</li>
+<li>
+<p><strong>Leader9 Starts Preparation:</strong> Almost simultaneously, <code>Leader9</code> dequeues, acquires the last <code>leaderSemaphore</code> slot (10 slots now used). It also begins preparation. Now all leader slots are full. Any new leader request will block.</p>
+</li>
+<li>
+<p><strong>Leader1 Finishes Preparation:</strong> After 2 seconds, <code>Leader1</code>&rsquo;s preparation is complete. The <code>defer e.releaseLeaderSemaphore()</code> in <code>executor.go</code> executes. <strong>The <code>leaderSemaphore</code> is released.</strong> (9 slots are now used).</p>
+</li>
+<li>
+<p><strong>A New Leader (Leader11) Can Start:</strong> A new request, <code>Leader11</code>, which was waiting, can now acquire the freed <code>leaderSemaphore</code> slot and <strong>begin its own preparation stage</strong>.</p>
+</li>
+<li>
+<p><strong>Leader1 Enters Streaming Phase:</strong> Meanwhile, <code>Leader1</code> is now in the <code>InitiateAndManageBroadcast</code> phase. It&rsquo;s waiting for its client to connect. Once connected, it will try to acquire an <code>llmStreamSemaphore</code> slot. <strong>Its progress is now completely independent of the <code>leaderSemaphore</code>.</strong> It does not block <code>Leader11</code> from starting preparation.</p>
+</li>
+</ol>
+<p><strong>Conclusion:</strong> <code>Leader11</code> does <strong>not</strong> have to wait for <code>Leader1</code> to finish streaming. It only has to wait for <code>Leader1</code> to finish <em>preparation</em>. This architecture maximizes the utilization of preparation workers, ensuring they are always busy with the next task and not stalled by downstream streaming processes.</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
