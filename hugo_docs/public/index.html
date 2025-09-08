@@ -518,7 +518,10 @@ go clean -testcache && go test -v ./core</code></pre>
 
               <h5>Chatbot Sub-package Tests</h5>
               <p>Run targeted unit tests for each sub-package within the <code>chatbot</code> module to validate its specific logic in isolation.</p>
-              <pre><code># Test the broadcast system (event fan-out, history, follower management)
+              <pre><code># Test chatbot core logic and cache optimization that promotes queued requests to the cache fast-lane.
+go clean -testcache && go test -v -run ./chatbot
+
+# Test the broadcast system (event fan-out, history, follower management)
 go clean -testcache && go test -v ./chatbot/broadcast
 
 # Test the cache subsystem (key generation, fast-lane logic)
@@ -527,7 +530,7 @@ go clean -testcache && go test -v ./chatbot/cache
 # Test the cancellation handler (leader/follower scenarios, resource cleanup)
 go clean -testcache && go test -v ./chatbot/cancellation
 
-# Test the core processing pipeline (executor, preparer, streamer)
+# Test the processing pipeline (executor, preparer, streamer)
 go clean -testcache && go test -v ./chatbot/processing
 
 # Test the queue manager (FIFO logic, requeue backoff, eviction)
@@ -535,13 +538,23 @@ go clean -testcache && go test -v ./chatbot/queue</code></pre>
 
               <h5>Performance Benchmarks</h5>
               <p>Run benchmarks to measure the performance and memory allocations of critical hot-path functions.</p>
-              <pre><code># Benchmark the cache subsystem (fast-lane speed, memory usage)
-cd chatbot/cache
-go test -bench=. -benchmem -timeout=60s
+              <pre><code># Benchmark chatbot core logic (cache notifications, request tracking, and history processing)
+go test -bench=. -benchmem ./chatbot
+
+# Benchmark the broadcast subsystem (event fan-out, follower management, stream lifecycle)
+go test -bench=. -benchmem ./chatbot/broadcast
+
+# Benchmark the cache subsystem (fast-lane speed, memory usage)
+go test -bench=. -benchmem ./chatbot/cache
+
+# Benchmark the cancellation subsystem (leader/follower scenarios, resource cleanup)
+go test -bench=. -benchmem ./chatbot/cancellation
 
 # Benchmark the processing subsystem (executor, preparer, streamer efficiency)
-cd chatbot/processing
-go test -bench=. -benchmem -timeout=60s
+go test -bench=. -benchmem ./chatbot/processing
+
+# Benchmark the queue subsystem (FIFO logic, requeue backoff, eviction)
+go test -bench=. -benchmem ./chatbot/queue
 
 # Integration benchmark with a real Redis instance
 # Ensure TEST_REDIS_URL is set in your environment
@@ -656,14 +669,39 @@ go clean -testcache && go test -v -run ^TestStream .</code></pre>
                 </li>
               </ol>
 
-              <h5>7. Testing Priority Dispatch and FIFO Integrity (<code>priority_dispatch_test.go</code>)</h5>
+              <h5>7. Testing Real-Time Request Status (<code>get_status_test.go</code>)</h5>
+              <p>This integration test suite validates the reliability and accuracy of the new <code>GET /chat/status/:request_id</code> endpoint, which is essential for providing real-time feedback to the user.</p>
+              <p><strong>Key Validations:</strong></p>
+              <ul>
+                  <li><strong>Active States:</strong> Verifies correct status reporting for requests that are <code>queued</code>, <code>choosing_tools</code>, <code>calling_tools</code>, and <code>formulating_answer</code>.</li>
+                  <li><strong>Database Fallback:</strong> Confirms that the status for <code>completed</code> and <code>cancelled</code> requests can be retrieved from the database after they are no longer in active memory.</li>
+                  <li><strong>Progress Tracking:</strong> Ensures the detailed <code>progress</code> object (completion ratio, selected tools, etc.) is accurately reported throughout the lifecycle.</li>
+                  <li><strong>Error Handling:</strong> Checks for correct <code>404 Not Found</code> responses for non-existent requests.</li>
+              </ul>
+              <ol>
+                  <li>
+                      <strong>Run the test:</strong>
+                      <pre><code># This command specifically runs all tests prefixed with "TestStatusEndpoint"
+go clean -testcache && go test -v -run ^TestStatusEndpoint .</code></pre>
+                  </li>
+                  <li>
+                      <strong>Analyze results:</strong> A successful run confirms that the status endpoint provides a reliable and complete view of a request's journey from submission to completion.
+                  </li>
+              </ol>
+
+              <h5>8. Testing Priority Dispatch and FIFO Integrity (<code>priority_dispatch_test.go</code>)</h5>
               <p>This is the most advanced concurrency test, designed to rigorously validate the intelligent dispatching logic that maximizes throughput under load. It proves that the system correctly prioritizes cheap "follower" requests over expensive, blocked "leader" requests, while still maintaining fairness (FIFO) for the waiting leaders.</p>
               <p>The test constructs a precise, high-contention scenario:</p>
               <ol>
                 <li><strong>Saturates Leader Slots:</strong> Deliberately fills all <code>MaxConcurrentLeaders</code> slots with unique requests that are paused mid-stream, creating a bottleneck.</li>
                 <li><strong>Queues New Leaders:</strong> Submits additional unique requests that are forced to wait in the queue because no leader slots are available.</li>
                 <li><strong>Introduces Followers:</strong> Submits follower requests (which match the in-progress leaders) <em>after</em> the new leaders have been queued.</li>
-                <li><strong>Verifies Correct Behavior:</strong> The test passes only if the follower requests "jump the queue" and the waiting leaders are processed in FIFO order.</li>
+                <li><strong>Verifies Correct Behavior:</strong> The test passes only if two conditions are met:
+                    <ul>
+                        <li><strong>Follower Fast-Tracking:</strong> The follower requests must "jump the queue" and be processed immediately, bypassing the waiting leaders.</li>
+                        <li><strong>Leader FIFO Integrity:</strong> When a leader slot is freed, the test verifies that the <em>first</em> leader that was queued (<code>LeaderC</code>) is the next one to be processed, not any others that were submitted later, proving fairness is maintained.</li>
+                    </ul>
+                </li>
               </ol>
               <ol>
                 <li>
@@ -672,8 +710,54 @@ go clean -testcache && go test -v -run ^TestStream .</code></pre>
 go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
                 </li>
                 <li>
-                    <strong>Analyze results:</strong> The detailed test output logs the exact sequence of events. A successful run with a final <code>✅ [PriorityDispatchTest] PASSED</code> message confirms the system's core scheduling and fairness guarantees are met under pressure.
+                    <strong>Analyze results:</strong> The detailed test output logs the exact sequence of events. A successful run with a <code>✅ [PriorityDispatchTest] PASSED</code> message confirms the system's core scheduling and fairness guarantees are met under pressure.
                 </li>
+              </ol>
+
+              <hr>
+
+              <h4>Queue Management Testing</h4>
+              <p>The queue management system implements sophisticated eviction and requeuing logic that requires specific testing to validate FIFO integrity and eviction behavior under load.</p>
+
+              <h5>9. Testing Queue Eviction Logic (<code>requeue_eviction_test.go</code>)</h5>
+              <p>These integration tests validate the queue's behavior when full and the eviction logic when requeuing older requests.</p>
+              <p>The tests cover:</p>
+              <ul>
+                  <li><strong>Simple Queue Behavior:</strong> Basic queue filling, rejection when full, and direct eviction testing</li>
+                  <li><strong>FIFO Preservation:</strong> Ensures that when an older request is requeued into a full queue, the newest item is evicted while maintaining chronological order</li>
+                  <li><strong>Queue State Validation:</strong> Verifies that queue status reporting accurately reflects the internal state after operations</li>
+              </ul>
+              <ol>
+                  <li>
+                      <strong>Run the eviction tests:</strong>
+                      <pre><code># Run the specific queue eviction tests
+go clean -testcache && go test -v -run ^TestSimpleQueueBehavior .
+go clean -testcache && go test -v -run ^TestRequeueEvictionDirect .</code></pre>
+                  </li>
+                  <li>
+                      <strong>Analyze results:</strong> The tests log detailed queue states before and after operations. Successful runs demonstrate that FIFO order is preserved even when eviction occurs.
+                  </li>
+              </ol>
+
+              <h5>10. Testing Queue Manager Unit Logic (<code>chatbot/queue/manager_test.go</code>)</h5>
+              <p>These unit tests validate the core queue manager functionality in isolation, testing the mathematical correctness of queue operations without external dependencies.</p>
+              <p>The tests validate:</p>
+              <ul>
+                  <li><strong>Basic Operations:</strong> Enqueue, dequeue, and status reporting</li>
+                  <li><strong>Capacity Management:</strong> Proper rejection when queue is full</li>
+                  <li><strong>FIFO Eviction:</strong> Complex eviction scenarios with multiple requeues</li>
+                  <li><strong>Chronological Insertion:</strong> Ensures requeued requests are inserted at the correct position to maintain timestamp ordering</li>
+                  <li><strong>Integration Compliance:</strong> Verifies the queue manager works correctly with the complete request structure</li>
+              </ul>
+              <ol>
+                  <li>
+                      <strong>Run the queue manager unit tests:</strong>
+                      <pre><code># Run all queue manager tests
+go clean -testcache && go test -v ./chatbot/queue</code></pre>
+                  </li>
+                  <li>
+                      <strong>Analyze results:</strong> These tests verify the mathematical correctness of queue operations. Focus on the chronological ordering validation in complex eviction scenarios.
+                  </li>
               </ol>
 
               <hr>
