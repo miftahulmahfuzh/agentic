@@ -1015,45 +1015,79 @@ graph TD
           case "priority-dispatch":
             popupContent = `
                         <h2>🚀 Priority Dispatch & Follower Fast-Lane</h2>
-                        <p>A standard First-In-First-Out (FIFO) queue is inefficient when followers (cheap) get stuck behind leaders (expensive) who are waiting for a resource slot. This creates a head-of-line blocking problem, nullifying the benefits of the broadcast system.</p>
-                        <p>Instead of blindly taking the next item, each worker in the pool acts as an intelligent dispatcher. It performs a cheap pre-check to see if a request in the queue can be a follower. If so, it processes it immediately, allowing it to 'jump the queue'. If the request is a leader and no leader slots are free, the worker puts it back at the end of the queue and moves on, preventing it from blocking the entire pool.</p>
-                        <p>For a detailed narrative illustrating the critical importance of this feature, see <a href="https://miftahulmahfuzh.github.io/agentic/docs/narratives/fantastic_beasts/" target="_blank" rel="noopener noreferrer">Fantastic Beasts</a>.</p>
-                        <div class="mermaid">
+<p>A standard First-In-First-Out (FIFO) queue is inefficient when followers (cheap) get stuck behind leaders (expensive) who are waiting for resource slots. This creates head-of-line blocking, nullifying the benefits of the broadcast system. We solve this problem by implementing workers that selects only requests that can be immediately processed (Followers). It never removes other unique requests (Leaders) from the queue unless they can be processed right away.</p>
+
+        <div class="mermaid">
 graph TD
-    subgraph Queue ["Request Queue (FIFO)"]
-        direction LR
-        L_C["Leader C (Waiting)"] --> F_A["Follower A (for Bcast A)"] --> L_D["Leader D (Waiting)"]
+    subgraph Queue ["Request Queue (FIFO Order)"]
+        direction TB
+        L_C["👑 Leader C (Position 0)"]
+        F_A["🎯 Follower A (Position 1)<br/>for Broadcast X"]
+        L_D["👑 Leader D (Position 2)"]
+        F_B["🎯 Follower B (Position 3)<br/>for Broadcast Y"]
     end
+
     subgraph ActiveBcasts ["Active Broadcasts"]
-        BcastA["Broadcast A"]
-        BcastB["Broadcast B"]
+        BcastX["📡 Broadcast X"]
+        BcastY["📡 Broadcast Y"]
     end
-    subgraph LeaderSlots ["Leader Slots (2/2 Full)"]
-        Slot1["Leader A (Active)"]
-        Slot2["Leader B (Active)"]
+
+    subgraph LeaderSlots ["Leader Slots (2/2 FULL)"]
+        Slot1["👑 Leader A (Active)"]
+        Slot2["👑 Leader B (Active)"]
+    end
+
+    subgraph FollowerSlots ["Follower Slots (1/3 Used)"]
+        direction TB
+        FSlot1["🎯 Follower (Active)"]
+        FSlot2["💤 Available"]
+        FSlot3["💤 Available"]
     end
 
     Dispatcher["🤖 Priority Dispatch Worker"]
-    Queue -->|"1. Pulls Leader C"| Dispatcher
-    Dispatcher -->|"2. No Bcast match"| CheckSlots{"🚦 Leader Slot Free?"}
-    CheckSlots -->|"3. No (Full)"| Requeue
-    Requeue -.->|"4. Re-queue Leader C"| Queue
 
-    Queue -->|"5. Pulls Follower A"| Dispatcher
-    Dispatcher -->|"6. Match Bcast A!"| FastLane[✅ Follower Fast-Lane]
-    FastLane -->|"7. Subscribe"| BcastA
+    %% Flow 1: Check for followers first
+    Queue -->|"1. Scan queue for followers"| Dispatcher
+    Dispatcher -->|"2. Found Follower A!"| CheckFollowerSlots{"🟢 Follower Slot Free?"}
+    CheckFollowerSlots -->|"3. YES - Pull from position 1"| FastLane[✅ Follower Fast-Lane]
+    FastLane -->|"4. Subscribe instantly"| BcastX
 
-    style Requeue fill:#f8d7da,stroke:#721c24
+    %% What happens to leaders
+    Dispatcher -.->|"Leaders stay in queue<br/>when no leader slots"| Queue
+
+    %% Queue state after follower removal
+    subgraph QueueAfter ["Queue After Follower Removal"]
+        L_C2["👑 Leader C (Position 0)"]
+        L_D2["👑 Leader D (Position 1)"]
+        F_B2["🎯 Follower B (Position 2)<br/>for Broadcast Y"]
+    end
+
+    FastLane -.->|"Queue compacts"| QueueAfter
+
+    %% Positioning constraints
+    LeaderSlots ~~~ FollowerSlots
+
     style FastLane fill:#d4edda,stroke:#155724
-                        </div>
-                        <hr>
-                        <p><strong>Benefits:</strong></p>
-                        <ul>
-                            <li>New requests don't wait for slow LLM calls</li>
-                            <li>Higher system throughput under load</li>
-                            <li>Better resource utilization</li>
-                            <li>Prevents cascading delays</li>
-                        </ul>
+    style CheckFollowerSlots fill:#fff3cd,stroke:#856404
+    style Queue fill:#f8d7da,stroke:#721c24
+    style QueueAfter fill:#d1ecf1,stroke:#0c5460
+        </div>
+
+        <h3>Priority Strategies:</h3>
+        <ul>
+            <li><strong>Strategy 1:</strong> If follower slots available → scan entire queue for followers and pull first one found (queue jumping)</li>
+            <li><strong>Strategy 2:</strong> If leader slots available → pull first item in FIFO order</li>
+            <li><strong>Strategy 3:</strong> If no slots available → return nothing, worker sleeps and retries</li>
+        </ul>
+
+        <h3>Benefits:</h3>
+        <ul>
+            <li>Followers can jump ahead of leaders when follower slots are available</li>
+            <li>Leaders maintain FIFO ordering among themselves</li>
+            <li>No wasteful queue manipulation (no pulling and re-queuing)</li>
+            <li>Workers sleep when no resources available instead of thrashing</li>
+            <li>Higher system throughput under load</li>
+        </ul>
                     `;
             break;
 
