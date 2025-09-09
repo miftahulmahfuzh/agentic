@@ -933,15 +933,15 @@ graph TD
         UserReq["User Request"] --> CacheKey["Generate Cache Key<br/>+History if needed"]
         CacheKey --> FastLane["Cache Fast-Lane<br/>(ALL requests)"]
         FastLane --> CacheCheck["Redis Cache Lookup"]
-        
+
         CacheCheck -->|"Cache Hit"| CacheStream["Direct Stream<br/>(<2 seconds)"]
         CacheCheck -->|"Cache Miss"| NormalQueue["Normal Processing Queue"]
-        
+
         NormalQueue --> NormalWork["LLM + Tools<br/>(5-15 seconds)"]
         NormalWork --> Response["Stream Response"]
         Response --> CacheWrite["Write to Cache"]
     end
-    
+
     subgraph Notification["🔔 Cache Re-evaluation"]
         CacheWrite --> Notify["NotifyCachePopulated()"]
         Notify --> ReevalWorker["Re-evaluation Worker"]
@@ -949,7 +949,7 @@ graph TD
         CheckQueued -->|"Found Matches"| Promote["Promote to Cache Fast-Lane"]
         Promote --> CacheCheck
     end
-    
+
     CacheStream --> Client["Client Response"]
     Response --> Client
 
@@ -1314,20 +1314,39 @@ graph TD
             `;
             break;
 
-        case "state-aware-janitor":
-            popupContent = `
-                <h2>🧹 State-Aware Janitor</h2>
-                <p>A background goroutine that acts as a robust "cleaner" for the system, inspired by The Wolf from Pulp Fiction. It periodically scans for requests that are stuck or have been abandoned, preventing resource leaks.</p>
-                <p>It's "state-aware" because it applies different logic based on the request's current state:</p>
-                <ul>
-                    <li><strong><code>StateQueued</code>:</strong> A long timeout (<code>QUEUE_TIMEOUT</code>, e.g., 1h) allows requests to wait patiently in a busy queue.</li>
-                    <li><strong><code>StateProcessing</code>:</strong> A shorter timeout (<code>PROCESSING_TIMEOUT</code>, e.g., 10m) kills jobs that are genuinely stuck in execution, likely due to an unhandled error or a deadlocked dependency.</li>
-                </ul>
-                <p>This is implemented in the <code>janitor</code> function in <code>chatbot/manager.go</code>.</p>
-                <hr>
-                <p><strong>Benefit:</strong> Guarantees system stability and prevents resource leaks from orphaned requests without prematurely killing valid, waiting jobs.</p>
-            `;
-            break;
+case "state-aware-janitor":
+    popupContent = `
+        <h2>🧹 State-Aware Janitor</h2>
+        <p>A background goroutine that acts as a comprehensive "cleaner" for the system, inspired by The Wolf from Pulp Fiction. It periodically scans for stuck requests, abandoned resources, and stale tracking data to prevent memory leaks and resource exhaustion.</p>
+
+        <p>The janitor runs three distinct cleanup operations every <code>JANITOR_INTERVAL</code>:</p>
+
+        <h3>1. State-Aware Request Cleanup</h3>
+        <p>Applies different timeout logic based on the request's current state:</p>
+        <ul>
+            <li><strong><code>StateCancelled</code>:</strong> Very short timeout (<code>CLIENT_PICKUP_TIMEOUT</code>, ~1s) - if client doesn't pick up cancellation quickly, cleanup immediately</li>
+            <li><strong><code>StateQueued</code>:</strong> Long timeout (<code>QUEUE_TIMEOUT</code>, ~1h) - allows requests to wait patiently in busy queues</li>
+            <li><strong><code>StateProcessing</code>:</strong> Medium timeout (<code>PROCESSING_TIMEOUT</code>, ~10m) - kills genuinely stuck jobs in execution</li>
+        </ul>
+
+        <h3>2. Requeue Tracker Cleanup</h3>
+        <p>Removes old exponential backoff tracking data from the queue manager to prevent unbounded memory growth from request retry histories.</p>
+
+        <h3>3. Queued Request Tracking Cleanup</h3>
+        <p>Cleans up stale entries from the cache re-evaluation system's tracking map, removing requests older than <code>QUEUE_TIMEOUT</code> that are no longer relevant for cache promotion.</p>
+
+        <p>All cleanup operations are race-condition safe and use proper locking to avoid data races during concurrent access.</p>
+
+        <hr>
+        <p><strong>Benefits:</strong></p>
+        <ul>
+            <li>Prevents memory leaks from abandoned requests and tracking data</li>
+            <li>Guarantees system stability under load</li>
+            <li>Avoids premature cleanup of valid, waiting requests</li>
+            <li>Maintains optimal performance by cleaning stale caches</li>
+        </ul>
+    `;
+    break;
 
         case "e2e-cancellation":
             popupContent = `
