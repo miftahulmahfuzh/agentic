@@ -6,7 +6,90 @@
         <description>Recent content in Tuntun Go Agentic Chatbot on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Thu, 28 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 09 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Dual Optimization</title>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/optimization_qa_1/</link>
+        <pubDate>Tue, 09 Sep 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/optimization_qa_1/</guid>
+        <description>&lt;h2 id=&#34;question&#34;&gt;Question:
+&lt;/h2&gt;&lt;p&gt;Our system implements a cache fast-lane that checks every request at the beginning of its lifecycle. To optimize cache fast-lane, we also have a cache notification system that scans the queue whenever a new cache entry is added, looking for requests that can bypass the normal queue and jump directly to the cache fast-lane.&lt;/p&gt;
+&lt;p&gt;With the new addition of PeekAndSelectRequest, which implements smart dispatch optimization that allows requests in the normal queue to jump ahead to the follower fast-lane, how do these two optimization systems correlate with each other? Are they completely separate, or do they interact? Additionally, how does the new PeekAndSelectRequest approach to queue jumping differ from the cache notification system&amp;rsquo;s approach?&lt;/p&gt;
+&lt;h2 id=&#34;answer&#34;&gt;Answer:
+&lt;/h2&gt;&lt;p&gt;These are &lt;strong&gt;two separate but complementary optimization layers&lt;/strong&gt; that operate at different stages and solve different bottleneck problems:&lt;/p&gt;
+&lt;h2 id=&#34;cache-fast-lane--cache-notification-system&#34;&gt;Cache Fast-Lane + Cache Notification System
+&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;What it optimizes:&lt;/strong&gt; Cache misses and redundant work&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;How it works:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;Request A → Cache Fast-Lane → MISS → Normal Queue
+Request B → Cache Fast-Lane → MISS → Normal Queue
+Request A completes → Writes to cache → Cache notification sent
+Cache notification system → Scans normal queue → Finds Request B with same cache key
+Request B → Promoted back to Cache Fast-Lane → Instant response
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;Trigger:&lt;/strong&gt; Cache write events (reactive)&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Selection criteria:&lt;/strong&gt; Cache key matching&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Benefit:&lt;/strong&gt; Eliminates redundant expensive processing&lt;/p&gt;
+&lt;h2 id=&#34;priority-dispatch-peekandselectrequest&#34;&gt;Priority Dispatch (PeekAndSelectRequest)
+&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;What it optimizes:&lt;/strong&gt; Resource utilization and head-of-line blocking&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;How it works:&lt;/strong&gt;&lt;/p&gt;
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;Normal Queue: [Leader A, Follower B, Follower C, Leader D]
+Worker checks resources: Leader slots=FULL, Follower slots=AVAILABLE
+PeekAndSelectRequest → Skips Leader A → Selects Follower B → Processes immediately
+Next worker → Selects Follower C → Processes immediately
+Leader A remains queued until leader slot available
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;Trigger:&lt;/strong&gt; Worker resource availability (proactive)&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Selection criteria:&lt;/strong&gt; Broadcast state (follower vs leader)&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Benefit:&lt;/strong&gt; Eliminates head-of-line blocking, maximizes throughput&lt;/p&gt;
+&lt;h2 id=&#34;key-architectural-differences&#34;&gt;Key Architectural Differences
+&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Aspect&lt;/th&gt;
+&lt;th&gt;Cache Notification&lt;/th&gt;
+&lt;th&gt;Priority Dispatch&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Movement&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Queue → Cache Fast-Lane&lt;/td&gt;
+&lt;td&gt;Reordering within queue&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Scope&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Bypasses all processing&lt;/td&gt;
+&lt;td&gt;Optimizes processing order&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Dependency&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;External cache events&lt;/td&gt;
+&lt;td&gt;Internal resource state&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;strong&gt;Frequency&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;Occasional (on cache writes)&lt;/td&gt;
+&lt;td&gt;Continuous (every worker cycle)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h2 id=&#34;why-both-are-needed&#34;&gt;Why Both Are Needed
+&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;Cache notification&lt;/strong&gt; solves the &amp;ldquo;duplicate work&amp;rdquo; problem - prevents multiple requests from doing identical expensive operations.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Priority dispatch&lt;/strong&gt; solves the &amp;ldquo;resource starvation&amp;rdquo; problem - prevents cheap operations from being blocked by expensive ones waiting for resources.&lt;/p&gt;
+&lt;h2 id=&#34;interaction-scenarios&#34;&gt;Interaction Scenarios
+&lt;/h2&gt;&lt;p&gt;A request can benefit from both optimizations in sequence:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Request starts&lt;/strong&gt; → Cache Fast-Lane → MISS → Normal Queue&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Cache notification&lt;/strong&gt; → Could promote it back to cache if another request completes&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Priority dispatch&lt;/strong&gt; → If it stays in normal queue, could jump ahead as follower&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;These systems don&amp;rsquo;t conflict because they operate on different principles:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Cache notification asks: &amp;ldquo;Can this request use existing work?&amp;rdquo;&lt;/li&gt;
+&lt;li&gt;Priority dispatch asks: &amp;ldquo;Can this request use available resources?&amp;rdquo;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The cache notification system is &lt;strong&gt;event-driven optimization&lt;/strong&gt; while priority dispatch is &lt;strong&gt;resource-driven optimization&lt;/strong&gt;. Both reduce latency but through completely different mechanisms.&lt;/p&gt;
+</description>
+        </item>
+        <item>
         <title>Semaphore Q&amp;A Part 1</title>
         <link>http://localhost:1313/agentic/docs/frequently_asked/semaphore_qa_1/</link>
         <pubDate>Thu, 28 Aug 2025 00:00:00 +0000</pubDate>
