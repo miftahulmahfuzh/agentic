@@ -55,110 +55,157 @@
           <div class="section-content">
             <div class="section-inner">
               <div class="mermaid">
-          graph TD
-    subgraph Client ["Client Interface"]
-        UI["🌐 Web Frontend / API Client"]
+  graph TD
+    subgraph Client ["🌐 Client Interface"]
+        UI["Web Frontend / API Client"]
     end
-    subgraph AppServer ["⚡ Application Server (Go Gin)"]
-        A["POST /chat/submit"]
+
+    subgraph AppServer ["⚡ Application Server"]
         C["GET /chat/stream/:id"]
+        A["POST /chat/submit"]
         Cancel["POST /chat/cancel/:id"]
     end
+
     subgraph AgenticCore ["🤖 Agentic Core Engine"]
         B["🧠 Chatbot Manager<br/>(Central State & Orchestrator)"]
-        subgraph CacheFastLane ["⚡ CACHE FAST-LANE (Tier 1) - ALL REQUESTS"]
-            CacheWorkers["⚡ Dedicated Cache Workers<br/>(No Semaphore Limits)"]
+
+        subgraph CacheFastLane ["⚡ CACHE FAST-LANE (Tier 1) - Universal Entry Point"]
+            CacheWorkers["⚡ Dedicated Cache Workers<br/>(Semaphore-Independent)"]
+            CacheCheck{"🔍 Cache Hit?"}
         end
-        D["Request Queue<br/>(Normal Processing)"]
-        subgraph RequestWorkerPool ["🔄 Worker Pool (Tier 2 & 3)"]
-            E["Priority Dispatch Workers"]
+
+        subgraph QueueSystem ["📋 Priority Queue System"]
+            QueueManager["📊 Queue Manager<br/>(Priority-Aware)"]
+            QueuedReqs["📝 Queued Requests<br/>Tracking"]
         end
-        subgraph DecisionLogic ["🎯 Two-Tier Routing (Post Cache-Miss)"]
-            FollowerCheck["🏃 Follower Lane<br/>(Tier 2)"]
-            LeaderCheck["👑 Leader Lane<br/>(Tier 3)"]
+
+        subgraph CacheReevaluation ["🔄 Cache Re-evaluation System"]
+            CacheNotifier["📢 Cache Notifier"]
+            ReevalWorker["🔄 Re-evaluation Worker"]
+            PromoteFlow["⬆️ Queue → Cache<br/>Promotion"]
         end
+
+        subgraph RequestWorkerPool ["🔄 Priority Dispatch Workers"]
+            DispatchLogic["🎯 Intelligent Dispatcher<br/>Resource-Aware Selection"]
+            StrategyOne["Strategy 1: Follower Scan<br/>(Queue Jumping)"]
+            StrategyTwo["Strategy 2: Leader FIFO<br/>(First-Come-First-Serve)"]
+            StrategyThree["Strategy 3: Sleep<br/>(No Available Slots)"]
+        end
+
+        subgraph ProcessingTiers ["🏃👑 Processing Tiers"]
+            FollowerTier["🏃 Follower Lane (Tier 2)<br/>Broadcast Subscription"]
+            LeaderTier["👑 Leader Lane (Tier 3)<br/>Unique Processing"]
+        end
+
         subgraph BroadcastSystem ["📡 Broadcast System"]
             Broadcaster["📻 Stream Broadcaster"]
-            FollowerSub["🏃 Follower Subs"]
-            LeaderSub["👑 Leader Sub"]
+            FollowerSubs["🏃 Follower Subscriptions"]
         end
-        subgraph LeaderPath ["👑 Leader Processing"]
-            SF["🔒 Singleflight"]
-            Prep["⚙️ Preparer"]
-            Stream["📺 Streamer"]
+
+        subgraph LeaderPath ["👑 Leader Processing Pipeline"]
+            SF["🔒 Singleflight Deduplication"]
+            Prep["⚙️ Request Preparer"]
+            Stream["📺 Response Streamer"]
         end
+
         subgraph ToolEngine ["🛠️ Tool Engine"]
-            Tools["Tools & LLM Calls"]
+            Tools["AI Tools & LLM Calls"]
         end
     end
+
     subgraph ExtDeps ["🌍 External Dependencies"]
-        Redis["Redis Cache"]
-        ArangoDB["ArangoDB"]
-        LLM["LLM Provider"]
-        APIs["Backend APIs"]
+        Redis["🔴 Redis Cache"]
+        ArangoDB["🟠 ArangoDB"]
+        LLM["🟢 LLM Provider"]
+        APIs["🔵 Backend APIs"]
     end
 
-    %% Flow Definitions - ALL REQUESTS through Cache Fast-Lane First
+    %% Main Flow - Universal Cache Entry Point
     UI --> A
-    A -->|"1. Submit Request<br/>(ALL requests)"| B
-    B -->|"2. Generate Cache Key<br/>(Unified Process)"| CacheWorkers
-    CacheWorkers -->|"⚡ CACHE HIT"| Redis
-    Redis -->|"INSTANT Response"| C
-    CacheWorkers -->|"Cache Miss"| D
+    A -->|"1. ALL Requests"| B
+    B -->|"2. Generate Cache Key"| CacheWorkers
+    CacheWorkers --> CacheCheck
 
-    %% Flow Definitions - Normal Processing (Tier 2 & 3) - Only Cache Misses
-    D -->|"3. Dequeue"| E
-    E -->|"4a. Broadcast Available"| FollowerCheck
-    E -->|"4b. Unique Request"| LeaderCheck
+    %% Cache Hit Path (Fast Lane)
+    CacheCheck -->|"⚡ CACHE HIT"| Redis
+    Redis -->|"Instant Response"| C
 
-    %% Follower Lane (Tier 2)
-    FollowerCheck -->|"Subscribe"| FollowerSub
-    FollowerSub --> Broadcaster
+    %% Cache Miss Path
+    CacheCheck -->|"❌ Cache Miss"| QueueManager
+    QueueManager -->|"3. Enqueue"| QueuedReqs
+    QueuedReqs --> DispatchLogic
 
-    %% Leader Lane (Tier 3)
-    LeaderCheck -->|"Process"| SF
+    %% Priority Dispatch Logic
+    DispatchLogic -->|"Has Follower Slots?"| StrategyOne
+    DispatchLogic -->|"Has Leader Slots?"| StrategyTwo
+    DispatchLogic -->|"No Slots Available"| StrategyThree
+
+    %% Processing Paths
+    StrategyOne -->|"Found Follower"| FollowerTier
+    StrategyTwo -->|"Selected Leader"| LeaderTier
+    StrategyThree -.->|"Sleep & Retry"| DispatchLogic
+
+    %% Follower Processing
+    FollowerTier --> FollowerSubs
+    FollowerSubs --> Broadcaster
+
+    %% Leader Processing
+    LeaderTier --> SF
     SF --> Prep
     Prep --> Stream
     Stream --> Tools
     Tools --> LLM
     Tools --> APIs
     Stream --> Broadcaster
-    Broadcaster --> LeaderSub
 
-    %% Cache Population & Data Access
-    Stream -->|"Cache Results"| Redis
-    CacheWorkers -->|"History Fetch<br/>(if no prevContext)"| ArangoDB
+    %% Cache Population & Notification
+    Stream -->|"✅ Cache Write"| Redis
+    Redis -->|"🔔 Notify Cache Populated"| CacheNotifier
+    CacheNotifier --> ReevalWorker
 
-    %% Client Connection
+    %% Cache Re-evaluation Feedback Loop
+    ReevalWorker -->|"🔍 Scan Queued Requests"| QueuedReqs
+    ReevalWorker -->|"🎯 Found Matches"| PromoteFlow
+    PromoteFlow -->|"♻️ Re-process via Cache"| CacheWorkers
+    QueueManager -->|"🗑️ Remove from Queue"| QueuedReqs
+
+    %% Client Connections
     UI --> C
     C -->|"Get Stream"| B
-    LeaderSub -->|"Stream Events"| C
-    FollowerSub -->|"Stream Events"| C
+    Broadcaster -->|"📡 Stream Events"| C
 
     %% Cancellation
     UI --> Cancel
     Cancel --> B
 
+    %% Database Operations
+    CacheWorkers -->|"History Fetch"| ArangoDB
+    Stream -->|"Log Results"| ArangoDB
+
     %% Styling
-    classDef clientStyle fill:#cce5ff,stroke:#004085
-    classDef serverStyle fill:#d4edda,stroke:#155724
-    classDef coreStyle fill:#fff3cd,stroke:#856404
-    classDef cacheFastLaneStyle fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
-    classDef tier2Style fill:#48c9b0,stroke:#2980b9,stroke-width:2px
-    classDef tier3Style fill:#f8d7da,stroke:#721c24
-    classDef broadcastStyle fill:#cceeff,stroke:#007bff
-    classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
-    classDef extStyle fill:#e2f3e4,stroke:#28a745
-    classDef queueStyle fill:#d6d8db,stroke:#383d41
+    classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef serverStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef coreStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef cacheFastLaneStyle fill:#ffebee,stroke:#d32f2f,stroke-width:3px
+    classDef queueStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef reevalStyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    classDef dispatchStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
+    classDef tierStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px
+    classDef broadcastStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef leaderStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef toolStyle fill:#f8f2ff,stroke:#6a1b9a,stroke-width:2px
+    classDef extStyle fill:#f1f8e9,stroke:#2e7d32,stroke-width:2px
 
     class UI clientStyle
     class A,C,Cancel serverStyle
-    class B,E coreStyle
-    class CacheWorkers cacheFastLaneStyle
-    class D queueStyle
-    class FollowerCheck,FollowerSub tier2Style
-    class LeaderCheck,LeaderSub,SF,Prep,Stream tier3Style
-    class Broadcaster broadcastStyle
+    class B coreStyle
+    class CacheWorkers,CacheCheck cacheFastLaneStyle
+    class QueueManager,QueuedReqs queueStyle
+    class CacheNotifier,ReevalWorker,PromoteFlow reevalStyle
+    class DispatchLogic,StrategyOne,StrategyTwo,StrategyThree dispatchStyle
+    class FollowerTier,LeaderTier tierStyle
+    class Broadcaster,FollowerSubs broadcastStyle
+    class SF,Prep,Stream leaderStyle
     class Tools toolStyle
     class Redis,ArangoDB,LLM,APIs extStyle
               </div>
