@@ -382,7 +382,11 @@
                   Establishes SSE connection to stream response
                 </li>
                 <li>
-                  <code>POST /chat/cancel/:request_id</code>: (Public) Cancels
+                  <code>GET /chat/status/:request_id</code>: (Auth) Check
+                  request state in its lifecycle
+                </li>
+                <li>
+                  <code>POST /chat/cancel/:request_id</code>: (Auth) Cancels
                   an in-progress request
                 </li>
                 <li>
