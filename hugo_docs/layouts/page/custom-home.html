@@ -923,93 +923,64 @@ tuntun-go-chatbot/
         let popupContent = "";
 
         switch (type) {
-          case "cache-fastlane":
-            popupContent = `
-                        <h2>⚡ Cache Fast-Lane System</h2>
-                        <p>The cache fast-lane is a revolutionary zero-semaphore bypass system that operates completely independently of the normal worker pool. It uses dedicated cache workers that NEVER compete for any semaphores, delivering cached responses with zero resource contention.</p>
-                        <div class="mermaid">
+case "cache-fastlane":
+  popupContent = `
+    <h2>⚡ Cache Fast-Lane System</h2>
+    <p>A zero-semaphore bypass system with intelligent cache re-evaluation that operates completely independently of the normal worker pool.</p>
+    <div class="mermaid">
 graph TD
-    subgraph Request["Request Submission"]
-        UserReq["User Request<br/>(ALL requests)"]
+    subgraph Main["Main Flow"]
+        UserReq["User Request"] --> CacheKey["Generate Cache Key<br/>+History if needed"]
+        CacheKey --> FastLane["Cache Fast-Lane<br/>(ALL requests)"]
+        FastLane --> CacheCheck["Redis Cache Lookup"]
+        
+        CacheCheck -->|"Cache Hit"| CacheStream["Direct Stream<br/>(<2 seconds)"]
+        CacheCheck -->|"Cache Miss"| NormalQueue["Normal Processing Queue"]
+        
+        NormalQueue --> NormalWork["LLM + Tools<br/>(5-15 seconds)"]
+        NormalWork --> Response["Stream Response"]
+        Response --> CacheWrite["Write to Cache"]
     end
-    subgraph Preparation["Request Preparation"]
-        CacheKeyGen["Generate Cache Key<br/>(Unified Process)<br/>Fetch history if needed"]
+    
+    subgraph Notification["🔔 Cache Re-evaluation"]
+        CacheWrite --> Notify["NotifyCachePopulated()"]
+        Notify --> ReevalWorker["Re-evaluation Worker"]
+        ReevalWorker --> CheckQueued["Check Queued Requests"]
+        CheckQueued -->|"Found Matches"| Promote["Promote to Cache Fast-Lane"]
+        Promote --> CacheCheck
     end
-    subgraph Routing["Unified Routing Logic"]
-        FastLaneQueue["Cache Fast-Lane Channel<br/>(ALL requests go here first)"]
-        NormalQueue["Normal Processing Queue<br/>(Cache misses only)"]
-    end
-    subgraph CacheWorkers["⚡ Dedicated Cache Workers"]
-        CW1["Cache Worker 1<br/>(ZERO semaphores)"]
-        CW2["Cache Worker 2<br/>(ZERO semaphores)"]
-        CW3["Cache Worker 3<br/>(ZERO semaphores)"]
-    end
-    subgraph NormalWorkers["🔄 Normal Worker Pool"]
-        NW1["Worker 1<br/>(Semaphore-limited)"]
-        NW2["Worker 2<br/>(Semaphore-limited)"]
-        NW3["Worker N<br/>(Semaphore-limited)"]
-    end
-    subgraph CacheFlow["⚡ Cache Fast-Lane Flow"]
-        Redis["Redis Cache<br/>(Instant lookup)"]
-        StreamDirect["Direct Stream<br/>(No LLM call)"]
-        Client["Client Response<br/>(<2 seconds)"]
-    end
-    subgraph NormalFlow["🐌 Normal Processing"]
-        LLM["LLM Processing<br/>(5-15 seconds)"]
-        Tools["Tool Execution"]
-        StreamNormal["Stream Response"]
-    end
-    subgraph DataStore["Data Storage"]
-        ArangoDB["ArangoDB<br/>(History fetch)"]
-    end
-
-    %% Flow Definitions - Cache key generation BEFORE queueing
-    UserReq --> CacheKeyGen
-    CacheKeyGen -.->|"If no prevContext"| ArangoDB
-    CacheKeyGen --> FastLaneQueue
-    FastLaneQueue --> CW1 & CW2 & CW3
-    CW1 --> Redis
-    Redis -->|"Cache Hit"| StreamDirect
-    Redis -->|"Cache Miss"| NormalQueue
-    StreamDirect --> Client
-
-    %% Normal processing for cache misses only
-    NormalQueue --> NW1 & NW2 & NW3
-    NW1 --> LLM & Tools
-    LLM --> StreamNormal
-    Tools --> StreamNormal
-    StreamNormal -->|"Cache results"| Redis
+    
+    CacheStream --> Client["Client Response"]
+    Response --> Client
 
     %% Styling
-    classDef fastLaneStyle fill:#48c9b0,stroke:#2c3e50,stroke-width:3px
-    classDef normalStyle fill:#f39c12,stroke:#e67e22,stroke-width:2px
-    classDef cacheStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
-    classDef slowStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
-    classDef dataStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef fastLane fill:#48c9b0,stroke:#2c3e50,stroke-width:3px
+    classDef normal fill:#f39c12,stroke:#e67e22,stroke-width:2px
+    classDef cache fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef notification fill:#e74c3c,stroke:#c0392b,stroke-width:2px
 
-    class UserReq,CacheKeyGen,FastLaneQueue,CW1,CW2,CW3,Redis,StreamDirect,Client fastLaneStyle
-    class NormalQueue,NW1,NW2,NW3,StreamNormal normalStyle
-    class Redis,StreamDirect cacheStyle
-    class LLM,Tools slowStyle
-    class ArangoDB dataStyle
-                        </div>
-                        <p><strong>Revolutionary Architecture:</strong></p>
-                        <ul>
-                            <li><strong>Zero Semaphore Usage:</strong> Cache workers operate completely independently - they NEVER acquire leader, follower, or LLM semaphores</li>
-                            <li><strong>Dedicated Worker Pool:</strong> Specialized cache workers handle only cache requests, preventing any resource competition</li>
-                            <li><strong>Smart Routing:</strong> Requests with conversation history are automatically eligible for cache fast-lane processing</li>
-                            <li><strong>Instant Fallback:</strong> Cache misses are seamlessly routed to normal processing without delay</li>
-                        </ul>
-                        <hr>
-                        <p><strong>Performance Impact:</strong></p>
-                        <ul>
-                            <li><strong>Response Time:</strong> &lt;1 seconds vs 10-20 seconds for normal processing</li>
-                            <li><strong>Throughput:</strong> 1k+ concurrent cache requests with &gt;95% success rate</li>
-                            <li><strong>Resource Efficiency:</strong> Zero CPU/memory overhead from LLM processing</li>
-                            <li><strong>Consistency:</strong> 100% identical responses to original processing</li>
-                        </ul>
-                    `;
-            break;
+    class UserReq,CacheKey,FastLane,CacheCheck,CacheStream fastLane
+    class NormalQueue,NormalWork,Response normal
+    class CacheWrite,Client cache
+    class Notify,ReevalWorker,CheckQueued,Promote notification
+    </div>
+    <p><strong>Core Features:</strong></p>
+    <ul>
+        <li><strong>Zero Semaphore Usage:</strong> Cache workers never compete for resources</li>
+        <li><strong>Automatic Promotion:</strong> Queued requests get promoted when cache becomes available</li>
+        <li><strong>Smart Routing:</strong> ALL requests try cache first, fallback to normal processing</li>
+        <li><strong>Cache Re-evaluation:</strong> Normal processing results trigger promotion of waiting requests</li>
+    </ul>
+    <hr>
+    <p><strong>Performance Impact:</strong></p>
+    <ul>
+        <li><strong>Response Time:</strong> <1 second vs 10-20 seconds</li>
+        <li><strong>Concurrent Requests:</strong> First pays full cost, others get instant promotion</li>
+        <li><strong>Resource Efficiency:</strong> Zero LLM overhead for cached responses</li>
+        <li><strong>Dynamic Optimization:</strong> System actively promotes requests as cache populates</li>
+    </ul>
+`;
+break;
 
           case "priority-dispatch":
             popupContent = `
