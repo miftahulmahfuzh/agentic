@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en-us" dir="ltr">
+    <head><script src="/agentic/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=agentic/livereload" data-no-instant defer></script><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="This document provides a detailed overview of all the tools available to the agent. Each tool&rsquo;s purpose, input arguments, output format, and internal logic are described to aid in understanding, debugging, and future development. Tool: get_current_time Use this tool if user ask about the current time. It takes no arguments. Purpose: To provide the agent with the current server time and date, including timezone information. This is essential for grounding any time-sensitive queries.">
+<title>Tools Documentation</title>
+
+<link rel='canonical' href='http://localhost:1313/agentic/docs/caller_insights/tools/'>
+
+<link rel="stylesheet" href="/agentic/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="Tools Documentation">
+<meta property='og:description' content="This document provides a detailed overview of all the tools available to the agent. Each tool&rsquo;s purpose, input arguments, output format, and internal logic are described to aid in understanding, debugging, and future development. Tool: get_current_time Use this tool if user ask about the current time. It takes no arguments. Purpose: To provide the agent with the current server time and date, including timezone information. This is essential for grounding any time-sensitive queries.">
+<meta property='og:url' content='http://localhost:1313/agentic/docs/caller_insights/tools/'>
+<meta property='og:site_name' content='Go Chatbot'>
+<meta property='og:type' content='article'><meta property='article:section' content='Docs' /><meta property='article:published_time' content='2025-09-10T00:00:00&#43;00:00'/><meta property='article:modified_time' content='2025-09-10T00:00:00&#43;00:00'/>
+<meta name="twitter:title" content="Tools Documentation">
+<meta name="twitter:description" content="This document provides a detailed overview of all the tools available to the agent. Each tool&rsquo;s purpose, input arguments, output format, and internal logic are described to aid in understanding, debugging, and future development. Tool: get_current_time Use this tool if user ask about the current time. It takes no arguments. Purpose: To provide the agent with the current server time and date, including timezone information. This is essential for grounding any time-sensitive queries.">
+    <link rel="shortcut icon" href="/agentic/favicon.png" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column compact"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="Toggle Menu">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/agentic/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/agentic/img/penguin_hu985367dcd5439c3a63e69853053effce_25187_300x0_resize_box_3.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🤖</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/agentic">Go Chatbot</a></h1>
+            <h2 class="site-description">Documentation</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/miftahulmahfuzh/agentic'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/agentic/' >
+                
+                
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>Dark Mode</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/agentic/docs/caller_insights/tools/">Tools Documentation</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Sep 10, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    15 minute read
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>This document provides a detailed overview of all the tools available to the agent. Each tool&rsquo;s purpose, input arguments, output format, and internal logic are described to aid in understanding, debugging, and future development.</p>
+<hr>
+<h2 id="tool-get_current_time">Tool: <code>get_current_time</code>
+</h2><blockquote>
+<p>Use this tool if user ask about the current time. It takes no arguments.</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> To provide the agent with the current server time and date, including timezone information. This is essential for grounding any time-sensitive queries.</li>
+<li><strong>Input Arguments:</strong> None. The tool is called with an empty JSON object.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A single string representing the current time in <a class="link" href="https://www.rfc-editor.org/rfc/rfc3339"  target="_blank" rel="noopener"
+    >RFC3339</a> format.
+<pre tabindex="0"><code>&#34;2023-10-27T10:30:00+07:00&#34;
+</code></pre></li>
+<li><strong>Logic / Algorithm:</strong>
+<ol>
+<li>Calls <code>time.Now()</code> to get the current system time.</li>
+<li>Formats the time object into an RFC3339 string.</li>
+<li>Returns the formatted string.</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2 id="tool-news_summary">Tool: <code>news_summary</code>
+</h2><blockquote>
+<p>Use this tool to get the latest 5 news articles for a given stock. The &lsquo;input&rsquo; parameter should be the 4-letter stock code, for example: &ldquo;BBCA&rdquo;.</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> To retrieve recent news headlines and summaries for a specific publicly traded company.</li>
+<li><strong>Input Arguments:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;code&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;The 4-letter stock code, for example: BBCA&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;code&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A plain text string where each news article is formatted with its title, date, and summary, separated by double newlines. If no news is found, it returns a specific message.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Title: Bank Central Asia Reports Strong Q3 Earnings
+</span></span><span style="display:flex;"><span>Date: 2023-10-26
+</span></span><span style="display:flex;"><span>Summary: BBCA announced a 15% year-over-year increase in net profit, driven by strong loan growth and improved net interest margins.
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Title: Tech Sector Sees Volatility Amid Global Concerns
+</span></span><span style="display:flex;"><span>Date: 2023-10-25
+</span></span><span style="display:flex;"><span>Summary: Stocks like BBCA remained resilient while the broader tech index faced a downturn due to international market pressures.
+</span></span></code></pre></div></li>
+<li><strong>Logic / Algorithm:</strong>
+<ol>
+<li>The input stock <code>code</code> is converted to uppercase.</li>
+<li>It checks if the news service URL is configured in the application settings.</li>
+<li>A JSON payload <code>{&quot;secCodes&quot;: [&quot;&lt;CODE&gt;&quot;]}</code> is constructed.</li>
+<li>A <code>POST</code> request is made to the backend news API with a 30-second timeout.</li>
+<li>It handles various errors, including context cancellation (user abort), timeouts, and network failures.</li>
+<li>The API response is read. If the status code is not <code>200 OK</code>, an error is returned.</li>
+<li>The JSON response is parsed. It expects a structure containing a list of news items.</li>
+<li>If the API reports a non-success message or the list of news is empty, it returns a user-friendly &ldquo;No news found for <code>&lt;CODE&gt;</code>&rdquo; message.</li>
+<li>It iterates through the top 5 news items from the response.</li>
+<li>For each item, it extracts the title, publication date (ignoring the time part), and the LLM-generated summary.</li>
+<li>These pieces are formatted into the final text string and returned.</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2 id="tool-realtime_market">Tool: <code>realtime_market</code>
+</h2><blockquote>
+<p>Gets the CURRENT, LIVE market data for a stock. Use this ONLY for the price &lsquo;right now&rsquo; or the &rsquo;latest&rsquo; single price point. This tool provides a real-time snapshot. DO NOT use this for questions about trends, history, or any period of time (e.g., &rsquo;last week&rsquo;, &lsquo;past month&rsquo;).</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> To fetch a real-time snapshot of market data for one or more stocks. This includes the latest price, change, volume, and other key daily metrics.</li>
+<li><strong>Input Arguments:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;codes&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;array&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;items&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>},
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;A list of 4-letter stock codes, e.g., [\&#34;BBCA\&#34;, \&#34;GOTO\&#34;]&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;codes&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A series of JSON objects, one for each requested stock, separated by newlines. If data for a specific stock cannot be found, an error object is returned for that stock.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{<span style="color:#ff79c6">&#34;code&#34;</span>:<span style="color:#f1fa8c">&#34;BBCA&#34;</span>,<span style="color:#ff79c6">&#34;date&#34;</span>:<span style="color:#f1fa8c">&#34;2023-10-27&#34;</span>,<span style="color:#ff79c6">&#34;time&#34;</span>:<span style="color:#f1fa8c">&#34;11:15&#34;</span>,<span style="color:#ff79c6">&#34;last price&#34;</span>:<span style="color:#bd93f9">9100</span>,<span style="color:#ff79c6">&#34;change&#34;</span>:<span style="color:#bd93f9">-25</span>,<span style="color:#ff79c6">&#34;change%&#34;</span>:<span style="color:#f1fa8c">&#34;-0.27%&#34;</span>,<span style="color:#ff79c6">&#34;previous close price&#34;</span>:<span style="color:#bd93f9">9125</span>,<span style="color:#ff79c6">&#34;open price&#34;</span>:<span style="color:#bd93f9">9125</span>,<span style="color:#ff79c6">&#34;high price&#34;</span>:<span style="color:#bd93f9">9150</span>,<span style="color:#ff79c6">&#34;low price&#34;</span>:<span style="color:#bd93f9">9075</span>,<span style="color:#ff79c6">&#34;value&#34;</span>:<span style="color:#f1fa8c">&#34;1.2 T&#34;</span>,<span style="color:#ff79c6">&#34;volume&#34;</span>:<span style="color:#f1fa8c">&#34;131.9 M&#34;</span>,<span style="color:#ff79c6">&#34;Average Price&#34;</span>:<span style="color:#bd93f9">9105.5</span>,<span style="color:#ff79c6">&#34;Frequency&#34;</span>:<span style="color:#f1fa8c">&#34;15,789&#34;</span>}
+</span></span><span style="display:flex;"><span>{<span style="color:#ff79c6">&#34;code&#34;</span>: <span style="color:#f1fa8c">&#34;INVALID&#34;</span>, <span style="color:#ff79c6">&#34;error&#34;</span>: <span style="color:#f1fa8c">&#34;No data found&#34;</span>}
+</span></span></code></pre></div></li>
+<li><strong>Logic / Algorithm:</strong>
+<ol>
+<li>It checks if the input <code>codes</code> list is empty.</li>
+<li>All stock codes in the list are converted to uppercase.</li>
+<li>A single <code>POST</code> request is made to the backend&rsquo;s price summary API with the list of codes.</li>
+<li>The API response, which contains a list of data for all found stocks, is processed. The results are placed into a map for efficient lookup (<code>code</code> -&gt; <code>data</code>).</li>
+<li>The tool then iterates through the <em>original list of requested codes</em>.</li>
+<li>For each code, it looks it up in the results map.</li>
+<li>If found, it formats the raw data into a structured <code>FormattedMarketData</code> object. This includes formatting large numbers (like <code>value</code> and <code>volume</code>) into human-readable strings (e.g., &ldquo;1.2 T&rdquo;).</li>
+<li>If a code is not found in the map, a specific JSON error object for that code is generated.</li>
+<li>Each resulting JSON object (either data or error) is appended to a string, separated by newlines.</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2 id="tool-historical_marketdata">Tool: <code>historical_marketdata</code>
+</h2><blockquote>
+<p>Gets HISTORICAL data for a stock&rsquo;s performance OVER A PERIOD OF TIME. This is ESSENTIAL for analyzing trends, charts, and price movements between a start and end date. Use this for ANY query that involves a date range like &rsquo;last week&rsquo;, &lsquo;past year&rsquo;, &lsquo;daily movement&rsquo;, &lsquo;since January&rsquo;, etc.</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> To retrieve historical end-of-day trading data for a stock over a specified period and aggregate it by a given time granularity.</li>
+<li><strong>Input Arguments:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;code&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;The stock ticker symbol.&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;start_date&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;Start date in &#39;YYYY-MM-DD&#39; format.&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;end_date&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;End date in &#39;YYYY-MM-DD&#39; format.&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;granularity&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;Time interval for aggregation.&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;enum&#34;</span>: [<span style="color:#f1fa8c">&#34;daily&#34;</span>, <span style="color:#f1fa8c">&#34;weekly&#34;</span>, <span style="color:#f1fa8c">&#34;monthly&#34;</span>, <span style="color:#f1fa8c">&#34;quarterly&#34;</span>, <span style="color:#f1fa8c">&#34;yearly&#34;</span>]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;code&#34;</span>, <span style="color:#f1fa8c">&#34;start_date&#34;</span>, <span style="color:#f1fa8c">&#34;end_date&#34;</span>, <span style="color:#f1fa8c">&#34;granularity&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A JSON array of objects. The structure of the objects depends on the requested <code>granularity</code>.
+<ul>
+<li><strong>For <code>granularity: &quot;daily&quot;</code>:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>[
+</span></span><span style="display:flex;"><span>  { <span style="color:#ff79c6">&#34;date&#34;</span>: <span style="color:#f1fa8c">&#34;2023-10-26&#34;</span>, <span style="color:#ff79c6">&#34;close price&#34;</span>: <span style="color:#bd93f9">9125</span>, <span style="color:#ff79c6">&#34;change&#34;</span>: <span style="color:#bd93f9">-25</span>, <span style="color:#ff79c6">&#34;change%&#34;</span>: <span style="color:#bd93f9">-0.27</span>, <span style="color:#ff79c6">&#34;volume&#34;</span>: <span style="color:#bd93f9">150000000</span> },
+</span></span><span style="display:flex;"><span>  { <span style="color:#ff79c6">&#34;date&#34;</span>: <span style="color:#f1fa8c">&#34;2023-10-25&#34;</span>, <span style="color:#ff79c6">&#34;close price&#34;</span>: <span style="color:#bd93f9">9150</span>, <span style="color:#ff79c6">&#34;change&#34;</span>: <span style="color:#bd93f9">50</span>, <span style="color:#ff79c6">&#34;change%&#34;</span>: <span style="color:#bd93f9">0.55</span>, <span style="color:#ff79c6">&#34;volume&#34;</span>: <span style="color:#bd93f9">120000000</span> }
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></div></li>
+<li><strong>For aggregated granularities (e.g., <code>&quot;weekly&quot;</code>):</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>[
+</span></span><span style="display:flex;"><span>  { <span style="color:#ff79c6">&#34;period_identifier&#34;</span>: <span style="color:#f1fa8c">&#34;2023-W43&#34;</span>, <span style="color:#ff79c6">&#34;start_date_of_period&#34;</span>: <span style="color:#f1fa8c">&#34;2023-10-23&#34;</span>, <span style="color:#ff79c6">&#34;end_date_of_period&#34;</span>: <span style="color:#f1fa8c">&#34;2023-10-26&#34;</span>, <span style="color:#ff79c6">&#34;period_end_close_price&#34;</span>: <span style="color:#bd93f9">9125</span>, <span style="color:#ff79c6">&#34;period_change&#34;</span>: <span style="color:#bd93f9">-75</span>, <span style="color:#ff79c6">&#34;period_change_percentage&#34;</span>: <span style="color:#bd93f9">-0.82</span> },
+</span></span><span style="display:flex;"><span>  { <span style="color:#ff79c6">&#34;period_identifier&#34;</span>: <span style="color:#f1fa8c">&#34;2023-W42&#34;</span>, <span style="color:#ff79c6">&#34;start_date_of_period&#34;</span>: <span style="color:#f1fa8c">&#34;2023-10-16&#34;</span>, <span style="color:#ff79c6">&#34;end_date_of_period&#34;</span>: <span style="color:#f1fa8c">&#34;2023-10-20&#34;</span>, <span style="color:#ff79c6">&#34;period_end_close_price&#34;</span>: <span style="color:#bd93f9">9200</span>, <span style="color:#ff79c6">&#34;period_change&#34;</span>: <span style="color:#bd93f9">100</span>, <span style="color:#ff79c6">&#34;period_change_percentage&#34;</span>: <span style="color:#bd93f9">1.1</span> }
+</span></span><span style="display:flex;"><span>]
+</span></span></code></pre></div></li>
+</ul>
+</li>
+<li><strong>Logic / Algorithm:</strong>
+<ol>
+<li><strong>Preparation:</strong> The stock <code>code</code> is uppercased and <code>granularity</code> is lowercased.</li>
+<li><strong>Date Handling:</strong> The input <code>start_date</code> and <code>end_date</code> strings are parsed. If they are invalid or missing, sensible defaults are applied (e.g., a 5-day range). If <code>start_date</code> is after <code>end_date</code>, they are swapped.</li>
+<li><strong>API Call:</strong> A request is made to the backend historical data API for the processed date range.</li>
+<li><strong>Data Processing:</strong>
+<ul>
+<li>If the API returns no data, a user-facing error message is returned.</li>
+<li>The raw API response is mapped to a standardized internal <code>DailyMarketDataItem</code> struct.</li>
+<li>The list of daily data is <strong>sorted from newest to oldest</strong>. This is critical for the next step.</li>
+</ul>
+</li>
+<li><strong>Aggregation (based on <code>granularity</code>):</strong>
+<ul>
+<li>If <code>daily</code>, the sorted list is returned as-is.</li>
+<li>If <code>weekly</code>, <code>monthly</code>, <code>quarterly</code>, or <code>yearly</code>, the daily data is grouped into periods (e.g., all days in week &ldquo;2023-W43&rdquo;).</li>
+<li>The periods are sorted from newest to oldest.</li>
+<li>For each period, an aggregated summary is calculated:
+<ul>
+<li><code>period_end_close_price</code>: The close price of the newest day in the period.</li>
+<li><code>period_change</code>: The difference between the close price of the newest day and the oldest day in the period.</li>
+<li><code>period_change_percentage</code>: The percentage change calculated from the period&rsquo;s start and end prices.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>The final list of daily or aggregated data is marshalled into a JSON string and returned.</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2 id="tool-financial-report-tools">Tool: Financial Report Tools
+</h2><p>This is a group of four related tools that retrieve specific financial statement data.</p>
+<ul>
+<li><code>financial_annualreport</code></li>
+<li><code>financial_quarterreport</code></li>
+<li><code>financial_ttmreport</code> (Trailing Twelve Months)</li>
+<li><code>financial_ytdreport</code> (Year to Date)</li>
+</ul>
+<blockquote>
+<p><strong>Description (Example for Annual):</strong> Requests annual financial report data from a financial API.</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> To fetch specific line items (e.g., &ldquo;Revenue&rdquo;, &ldquo;Net Income&rdquo;) from a company&rsquo;s financial statements, aggregated in different ways (annually, quarterly, etc.).</li>
+<li><strong>Input Arguments:</strong> All four tools use the same schema.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;code&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;The 4-letter stock code, e.g., BBCA&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;start_date&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;Start date, e.g., &#39;2022&#39; or &#39;2023-01-01&#39;&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;end_date&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;End date, e.g., &#39;2023&#39; or &#39;2023-12-31&#39;&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;name&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;Name of the financial metric&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;enum&#34;</span>: [<span style="color:#f1fa8c">&#34;Revenue&#34;</span>, <span style="color:#f1fa8c">&#34;Net Income&#34;</span>, <span style="color:#f1fa8c">&#34;Total assets&#34;</span>, <span style="color:#f1fa8c">&#34;Total liabilities&#34;</span>, <span style="color:#f1fa8c">&#34;Cash from operating act&#34;</span>, <span style="color:#f1fa8c">&#34;Cash from financing act&#34;</span>, <span style="color:#f1fa8c">&#34;Cash from investing act&#34;</span>]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;code&#34;</span>, <span style="color:#f1fa8c">&#34;name&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A JSON object containing metadata and an array of financial values. The structure varies slightly based on the tool.
+<ul>
+<li><strong>For <code>financial_quarterreport</code>:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;start_date&#34;</span>: <span style="color:#f1fa8c">&#34;2022 Q1&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;end_date&#34;</span>: <span style="color:#f1fa8c">&#34;2023 Q2&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;stock_code&#34;</span>: <span style="color:#f1fa8c">&#34;BBCA&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;indicator&#34;</span>: <span style="color:#f1fa8c">&#34;quarter&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;value&#34;</span>: [
+</span></span><span style="display:flex;"><span>    { <span style="color:#ff79c6">&#34;period&#34;</span>: <span style="color:#f1fa8c">&#34;2023 Q2&#34;</span>, <span style="color:#ff79c6">&#34;name&#34;</span>: <span style="color:#f1fa8c">&#34;Net Income&#34;</span>, <span style="color:#ff79c6">&#34;value&#34;</span>: <span style="color:#bd93f9">12000000000000</span>, <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;nominal&#34;</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#ff79c6">&#34;period&#34;</span>: <span style="color:#f1fa8c">&#34;2023 Q1&#34;</span>, <span style="color:#ff79c6">&#34;name&#34;</span>: <span style="color:#f1fa8c">&#34;Net Income&#34;</span>, <span style="color:#ff79c6">&#34;value&#34;</span>: <span style="color:#bd93f9">11500000000000</span>, <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;nominal&#34;</span> }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>For <code>financial_ttmreport</code>:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;YoYTTMStartValue&#34;</span>: <span style="color:#bd93f9">40.5</span>, <span style="color:#ff79c6">&#34;YoYTTMEndValue&#34;</span>: <span style="color:#bd93f9">48.6</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;YoYTTMStartPeriod&#34;</span>: [<span style="color:#f1fa8c">&#34;2022 Q1&#34;</span>, <span style="color:#f1fa8c">&#34;2022 Q2&#34;</span>, <span style="color:#f1fa8c">&#34;2022 Q3&#34;</span>, <span style="color:#f1fa8c">&#34;2022 Q4&#34;</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;YoYTTMEndPeriod&#34;</span>: [<span style="color:#f1fa8c">&#34;2023 Q1&#34;</span>, <span style="color:#f1fa8c">&#34;2023 Q2&#34;</span>, <span style="color:#f1fa8c">&#34;2023 Q3&#34;</span>, <span style="color:#f1fa8c">&#34;2023 Q4&#34;</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;YoYTTMGrowth&#34;</span>: <span style="color:#bd93f9">20.0</span>, <span style="color:#ff79c6">&#34;YoYTTMGrowthValue&#34;</span>: <span style="color:#bd93f9">8.1</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#6272a4">// ... QoQ fields ...
+</span></span></span><span style="display:flex;"><span><span style="color:#6272a4"></span>  <span style="color:#ff79c6">&#34;name&#34;</span>: <span style="color:#f1fa8c">&#34;net income&#34;</span>, <span style="color:#ff79c6">&#34;stock_code&#34;</span>: <span style="color:#f1fa8c">&#34;BBCA&#34;</span>, <span style="color:#ff79c6">&#34;indicator&#34;</span>: <span style="color:#f1fa8c">&#34;TTM&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+</ul>
+</li>
+<li><strong>Logic / Algorithm:</strong>
+<ul>
+<li><strong><code>financial_annualreport</code> / <code>financial_quarterreport</code>:</strong>
+<ol>
+<li>Calls the backend financial API to get all available data for the specified <code>code</code> and period type (<code>annual</code> or <code>quarter</code>). It fetches both <code>nominal</code> values and <code>percentage</code> growth values.</li>
+<li>It applies default date ranges if none are provided (typically a 5-year span). It intelligently handles various date formats (e.g., &ldquo;2023&rdquo;, &ldquo;2023 Q2&rdquo;, &ldquo;2023-06-30&rdquo;).</li>
+<li>It filters the comprehensive list of data down to only the records that match the requested metric <code>name</code> and fall within the date range.</li>
+<li>The final filtered list is packaged into a JSON object and returned.</li>
+</ol>
+</li>
+<li><strong><code>financial_ttmreport</code>:</strong>
+<ol>
+<li>Fetches all available quarterly <code>nominal</code> data for the stock.</li>
+<li>Determines the four quarters that constitute the TTM period for the <code>end_date</code>.</li>
+<li>Determines the four quarters that constitute the TTM period for the <code>start_date</code>.</li>
+<li>Sums the values for the metric <code>name</code> for each of these two TTM periods.</li>
+<li>Calculates the Year-over-Year (YoY) and Quarter-over-Quarter (QoQ) growth between the two TTM sums.</li>
+<li>Returns a detailed JSON object with the start and end TTM values, the periods used for the calculation, and the resulting growth figures.</li>
+</ol>
+</li>
+<li><strong><code>financial_ytdreport</code>:</strong>
+<ol>
+<li>Fetches all available quarterly <code>nominal</code> data for the stock.</li>
+<li>For each year within the specified date range, it identifies the relevant quarters to sum (from Q1 up to the quarter specified in the <code>end_date</code>).</li>
+<li>It sums the values for the metric <code>name</code> across these quarters for each year.</li>
+<li>Returns a JSON object containing a list of years, each with its calculated YTD cumulative value.</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="tool-financial-ratio-tools">Tool: Financial Ratio Tools
+</h2><p>This is a group of four related tools that retrieve pre-calculated financial ratios.</p>
+<ul>
+<li><code>financial_profitability_ratio</code> (ROA, ROE, GPM, OPM, NPM)</li>
+<li><code>financial_solvency_ratio</code> (Current Ratio, Quick Ratio, Debt to Equity)</li>
+<li><code>financial_valuation_ratio</code> (PER, PSR, PBV, PCFR, EV/EBITDA)</li>
+<li><code>financial_dividend_ratio</code> (Dividend, Payout Ratio)</li>
+</ul>
+<blockquote>
+<p><strong>Description (Example for Profitability):</strong> Retrieves Profitability financial ratios (ROA, ROE, GPM, OPM, NPM) for a given stock.</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> To provide a convenient way to access common financial ratios without needing to fetch the underlying financial statement data and calculate them manually.</li>
+<li><strong>Input Arguments:</strong> All four tools use the same schema. <code>start_date</code> and <code>end_date</code> are optional.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;code&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;The stock ticker symbol (e.g., &#39;BBCA&#39;).&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;start_date&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;Optional start date (&#39;YYYY-MM-DD&#39; or &#39;YYYY QX&#39;).&#34;</span>},
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;end_date&#34;</span>: {<span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>, <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;Optional end date (&#39;YYYY-MM-DD&#39; or &#39;YYYY QX&#39;).&#34;</span>}
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;code&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A JSON object where the key is the category of ratios requested (e.g., &ldquo;Profitability&rdquo;), containing an array of ratio values over time.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;stock_code&#34;</span>: <span style="color:#f1fa8c">&#34;BBCA&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;start_date&#34;</span>: <span style="color:#f1fa8c">&#34;2021 Q4&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;end_date&#34;</span>: <span style="color:#f1fa8c">&#34;2023 Q3&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;Profitability&#34;</span>: [
+</span></span><span style="display:flex;"><span>    { <span style="color:#ff79c6">&#34;period&#34;</span>: <span style="color:#f1fa8c">&#34;2023 Q3&#34;</span>, <span style="color:#ff79c6">&#34;name&#34;</span>: <span style="color:#f1fa8c">&#34;ROE TTM&#34;</span>, <span style="color:#ff79c6">&#34;value&#34;</span>: <span style="color:#bd93f9">21.5</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#ff79c6">&#34;period&#34;</span>: <span style="color:#f1fa8c">&#34;2023 Q3&#34;</span>, <span style="color:#ff79c6">&#34;name&#34;</span>: <span style="color:#f1fa8c">&#34;ROA TTM&#34;</span>, <span style="color:#ff79c6">&#34;value&#34;</span>: <span style="color:#bd93f9">3.8</span> },
+</span></span><span style="display:flex;"><span>    { <span style="color:#ff79c6">&#34;period&#34;</span>: <span style="color:#f1fa8c">&#34;2023 Q2&#34;</span>, <span style="color:#ff79c6">&#34;name&#34;</span>: <span style="color:#f1fa8c">&#34;ROE TTM&#34;</span>, <span style="color:#ff79c6">&#34;value&#34;</span>: <span style="color:#bd93f9">21.2</span> }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Logic / Algorithm:</strong>
+<ol>
+<li>All four tools use a shared helper function, <code>fetchAndPrepareFinancialData</code>.</li>
+<li>This function first normalizes the date range, providing a 5-year default if none is specified.</li>
+<li>It then makes a single API call to fetch <strong>all available quarterly financial data</strong> for the stock. This is an efficient optimization to avoid multiple API calls.</li>
+<li>The main tool function (e.g., <code>FinancialProfitabilityRatio</code>) then calls another helper, <code>createRatioResult</code>, passing in the category name (e.g., &ldquo;Profitability&rdquo;).</li>
+<li><code>createRatioResult</code> uses an internal map to identify which specific metrics belong to the requested category (e.g., &ldquo;Profitability&rdquo; -&gt; <code>[&quot;ROA TTM&quot;, &quot;ROE TTM&quot;, ...]</code>).</li>
+<li>It filters the large dataset from step 3, keeping only the metrics that match the category and fall within the requested date range.</li>
+<li><strong>Special Case for <code>financial_valuation_ratio</code></strong>: Before filtering, this specific tool makes an additional API call to get the company&rsquo;s Book Value Per Share (BVPS) and the stock&rsquo;s last price to calculate the <em>current</em> Price-to-Book Value (PBV). This live PBV value is added to the historical dataset as a synthetic point for the current quarter, providing the most up-to-date valuation metric.</li>
+<li>The final filtered list is embedded in a JSON object under a key corresponding to its category and returned.</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2 id="tool-stock_valuation">Tool: <code>stock_valuation</code>
+</h2><blockquote>
+<p>Get company quality (e.g: excellent, good, bad), stock valuation (e.g: fair_value, overvalued, undervalued), and bullish signals.</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> To provide a comprehensive, multi-faceted valuation summary of a stock by combining several different data points into a single, cohesive analysis.</li>
+<li><strong>Input Arguments:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;code&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;The 4-letter stock code, for example: BBCA&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;code&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A single, detailed JSON object summarizing the valuation.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;stock&#34;</span>: <span style="color:#f1fa8c">&#34;BBCA&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;last_price&#34;</span>: <span style="color:#bd93f9">9100</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;last_price_time&#34;</span>: <span style="color:#f1fa8c">&#34;2023-10-27T11:45:00+07:00&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;company_quality&#34;</span>: <span style="color:#f1fa8c">&#34;excellent&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;bullish_fair_value&#34;</span>: <span style="color:#bd93f9">9800</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;bearish_fair_value&#34;</span>: <span style="color:#bd93f9">8900</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;median_fair_value&#34;</span>: <span style="color:#bd93f9">9350</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;valuation&#34;</span>: <span style="color:#f1fa8c">&#34;fair_valued&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;bullish_signal_number&#34;</span>: <span style="color:#bd93f9">3</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;bullish_signals&#34;</span>: [<span style="color:#f1fa8c">&#34;Golden Cross&#34;</span>, <span style="color:#f1fa8c">&#34;MACD Crossover&#34;</span>, <span style="color:#f1fa8c">&#34;Uptrend&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Logic / Algorithm:</strong>
+<ol>
+<li>The tool initiates four separate API calls <strong>in parallel</strong> to maximize speed:
+<ul>
+<li>Get the latest stock price.</li>
+<li>Get the company&rsquo;s quality rating (e.g., &ldquo;excellent&rdquo;, &ldquo;good&rdquo;).</li>
+<li>Get the analyst consensus fair value range (bearish and bullish price targets).</li>
+<li>Get the active technical trading signals (e.g., &ldquo;Golden Cross&rdquo;).</li>
+</ul>
+</li>
+<li>It uses a <code>sync.WaitGroup</code> to wait for all four network requests to complete. Errors from any request are collected. If any fail, the entire tool fails.</li>
+<li>Once all data is retrieved, it performs business logic:
+<ul>
+<li>It calculates the <code>median_fair_value</code> from the bearish and bullish targets.</li>
+<li>It determines the <code>valuation</code> status by comparing the <code>last_price</code> to the fair value range (<code>undervalued</code>, <code>fair_valued</code>, or <code>overvalued</code>).</li>
+<li>If the stock is not fair-valued, it may append a percentage to the valuation string (e.g., <code>&quot;undervalued 15.20%&quot;</code>).</li>
+</ul>
+</li>
+<li>All the raw and calculated data points are assembled into the final <code>ValuationResult</code> struct.</li>
+<li>The result is marshalled into a JSON string and returned.</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2 id="tool-analyze_stock">Tool: <code>analyze_stock</code>
+</h2><blockquote>
+<p>Always use this tool if user ask you to &lsquo;analyze&rsquo; any stock. Get company related research data (business_line, competitive_advantage) to be used by LLM to analyze the stock quality.</p>
+</blockquote>
+<ul>
+<li>
+<p><strong>Purpose:</strong> To retrieve a complete, qualitative research document about a company from an internal database. This provides deep, human-written analysis and context (such as business model, industry insights, and competitive landscape) that is not available in purely quantitative tools like financial reports or market data. The output is the <strong>full, raw research report</strong>, intended for the LLM to read and synthesize for its final analysis.</p>
+</li>
+<li>
+<p><strong>Input Arguments:</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;code&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;The 4-letter stock code, for example: BBCA&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;code&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Output Format:</strong> A pretty-printed JSON object representing the entire <code>ResearchReportDoc</code> structure as stored in the database. If no document is found, it returns a plain text message.</p>
+<p>The primary field for the LLM is <code>report_content</code>, which contains the full text of the analysis.</p>
+<p><strong>Example Output (Content Truncated for Brevity):</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;_key&#34;</span>: <span style="color:#f1fa8c">&#34;BMRI.docx_BMRI&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;filename&#34;</span>: <span style="color:#f1fa8c">&#34;BMRI.docx&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;stock_code&#34;</span>: <span style="color:#f1fa8c">&#34;BMRI&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;report_content&#34;</span>: <span style="color:#f1fa8c">&#34;BMRI (PT Bank Mandiri (Persero) Tbk) is Indonesia&#39;s largest bank by assets, loans, and deposits... \n\n## Company profile\n\nBMRI’s revenue is predominantly driven by its Loan segment...\n\n## Bullish Valuation\n\nUpstream – Capital Sourcing\nBMRI primarily raises capital through customer deposits...\n\n## Business Line\n\nRisk management is the core of banking...\n\n## Competitive Advantage Analysis\n\nIndustry Valuation: Indonesia’s credit growth set to expand as economy grows...\n\n[... extensive report content continues ...] \n\n[TABLE DATA]\nCompany Score | Best\nTicker | BMRI\n...\n[/TABLE DATA]&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;created_timestamp&#34;</span>: <span style="color:#f1fa8c">&#34;2025-07-25T14:38:00.451254+07:00&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;last_updated_timestamp&#34;</span>: <span style="color:#f1fa8c">&#34;2025-07-25T14:39:13.035925+07:00&#34;</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li>
+<p><strong>Logic / Algorithm:</strong></p>
+<ol>
+<li>The input stock <code>code</code> is converted to uppercase.</li>
+<li>It queries an ArangoDB database by calling <code>arangoStore.GetResearchDocByStockCode</code> to find a single research document where the <code>stock_code</code> field matches the input.</li>
+<li>The database access is protected by a circuit breaker. If the database is unavailable, the tool will fail fast with a user-facing error.</li>
+<li>If the query returns no document (the result is <code>nil</code>), the tool returns the specific plain text string: <code>&quot;No research data related to &lt;CODE&gt; was found.&quot;</code>.</li>
+<li>If a document is successfully retrieved, the entire <code>ResearchReportDoc</code> struct is marshalled into an indented (pretty-printed) JSON string.</li>
+<li>This complete JSON string, containing all metadata and the full <code>report_content</code>, is returned as the tool&rsquo;s output.</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h2 id="tool-frequently_asked">Tool: <code>frequently_asked</code>
+</h2><blockquote>
+<p>This is the primary tool for answering all user questions that seek knowledge, definitions, explanations, or guidance&hellip; CRITICAL INSTRUCTION: If the user&rsquo;s question is not in formal English, you MUST first translate it into formal English&hellip; DO NOT use your own internal knowledge. ALWAYS call this tool.</p>
+</blockquote>
+<ul>
+<li><strong>Purpose:</strong> This is the agent&rsquo;s primary Retrieval-Augmented Generation (RAG) tool. It is used to answer any question about Tuntun&rsquo;s products, services, policies, or general financial concepts by querying an external knowledge base. It is designed to be the default tool for most informational queries. It supports both standard blocking and real-time streaming responses.</li>
+<li><strong>Input Arguments:</strong>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;object&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;properties&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#ff79c6">&#34;query&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;type&#34;</span>: <span style="color:#f1fa8c">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#ff79c6">&#34;description&#34;</span>: <span style="color:#f1fa8c">&#34;The user&#39;s question about products or services.&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#ff79c6">&#34;required&#34;</span>: [<span style="color:#f1fa8c">&#34;query&#34;</span>]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li><strong>Output Format:</strong> A plain text string containing the answer from the RAG system.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>To register on the Tuntun application, you first need to download the app from the App Store or Google Play Store. Once installed, open the app and tap on the &#39;Register&#39; button. You will be prompted to enter your email address and create a password...
+</span></span></code></pre></div></li>
+<li><strong>Logic / Algorithm:</strong>
+<ol>
+<li>The tool checks that the Tencent RAG service is properly configured.</li>
+<li>It constructs a request payload including the user&rsquo;s <code>query</code>, a unique request ID, and various application keys.</li>
+<li>It makes a <code>POST</code> request to the Tencent RAG API, with headers indicating it expects a Server-Sent Events (<code>text/event-stream</code>) response. The HTTP client for this tool has a longer timeout (60s) to accommodate potentially slow LLM responses.</li>
+<li>It handles non-200 OK status codes from the API as fatal errors.</li>
+<li>It reads the response body as a stream, processing it line-by-line.</li>
+<li>It parses the SSE protocol, looking for <code>event: reply</code> and <code>data: {...}</code> lines. It ignores other event types like <code>token_stat</code>.</li>
+<li>The JSON in the <code>data</code> field is parsed. The tool looks for payloads where <code>IsFromSelf</code> is <code>false</code> (meaning the message is from the AI, not an echo of the user&rsquo;s query).</li>
+<li><strong>For Blocking Execution (<code>TencentFrequentlyAsked</code>):</strong>
+<ul>
+<li>It keeps track of the most recent complete <code>Content</code> string from the AI.</li>
+<li>If it receives a message with <code>IsFinal: true</code>, it immediately stops processing and returns the content of that message.</li>
+<li>If the stream ends without a final marker, it returns the last complete content string it received.</li>
+</ul>
+</li>
+<li><strong>For Streaming Execution (<code>StreamTencentFrequentlyAsked</code>):</strong>
+<ul>
+<li>It maintains a copy of the <code>previousContent</code>.</li>
+<li>When a new AI message arrives, it calculates the <em>delta</em> (the new text added since the last message) by comparing the new content with the <code>previousContent</code>.</li>
+<li>This small delta string is sent immediately down a channel to the client as a <code>StreamEventToken</code>.</li>
+<li>It updates <code>previousContent</code> to the new content.</li>
+<li>This process repeats for every incoming message, creating a real-time typing effect for the user.</li>
+<li>The stream processing stops when a final marker is received or the connection closes.</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2024 - 
+        
+        2025 Go Chatbot
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        Theme <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> designed by <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a>
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/agentic/ts/main.7d3b06a3f9c7fc3f9e8edd384e9d4245f05cc3d94e687961eee37c1b5c98d939.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

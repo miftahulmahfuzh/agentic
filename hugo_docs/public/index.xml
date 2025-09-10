@@ -6,7 +6,480 @@
         <description>Recent content in Tuntun Go Agentic Chatbot on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Tue, 09 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 10 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Tools Documentation</title>
+        <link>http://localhost:1313/agentic/docs/caller_insights/tools/</link>
+        <pubDate>Wed, 10 Sep 2025 00:00:00 +0000</pubDate>
+        
+        <guid>http://localhost:1313/agentic/docs/caller_insights/tools/</guid>
+        <description>&lt;p&gt;This document provides a detailed overview of all the tools available to the agent. Each tool&amp;rsquo;s purpose, input arguments, output format, and internal logic are described to aid in understanding, debugging, and future development.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-get_current_time&#34;&gt;Tool: &lt;code&gt;get_current_time&lt;/code&gt;
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;Use this tool if user ask about the current time. It takes no arguments.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To provide the agent with the current server time and date, including timezone information. This is essential for grounding any time-sensitive queries.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt; None. The tool is called with an empty JSON object.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A single string representing the current time in &lt;a class=&#34;link&#34; href=&#34;https://www.rfc-editor.org/rfc/rfc3339&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
+    &gt;RFC3339&lt;/a&gt; format.
+&lt;pre tabindex=&#34;0&#34;&gt;&lt;code&gt;&amp;#34;2023-10-27T10:30:00+07:00&amp;#34;
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;Calls &lt;code&gt;time.Now()&lt;/code&gt; to get the current system time.&lt;/li&gt;
+&lt;li&gt;Formats the time object into an RFC3339 string.&lt;/li&gt;
+&lt;li&gt;Returns the formatted string.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-news_summary&#34;&gt;Tool: &lt;code&gt;news_summary&lt;/code&gt;
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;Use this tool to get the latest 5 news articles for a given stock. The &amp;lsquo;input&amp;rsquo; parameter should be the 4-letter stock code, for example: &amp;ldquo;BBCA&amp;rdquo;.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To retrieve recent news headlines and summaries for a specific publicly traded company.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;The 4-letter stock code, for example: BBCA&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A plain text string where each news article is formatted with its title, date, and summary, separated by double newlines. If no news is found, it returns a specific message.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Title: Bank Central Asia Reports Strong Q3 Earnings
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Date: 2023-10-26
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Summary: BBCA announced a 15% year-over-year increase in net profit, driven by strong loan growth and improved net interest margins.
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Title: Tech Sector Sees Volatility Amid Global Concerns
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Date: 2023-10-25
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Summary: Stocks like BBCA remained resilient while the broader tech index faced a downturn due to international market pressures.
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;The input stock &lt;code&gt;code&lt;/code&gt; is converted to uppercase.&lt;/li&gt;
+&lt;li&gt;It checks if the news service URL is configured in the application settings.&lt;/li&gt;
+&lt;li&gt;A JSON payload &lt;code&gt;{&amp;quot;secCodes&amp;quot;: [&amp;quot;&amp;lt;CODE&amp;gt;&amp;quot;]}&lt;/code&gt; is constructed.&lt;/li&gt;
+&lt;li&gt;A &lt;code&gt;POST&lt;/code&gt; request is made to the backend news API with a 30-second timeout.&lt;/li&gt;
+&lt;li&gt;It handles various errors, including context cancellation (user abort), timeouts, and network failures.&lt;/li&gt;
+&lt;li&gt;The API response is read. If the status code is not &lt;code&gt;200 OK&lt;/code&gt;, an error is returned.&lt;/li&gt;
+&lt;li&gt;The JSON response is parsed. It expects a structure containing a list of news items.&lt;/li&gt;
+&lt;li&gt;If the API reports a non-success message or the list of news is empty, it returns a user-friendly &amp;ldquo;No news found for &lt;code&gt;&amp;lt;CODE&amp;gt;&lt;/code&gt;&amp;rdquo; message.&lt;/li&gt;
+&lt;li&gt;It iterates through the top 5 news items from the response.&lt;/li&gt;
+&lt;li&gt;For each item, it extracts the title, publication date (ignoring the time part), and the LLM-generated summary.&lt;/li&gt;
+&lt;li&gt;These pieces are formatted into the final text string and returned.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-realtime_market&#34;&gt;Tool: &lt;code&gt;realtime_market&lt;/code&gt;
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;Gets the CURRENT, LIVE market data for a stock. Use this ONLY for the price &amp;lsquo;right now&amp;rsquo; or the &amp;rsquo;latest&amp;rsquo; single price point. This tool provides a real-time snapshot. DO NOT use this for questions about trends, history, or any period of time (e.g., &amp;rsquo;last week&amp;rsquo;, &amp;lsquo;past month&amp;rsquo;).&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To fetch a real-time snapshot of market data for one or more stocks. This includes the latest price, change, volume, and other key daily metrics.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;codes&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;array&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;items&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;A list of 4-letter stock codes, e.g., [\&amp;#34;BBCA\&amp;#34;, \&amp;#34;GOTO\&amp;#34;]&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;codes&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A series of JSON objects, one for each requested stock, separated by newlines. If data for a specific stock cannot be found, an error object is returned for that stock.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BBCA&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;date&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-27&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;time&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;11:15&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;last price&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#bd93f9&#34;&gt;9100&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;change&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#bd93f9&#34;&gt;-25&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;change%&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;-0.27%&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;previous close price&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#bd93f9&#34;&gt;9125&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;open price&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#bd93f9&#34;&gt;9125&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;high price&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#bd93f9&#34;&gt;9150&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;low price&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#bd93f9&#34;&gt;9075&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;value&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;1.2 T&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;volume&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;131.9 M&amp;#34;&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;Average Price&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#bd93f9&#34;&gt;9105.5&lt;/span&gt;,&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;Frequency&amp;#34;&lt;/span&gt;:&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;15,789&amp;#34;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;INVALID&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;error&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;No data found&amp;#34;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;It checks if the input &lt;code&gt;codes&lt;/code&gt; list is empty.&lt;/li&gt;
+&lt;li&gt;All stock codes in the list are converted to uppercase.&lt;/li&gt;
+&lt;li&gt;A single &lt;code&gt;POST&lt;/code&gt; request is made to the backend&amp;rsquo;s price summary API with the list of codes.&lt;/li&gt;
+&lt;li&gt;The API response, which contains a list of data for all found stocks, is processed. The results are placed into a map for efficient lookup (&lt;code&gt;code&lt;/code&gt; -&amp;gt; &lt;code&gt;data&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;The tool then iterates through the &lt;em&gt;original list of requested codes&lt;/em&gt;.&lt;/li&gt;
+&lt;li&gt;For each code, it looks it up in the results map.&lt;/li&gt;
+&lt;li&gt;If found, it formats the raw data into a structured &lt;code&gt;FormattedMarketData&lt;/code&gt; object. This includes formatting large numbers (like &lt;code&gt;value&lt;/code&gt; and &lt;code&gt;volume&lt;/code&gt;) into human-readable strings (e.g., &amp;ldquo;1.2 T&amp;rdquo;).&lt;/li&gt;
+&lt;li&gt;If a code is not found in the map, a specific JSON error object for that code is generated.&lt;/li&gt;
+&lt;li&gt;Each resulting JSON object (either data or error) is appended to a string, separated by newlines.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-historical_marketdata&#34;&gt;Tool: &lt;code&gt;historical_marketdata&lt;/code&gt;
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;Gets HISTORICAL data for a stock&amp;rsquo;s performance OVER A PERIOD OF TIME. This is ESSENTIAL for analyzing trends, charts, and price movements between a start and end date. Use this for ANY query that involves a date range like &amp;rsquo;last week&amp;rsquo;, &amp;lsquo;past year&amp;rsquo;, &amp;lsquo;daily movement&amp;rsquo;, &amp;lsquo;since January&amp;rsquo;, etc.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To retrieve historical end-of-day trading data for a stock over a specified period and aggregate it by a given time granularity.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;The stock ticker symbol.&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;start_date&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Start date in &amp;#39;YYYY-MM-DD&amp;#39; format.&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;end_date&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;End date in &amp;#39;YYYY-MM-DD&amp;#39; format.&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;granularity&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Time interval for aggregation.&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;enum&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;daily&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;weekly&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;monthly&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;quarterly&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;yearly&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;start_date&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;end_date&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;granularity&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A JSON array of objects. The structure of the objects depends on the requested &lt;code&gt;granularity&lt;/code&gt;.
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;For &lt;code&gt;granularity: &amp;quot;daily&amp;quot;&lt;/code&gt;:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;date&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-26&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;close price&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;9125&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;change&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;-25&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;change%&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;-0.27&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;volume&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;150000000&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;date&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-25&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;close price&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;9150&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;change&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;50&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;change%&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;0.55&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;volume&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;120000000&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;For aggregated granularities (e.g., &lt;code&gt;&amp;quot;weekly&amp;quot;&lt;/code&gt;):&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;[
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_identifier&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-W43&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;start_date_of_period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-23&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;end_date_of_period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-26&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_end_close_price&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;9125&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_change&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;-75&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_change_percentage&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;-0.82&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_identifier&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-W42&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;start_date_of_period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-16&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;end_date_of_period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-20&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_end_close_price&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;9200&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_change&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;100&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period_change_percentage&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;1.1&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;strong&gt;Preparation:&lt;/strong&gt; The stock &lt;code&gt;code&lt;/code&gt; is uppercased and &lt;code&gt;granularity&lt;/code&gt; is lowercased.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Date Handling:&lt;/strong&gt; The input &lt;code&gt;start_date&lt;/code&gt; and &lt;code&gt;end_date&lt;/code&gt; strings are parsed. If they are invalid or missing, sensible defaults are applied (e.g., a 5-day range). If &lt;code&gt;start_date&lt;/code&gt; is after &lt;code&gt;end_date&lt;/code&gt;, they are swapped.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;API Call:&lt;/strong&gt; A request is made to the backend historical data API for the processed date range.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Data Processing:&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;If the API returns no data, a user-facing error message is returned.&lt;/li&gt;
+&lt;li&gt;The raw API response is mapped to a standardized internal &lt;code&gt;DailyMarketDataItem&lt;/code&gt; struct.&lt;/li&gt;
+&lt;li&gt;The list of daily data is &lt;strong&gt;sorted from newest to oldest&lt;/strong&gt;. This is critical for the next step.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Aggregation (based on &lt;code&gt;granularity&lt;/code&gt;):&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;If &lt;code&gt;daily&lt;/code&gt;, the sorted list is returned as-is.&lt;/li&gt;
+&lt;li&gt;If &lt;code&gt;weekly&lt;/code&gt;, &lt;code&gt;monthly&lt;/code&gt;, &lt;code&gt;quarterly&lt;/code&gt;, or &lt;code&gt;yearly&lt;/code&gt;, the daily data is grouped into periods (e.g., all days in week &amp;ldquo;2023-W43&amp;rdquo;).&lt;/li&gt;
+&lt;li&gt;The periods are sorted from newest to oldest.&lt;/li&gt;
+&lt;li&gt;For each period, an aggregated summary is calculated:
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;period_end_close_price&lt;/code&gt;: The close price of the newest day in the period.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;period_change&lt;/code&gt;: The difference between the close price of the newest day and the oldest day in the period.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;period_change_percentage&lt;/code&gt;: The percentage change calculated from the period&amp;rsquo;s start and end prices.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;The final list of daily or aggregated data is marshalled into a JSON string and returned.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-financial-report-tools&#34;&gt;Tool: Financial Report Tools
+&lt;/h2&gt;&lt;p&gt;This is a group of four related tools that retrieve specific financial statement data.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;financial_annualreport&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;financial_quarterreport&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;financial_ttmreport&lt;/code&gt; (Trailing Twelve Months)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;financial_ytdreport&lt;/code&gt; (Year to Date)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Description (Example for Annual):&lt;/strong&gt; Requests annual financial report data from a financial API.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To fetch specific line items (e.g., &amp;ldquo;Revenue&amp;rdquo;, &amp;ldquo;Net Income&amp;rdquo;) from a company&amp;rsquo;s financial statements, aggregated in different ways (annually, quarterly, etc.).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt; All four tools use the same schema.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;The 4-letter stock code, e.g., BBCA&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;start_date&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Start date, e.g., &amp;#39;2022&amp;#39; or &amp;#39;2023-01-01&amp;#39;&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;end_date&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;End date, e.g., &amp;#39;2023&amp;#39; or &amp;#39;2023-12-31&amp;#39;&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Name of the financial metric&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;enum&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Revenue&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Net Income&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Total assets&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Total liabilities&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Cash from operating act&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Cash from financing act&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Cash from investing act&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A JSON object containing metadata and an array of financial values. The structure varies slightly based on the tool.
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;For &lt;code&gt;financial_quarterreport&lt;/code&gt;:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;start_date&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2022 Q1&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;end_date&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q2&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;stock_code&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BBCA&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;indicator&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;quarter&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;value&amp;#34;&lt;/span&gt;: [
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q2&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Net Income&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;12000000000000&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;nominal&amp;#34;&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q1&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Net Income&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;11500000000000&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;nominal&amp;#34;&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;For &lt;code&gt;financial_ttmreport&lt;/code&gt;:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;YoYTTMStartValue&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;40.5&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;YoYTTMEndValue&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;48.6&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;YoYTTMStartPeriod&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2022 Q1&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2022 Q2&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2022 Q3&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2022 Q4&amp;#34;&lt;/span&gt;],
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;YoYTTMEndPeriod&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q1&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q2&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q3&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q4&amp;#34;&lt;/span&gt;],
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;YoYTTMGrowth&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;20.0&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;YoYTTMGrowthValue&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;8.1&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#6272a4&#34;&gt;// ... QoQ fields ...
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#6272a4&#34;&gt;&lt;/span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;net income&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;stock_code&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BBCA&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;indicator&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;TTM&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;financial_annualreport&lt;/code&gt; / &lt;code&gt;financial_quarterreport&lt;/code&gt;:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;Calls the backend financial API to get all available data for the specified &lt;code&gt;code&lt;/code&gt; and period type (&lt;code&gt;annual&lt;/code&gt; or &lt;code&gt;quarter&lt;/code&gt;). It fetches both &lt;code&gt;nominal&lt;/code&gt; values and &lt;code&gt;percentage&lt;/code&gt; growth values.&lt;/li&gt;
+&lt;li&gt;It applies default date ranges if none are provided (typically a 5-year span). It intelligently handles various date formats (e.g., &amp;ldquo;2023&amp;rdquo;, &amp;ldquo;2023 Q2&amp;rdquo;, &amp;ldquo;2023-06-30&amp;rdquo;).&lt;/li&gt;
+&lt;li&gt;It filters the comprehensive list of data down to only the records that match the requested metric &lt;code&gt;name&lt;/code&gt; and fall within the date range.&lt;/li&gt;
+&lt;li&gt;The final filtered list is packaged into a JSON object and returned.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;financial_ttmreport&lt;/code&gt;:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;Fetches all available quarterly &lt;code&gt;nominal&lt;/code&gt; data for the stock.&lt;/li&gt;
+&lt;li&gt;Determines the four quarters that constitute the TTM period for the &lt;code&gt;end_date&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Determines the four quarters that constitute the TTM period for the &lt;code&gt;start_date&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;Sums the values for the metric &lt;code&gt;name&lt;/code&gt; for each of these two TTM periods.&lt;/li&gt;
+&lt;li&gt;Calculates the Year-over-Year (YoY) and Quarter-over-Quarter (QoQ) growth between the two TTM sums.&lt;/li&gt;
+&lt;li&gt;Returns a detailed JSON object with the start and end TTM values, the periods used for the calculation, and the resulting growth figures.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;&lt;code&gt;financial_ytdreport&lt;/code&gt;:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;Fetches all available quarterly &lt;code&gt;nominal&lt;/code&gt; data for the stock.&lt;/li&gt;
+&lt;li&gt;For each year within the specified date range, it identifies the relevant quarters to sum (from Q1 up to the quarter specified in the &lt;code&gt;end_date&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;It sums the values for the metric &lt;code&gt;name&lt;/code&gt; across these quarters for each year.&lt;/li&gt;
+&lt;li&gt;Returns a JSON object containing a list of years, each with its calculated YTD cumulative value.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-financial-ratio-tools&#34;&gt;Tool: Financial Ratio Tools
+&lt;/h2&gt;&lt;p&gt;This is a group of four related tools that retrieve pre-calculated financial ratios.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;financial_profitability_ratio&lt;/code&gt; (ROA, ROE, GPM, OPM, NPM)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;financial_solvency_ratio&lt;/code&gt; (Current Ratio, Quick Ratio, Debt to Equity)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;financial_valuation_ratio&lt;/code&gt; (PER, PSR, PBV, PCFR, EV/EBITDA)&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;financial_dividend_ratio&lt;/code&gt; (Dividend, Payout Ratio)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;strong&gt;Description (Example for Profitability):&lt;/strong&gt; Retrieves Profitability financial ratios (ROA, ROE, GPM, OPM, NPM) for a given stock.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To provide a convenient way to access common financial ratios without needing to fetch the underlying financial statement data and calculate them manually.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt; All four tools use the same schema. &lt;code&gt;start_date&lt;/code&gt; and &lt;code&gt;end_date&lt;/code&gt; are optional.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;The stock ticker symbol (e.g., &amp;#39;BBCA&amp;#39;).&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;start_date&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Optional start date (&amp;#39;YYYY-MM-DD&amp;#39; or &amp;#39;YYYY QX&amp;#39;).&amp;#34;&lt;/span&gt;},
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;end_date&amp;#34;&lt;/span&gt;: {&lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Optional end date (&amp;#39;YYYY-MM-DD&amp;#39; or &amp;#39;YYYY QX&amp;#39;).&amp;#34;&lt;/span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A JSON object where the key is the category of ratios requested (e.g., &amp;ldquo;Profitability&amp;rdquo;), containing an array of ratio values over time.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;stock_code&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BBCA&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;start_date&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2021 Q4&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;end_date&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q3&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;Profitability&amp;#34;&lt;/span&gt;: [
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q3&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;ROE TTM&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;21.5&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q3&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;ROA TTM&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;3.8&lt;/span&gt; },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    { &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;period&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023 Q2&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;name&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;ROE TTM&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;21.2&lt;/span&gt; }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  ]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;All four tools use a shared helper function, &lt;code&gt;fetchAndPrepareFinancialData&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;This function first normalizes the date range, providing a 5-year default if none is specified.&lt;/li&gt;
+&lt;li&gt;It then makes a single API call to fetch &lt;strong&gt;all available quarterly financial data&lt;/strong&gt; for the stock. This is an efficient optimization to avoid multiple API calls.&lt;/li&gt;
+&lt;li&gt;The main tool function (e.g., &lt;code&gt;FinancialProfitabilityRatio&lt;/code&gt;) then calls another helper, &lt;code&gt;createRatioResult&lt;/code&gt;, passing in the category name (e.g., &amp;ldquo;Profitability&amp;rdquo;).&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;createRatioResult&lt;/code&gt; uses an internal map to identify which specific metrics belong to the requested category (e.g., &amp;ldquo;Profitability&amp;rdquo; -&amp;gt; &lt;code&gt;[&amp;quot;ROA TTM&amp;quot;, &amp;quot;ROE TTM&amp;quot;, ...]&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;It filters the large dataset from step 3, keeping only the metrics that match the category and fall within the requested date range.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Special Case for &lt;code&gt;financial_valuation_ratio&lt;/code&gt;&lt;/strong&gt;: Before filtering, this specific tool makes an additional API call to get the company&amp;rsquo;s Book Value Per Share (BVPS) and the stock&amp;rsquo;s last price to calculate the &lt;em&gt;current&lt;/em&gt; Price-to-Book Value (PBV). This live PBV value is added to the historical dataset as a synthetic point for the current quarter, providing the most up-to-date valuation metric.&lt;/li&gt;
+&lt;li&gt;The final filtered list is embedded in a JSON object under a key corresponding to its category and returned.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-stock_valuation&#34;&gt;Tool: &lt;code&gt;stock_valuation&lt;/code&gt;
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;Get company quality (e.g: excellent, good, bad), stock valuation (e.g: fair_value, overvalued, undervalued), and bullish signals.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To provide a comprehensive, multi-faceted valuation summary of a stock by combining several different data points into a single, cohesive analysis.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;The 4-letter stock code, for example: BBCA&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A single, detailed JSON object summarizing the valuation.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;stock&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BBCA&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;last_price&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;9100&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;last_price_time&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2023-10-27T11:45:00+07:00&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;company_quality&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;excellent&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;bullish_fair_value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;9800&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;bearish_fair_value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;8900&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;median_fair_value&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;9350&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;valuation&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;fair_valued&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;bullish_signal_number&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#bd93f9&#34;&gt;3&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;bullish_signals&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Golden Cross&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;MACD Crossover&amp;#34;&lt;/span&gt;, &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;Uptrend&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;The tool initiates four separate API calls &lt;strong&gt;in parallel&lt;/strong&gt; to maximize speed:
+&lt;ul&gt;
+&lt;li&gt;Get the latest stock price.&lt;/li&gt;
+&lt;li&gt;Get the company&amp;rsquo;s quality rating (e.g., &amp;ldquo;excellent&amp;rdquo;, &amp;ldquo;good&amp;rdquo;).&lt;/li&gt;
+&lt;li&gt;Get the analyst consensus fair value range (bearish and bullish price targets).&lt;/li&gt;
+&lt;li&gt;Get the active technical trading signals (e.g., &amp;ldquo;Golden Cross&amp;rdquo;).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;It uses a &lt;code&gt;sync.WaitGroup&lt;/code&gt; to wait for all four network requests to complete. Errors from any request are collected. If any fail, the entire tool fails.&lt;/li&gt;
+&lt;li&gt;Once all data is retrieved, it performs business logic:
+&lt;ul&gt;
+&lt;li&gt;It calculates the &lt;code&gt;median_fair_value&lt;/code&gt; from the bearish and bullish targets.&lt;/li&gt;
+&lt;li&gt;It determines the &lt;code&gt;valuation&lt;/code&gt; status by comparing the &lt;code&gt;last_price&lt;/code&gt; to the fair value range (&lt;code&gt;undervalued&lt;/code&gt;, &lt;code&gt;fair_valued&lt;/code&gt;, or &lt;code&gt;overvalued&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;If the stock is not fair-valued, it may append a percentage to the valuation string (e.g., &lt;code&gt;&amp;quot;undervalued 15.20%&amp;quot;&lt;/code&gt;).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;All the raw and calculated data points are assembled into the final &lt;code&gt;ValuationResult&lt;/code&gt; struct.&lt;/li&gt;
+&lt;li&gt;The result is marshalled into a JSON string and returned.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-analyze_stock&#34;&gt;Tool: &lt;code&gt;analyze_stock&lt;/code&gt;
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;Always use this tool if user ask you to &amp;lsquo;analyze&amp;rsquo; any stock. Get company related research data (business_line, competitive_advantage) to be used by LLM to analyze the stock quality.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; To retrieve a complete, qualitative research document about a company from an internal database. This provides deep, human-written analysis and context (such as business model, industry insights, and competitive landscape) that is not available in purely quantitative tools like financial reports or market data. The output is the &lt;strong&gt;full, raw research report&lt;/strong&gt;, intended for the LLM to read and synthesize for its final analysis.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;The 4-letter stock code, for example: BBCA&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;code&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A pretty-printed JSON object representing the entire &lt;code&gt;ResearchReportDoc&lt;/code&gt; structure as stored in the database. If no document is found, it returns a plain text message.&lt;/p&gt;
+&lt;p&gt;The primary field for the LLM is &lt;code&gt;report_content&lt;/code&gt;, which contains the full text of the analysis.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Example Output (Content Truncated for Brevity):&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;_key&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BMRI.docx_BMRI&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;filename&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BMRI.docx&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;stock_code&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BMRI&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;report_content&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;BMRI (PT Bank Mandiri (Persero) Tbk) is Indonesia&amp;#39;s largest bank by assets, loans, and deposits... \n\n## Company profile\n\nBMRI’s revenue is predominantly driven by its Loan segment...\n\n## Bullish Valuation\n\nUpstream – Capital Sourcing\nBMRI primarily raises capital through customer deposits...\n\n## Business Line\n\nRisk management is the core of banking...\n\n## Competitive Advantage Analysis\n\nIndustry Valuation: Indonesia’s credit growth set to expand as economy grows...\n\n[... extensive report content continues ...] \n\n[TABLE DATA]\nCompany Score | Best\nTicker | BMRI\n...\n[/TABLE DATA]&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;created_timestamp&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2025-07-25T14:38:00.451254+07:00&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;last_updated_timestamp&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;2025-07-25T14:39:13.035925+07:00&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;The input stock &lt;code&gt;code&lt;/code&gt; is converted to uppercase.&lt;/li&gt;
+&lt;li&gt;It queries an ArangoDB database by calling &lt;code&gt;arangoStore.GetResearchDocByStockCode&lt;/code&gt; to find a single research document where the &lt;code&gt;stock_code&lt;/code&gt; field matches the input.&lt;/li&gt;
+&lt;li&gt;The database access is protected by a circuit breaker. If the database is unavailable, the tool will fail fast with a user-facing error.&lt;/li&gt;
+&lt;li&gt;If the query returns no document (the result is &lt;code&gt;nil&lt;/code&gt;), the tool returns the specific plain text string: &lt;code&gt;&amp;quot;No research data related to &amp;lt;CODE&amp;gt; was found.&amp;quot;&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;If a document is successfully retrieved, the entire &lt;code&gt;ResearchReportDoc&lt;/code&gt; struct is marshalled into an indented (pretty-printed) JSON string.&lt;/li&gt;
+&lt;li&gt;This complete JSON string, containing all metadata and the full &lt;code&gt;report_content&lt;/code&gt;, is returned as the tool&amp;rsquo;s output.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2 id=&#34;tool-frequently_asked&#34;&gt;Tool: &lt;code&gt;frequently_asked&lt;/code&gt;
+&lt;/h2&gt;&lt;blockquote&gt;
+&lt;p&gt;This is the primary tool for answering all user questions that seek knowledge, definitions, explanations, or guidance&amp;hellip; CRITICAL INSTRUCTION: If the user&amp;rsquo;s question is not in formal English, you MUST first translate it into formal English&amp;hellip; DO NOT use your own internal knowledge. ALWAYS call this tool.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Purpose:&lt;/strong&gt; This is the agent&amp;rsquo;s primary Retrieval-Augmented Generation (RAG) tool. It is used to answer any question about Tuntun&amp;rsquo;s products, services, policies, or general financial concepts by querying an external knowledge base. It is designed to be the default tool for most informational queries. It supports both standard blocking and real-time streaming responses.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Input Arguments:&lt;/strong&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-json&#34; data-lang=&#34;json&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;{
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;object&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;properties&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;query&amp;#34;&lt;/span&gt;: {
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;type&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;string&amp;#34;&lt;/span&gt;,
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;      &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;description&amp;#34;&lt;/span&gt;: &lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;The user&amp;#39;s question about products or services.&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    }
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  },
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#ff79c6&#34;&gt;&amp;#34;required&amp;#34;&lt;/span&gt;: [&lt;span style=&#34;color:#f1fa8c&#34;&gt;&amp;#34;query&amp;#34;&lt;/span&gt;]
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;}
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Output Format:&lt;/strong&gt; A plain text string containing the answer from the RAG system.
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-text&#34; data-lang=&#34;text&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;To register on the Tuntun application, you first need to download the app from the App Store or Google Play Store. Once installed, open the app and tap on the &amp;#39;Register&amp;#39; button. You will be prompted to enter your email address and create a password...
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Logic / Algorithm:&lt;/strong&gt;
+&lt;ol&gt;
+&lt;li&gt;The tool checks that the Tencent RAG service is properly configured.&lt;/li&gt;
+&lt;li&gt;It constructs a request payload including the user&amp;rsquo;s &lt;code&gt;query&lt;/code&gt;, a unique request ID, and various application keys.&lt;/li&gt;
+&lt;li&gt;It makes a &lt;code&gt;POST&lt;/code&gt; request to the Tencent RAG API, with headers indicating it expects a Server-Sent Events (&lt;code&gt;text/event-stream&lt;/code&gt;) response. The HTTP client for this tool has a longer timeout (60s) to accommodate potentially slow LLM responses.&lt;/li&gt;
+&lt;li&gt;It handles non-200 OK status codes from the API as fatal errors.&lt;/li&gt;
+&lt;li&gt;It reads the response body as a stream, processing it line-by-line.&lt;/li&gt;
+&lt;li&gt;It parses the SSE protocol, looking for &lt;code&gt;event: reply&lt;/code&gt; and &lt;code&gt;data: {...}&lt;/code&gt; lines. It ignores other event types like &lt;code&gt;token_stat&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;The JSON in the &lt;code&gt;data&lt;/code&gt; field is parsed. The tool looks for payloads where &lt;code&gt;IsFromSelf&lt;/code&gt; is &lt;code&gt;false&lt;/code&gt; (meaning the message is from the AI, not an echo of the user&amp;rsquo;s query).&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;For Blocking Execution (&lt;code&gt;TencentFrequentlyAsked&lt;/code&gt;):&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;It keeps track of the most recent complete &lt;code&gt;Content&lt;/code&gt; string from the AI.&lt;/li&gt;
+&lt;li&gt;If it receives a message with &lt;code&gt;IsFinal: true&lt;/code&gt;, it immediately stops processing and returns the content of that message.&lt;/li&gt;
+&lt;li&gt;If the stream ends without a final marker, it returns the last complete content string it received.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;For Streaming Execution (&lt;code&gt;StreamTencentFrequentlyAsked&lt;/code&gt;):&lt;/strong&gt;
+&lt;ul&gt;
+&lt;li&gt;It maintains a copy of the &lt;code&gt;previousContent&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;When a new AI message arrives, it calculates the &lt;em&gt;delta&lt;/em&gt; (the new text added since the last message) by comparing the new content with the &lt;code&gt;previousContent&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;This small delta string is sent immediately down a channel to the client as a &lt;code&gt;StreamEventToken&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;It updates &lt;code&gt;previousContent&lt;/code&gt; to the new content.&lt;/li&gt;
+&lt;li&gt;This process repeats for every incoming message, creating a real-time typing effect for the user.&lt;/li&gt;
+&lt;li&gt;The stream processing stops when a final marker is received or the connection closes.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+        </item>
+        <item>
         <title>Dual Optimization</title>
         <link>http://localhost:1313/agentic/docs/frequently_asked/optimization_qa_1/</link>
         <pubDate>Tue, 09 Sep 2025 00:00:00 +0000</pubDate>
