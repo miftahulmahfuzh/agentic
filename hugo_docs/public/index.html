@@ -246,6 +246,8 @@
             <ul>
                 <li><span class="popup-trigger" onclick="showPopup('token-truncation')">Targeted Token Truncation</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('context-aware-caching')">Context-Aware Caching</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('enhanced-cache-metadata')">Enhanced Cache Metadata</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('detailed-tool-logging')">Detailed Tool Metadata Logging</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('rag')">Direct Stream RAG</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('automated-indexing')">Automated Schema & Indexing</span></li>
             </ul>
@@ -255,6 +257,7 @@
             <h4>🔭 Total System Observability</h4>
             <ul>
                 <li><span class="popup-trigger" onclick="showPopup('structured-logging')">Structured JSON Logging</span></li>
+                <li><span class="popup-trigger" onclick="showPopup('real-time-status-tracking')">Real-Time Status Tracking</span></li>
                 <li><span class="popup-trigger" onclick="showPopup('observability')">Complete Observability Stack</span></li>
             </ul>
           </div>
@@ -1564,6 +1567,126 @@ graph TD
                             <li><strong>Single Source of Truth:</strong> All system capabilities are defined in one place.</li>
                         </ul>
                     `;
+            break;
+
+          case "enhanced-cache-metadata":
+            popupContent = `
+                <h2>📊 Enhanced Cache Metadata</h2>
+                <p>The cache system now stores rich metadata alongside responses, dramatically improving cache transparency and user experience. Instead of simple string caching, the system preserves complete execution context.</p>
+                
+                <h3>🔍 What's Cached:</h3>
+                <ul>
+                    <li><strong>Response Content:</strong> The actual chatbot response</li>
+                    <li><strong>Tool Execution Details:</strong> Complete metadata for all tools used</li>
+                    <li><strong>Performance Metrics:</strong> Time-to-first-token and completion status</li>
+                    <li><strong>Execution Timeline:</strong> When the response was originally generated and cached</li>
+                </ul>
+                
+                <h3>⚡ Cache Fast-Lane Benefits:</h3>
+                <ul>
+                    <li><strong>Full Transparency:</strong> Users see exactly which tools were used, even from cache</li>
+                    <li><strong>Consistent UI Experience:</strong> Cache responses show the same detailed status as fresh requests</li>
+                    <li><strong>Debug Capability:</strong> Complete audit trail of tool usage preserved in cache</li>
+                    <li><strong>Performance Insights:</strong> Original execution timing data available for analysis</li>
+                </ul>
+                
+                <p>This transforms the cache from a "black box" optimization into a fully transparent acceleration layer that maintains complete fidelity with the original processing pipeline.</p>
+            `;
+            break;
+
+          case "detailed-tool-logging":
+            popupContent = `
+                <h2>📋 Detailed Tool Metadata Logging</h2>
+                <p>The logging system now captures comprehensive metadata for every tool execution, creating a complete audit trail and enabling deep analytics of system behavior.</p>
+                
+                <h3>🛠️ Tool Execution Data Captured:</h3>
+                <ul>
+                    <li><strong>Input Parameters:</strong> Complete key-value pairs of tool arguments</li>
+                    <li><strong>Output Analysis:</strong> Token count and full response content</li>
+                    <li><strong>Performance Metrics:</strong> Precise execution duration in seconds</li>
+                    <li><strong>Error Tracking:</strong> Detailed error messages when tools fail</li>
+                    <li><strong>Execution Timeline:</strong> Timestamp of when each tool was invoked</li>
+                </ul>
+                
+                <h3>📊 Multiple Tool Support:</h3>
+                <ul>
+                    <li><strong>Multi-Call Tracking:</strong> Same tool called multiple times in one request</li>
+                    <li><strong>Parallel Execution Log:</strong> Complete record of concurrent tool operations</li>
+                    <li><strong>Tool Chain Analysis:</strong> Understanding of tool interaction patterns</li>
+                </ul>
+                
+                <h3>🎯 Analytics & Insights:</h3>
+                <ul>
+                    <li><strong>Performance Analysis:</strong> Which tools are slowest/fastest</li>
+                    <li><strong>Usage Patterns:</strong> Most frequently used tool combinations</li>
+                    <li><strong>Error Analysis:</strong> Tool failure rates and common issues</li>
+                    <li><strong>Resource Optimization:</strong> Token usage patterns across different tools</li>
+                </ul>
+                
+                <p>This creates a comprehensive dataset for system optimization, debugging, and understanding user interaction patterns with the tool ecosystem.</p>
+            `;
+            break;
+
+          case "real-time-status-tracking":
+            popupContent = `
+                <h2>🔍 Real-Time Status Tracking</h2>
+                <p>The <code>GET /chat/status/:request_id</code> endpoint provides unprecedented visibility into the chatbot's internal processing pipeline, giving users real-time insight into what's happening behind the scenes.</p>
+                
+                <div class="mermaid">
+graph TD
+    subgraph StatusAPI["🔍 Status API Pipeline"]
+        Client[\"👤 Client Request\"] --> StatusEndpoint[\"GET /chat/status/:id\"]
+        StatusEndpoint --> StateCheck{\"Request State?\"}
+        
+        StateCheck -->|\"Active\"| ActiveMemory[\"📊 Live Memory State\"]
+        StateCheck -->|\"Completed\"| Database[\"💾 ArangoDB Lookup\"]
+        
+        ActiveMemory --> RealTimeData[\"⚡ Real-Time Progress\"]
+        Database --> HistoricalData[\"📚 Historical Record\"]
+    end
+    
+    subgraph ProcessingStates["🔄 Processing States Tracked"]
+        direction TB
+        Queued[\"📋 Queued\"]
+        ChoosingTools[\"🔧 Choosing Tools\"]
+        CallingTools[\"⚙️ Calling Tools\"]
+        FormulatingAnswer[\"✍️ Formulating Answer\"]
+        ReadyToStream[\"📺 Ready to Stream\"]
+        Completed[\"✅ Completed\"]
+    end
+    
+    RealTimeData --> ProcessingStates
+    HistoricalData --> ProcessingStates
+    
+    %% Styling
+    classDef apiStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    classDef stateStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef dataStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    
+    class StatusEndpoint,StateCheck,ActiveMemory,Database apiStyle
+    class Queued,ChoosingTools,CallingTools,FormulatingAnswer,ReadyToStream,Completed stateStyle
+    class RealTimeData,HistoricalData dataStyle
+                </div>
+                
+                <h3>📊 Status Information Provided:</h3>
+                <ul>
+                    <li><strong>Current Processing Stage:</strong> Exactly where the request is in the pipeline</li>
+                    <li><strong>Tool Selection Progress:</strong> Which tools have been chosen for execution</li>
+                    <li><strong>Tool Execution Status:</strong> Which tools are running, completed, or failed</li>
+                    <li><strong>Completion Ratio:</strong> Percentage progress through the entire pipeline</li>
+                    <li><strong>Estimated ETA:</strong> Projected completion time for active requests</li>
+                </ul>
+                
+                <h3>🎯 Frontend Integration:</h3>
+                <ul>
+                    <li><strong>Real-Time Polling:</strong> Status updates every 750ms during processing</li>
+                    <li><strong>Visual Progress Indicators:</strong> Dynamic status boxes with tool progression</li>
+                    <li><strong>Tool-by-Tool Tracking:</strong> Individual checkmarks as each tool completes</li>
+                    <li><strong>Transparent Cache Hits:</strong> Instant status finalization for cached responses</li>
+                </ul>
+                
+                <p><strong>User Experience Impact:</strong> Users no longer see a "black box" processing delay. They get Netflix-style transparency into what's happening: "Choosing the right tools... ✓ Calling market data API... ⏳ Analyzing company financials..."</p>
+            `;
             break;
 
           default:
