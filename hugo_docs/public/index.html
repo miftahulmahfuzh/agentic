@@ -5,145 +5,205 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuntun Go Agentic Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
     <link rel="stylesheet" href="http://localhost:1313/agentic/style.css">
     <link rel="icon" type="image/png" href="http://localhost:1313/agentic/favicon.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
   </head>
   <body>
-        <div class="container">
-      <h1>🤖 Tuntun Go Agentic Chatbot</h1>
 
-      <div class="intro">
-        <p>
-          <strong>An enterprise-grade, high-concurrency agentic chatbot system built
-            in Go.</strong>
-          It uses the Gin web framework and LangChainGo to provide a robust,
-          intelligent assistant for the financial sector, integrating LLM
-          capabilities with real-time financial data, market analysis, and news.
+    
+    <svg style="display:none" aria-hidden="true">
+      <symbol id="ic-architecture" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+      <symbol id="ic-bolt" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+      <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+      <symbol id="ic-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></symbol>
+      <symbol id="ic-activity" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol>
+      <symbol id="ic-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+      <symbol id="ic-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z"/></symbol>
+      <symbol id="ic-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+      <symbol id="ic-sliders" viewBox="0 0 24 24"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></symbol>
+      <symbol id="ic-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></symbol>
+      <symbol id="ic-code" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></symbol>
+      <symbol id="ic-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+      <symbol id="ic-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+      <symbol id="ic-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+      <symbol id="ic-arrow-right" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+      <symbol id="ic-arrow-up-right" viewBox="0 0 24 24"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></symbol>
+    </svg>
+
+    
+    <header class="masthead">
+      <a class="masthead__brand" href="#top">tuntun-go-chatbot</a>
+      <nav class="masthead__nav" aria-label="Primary">
+        <a href="#architecture">Architecture</a>
+        <a href="#tools">Tools</a>
+        <a href="#api">API</a>
+        <a class="is-ext" href="docs/">Docs <svg class="ic"><use href="#ic-arrow-up-right"/></svg></a>
+      </nav>
+    </header>
+
+    <div class="container" id="top">
+
+      
+      <section class="hero" id="overview">
+        <p class="eyebrow reveal" style="--reveal-delay:0ms">GO · GIN · LANGCHAINGO</p>
+        <h1 class="reveal" style="--reveal-delay:80ms">A high-concurrency agentic engine for financial workloads.</h1>
+        <p class="lede reveal" style="--reveal-delay:160ms">
+          An enterprise chatbot that serves cached answers in under two seconds,
+          deduplicates identical in-flight requests into a single LLM stream, and
+          degrades gracefully under load.
         </p>
-      </div>
 
-      <div class="toc">
-        <h3>📋 Quick Navigation</h3>
-        <ul>
-          <li><a href="#architecture">System Architecture</a></li>
-          <li><a href="#features">Core Engineering & Features</a></li>
-          <li><a href="#tools">Available Tools</a></li>
-          <li><a href="#api">API Endpoints</a></li>
-          <li><a href="#installation">Installation & Setup</a></li>
-          <li><a href="#configuration">Configuration</a></li>
-          <li><a href="#usage">Usage & Testing</a></li>
-          <li><a href="#development">Development</a></li>
-          <li><a href="#documentation">Documentation</a></li>
-        </ul>
-      </div>
+        <div class="metrics reveal" style="--reveal-delay:240ms">
+          <span><b>8</b> concurrent leaders</span>
+          <span><b>50</b> active subscribers</span>
+          <span><b>5</b> LLM stream workers</span>
+          <span><b>&lt; 2s</b> cache hit</span>
+          <span><b>100</b>-deep queue</span>
+        </div>
 
-      <section id="architecture">
-        <h2>🏗️ System Architecture</h2>
-        <p>
-          The system is a decoupled, two-stage worker pipeline designed for high
-          throughput. It separates fast data preparation from slow LLM
-          interactions and executes blocking tool calls concurrently to minimize
-          latency.
-        </p>
-
-        <div class="expandable-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <h3>View Complete Architecture Diagram</h3>
-            <span class="expand-icon">▼</span>
+        
+        <div class="rail reveal" style="--reveal-delay:320ms">
+          <div class="rail__head">Agentic engine · request lifecycle</div>
+          <div class="rail__flow">
+            <div class="rail__node reveal" style="--reveal-delay:360ms">
+              <span class="label">Entry</span>
+              <span class="title">POST /submit</span>
+              <span class="meta">all requests</span>
+            </div>
+            <div class="rail__arrow"><svg class="ic"><use href="#ic-arrow-right"/></svg></div>
+            <div class="rail__node rail__node--hot reveal" style="--reveal-delay:420ms">
+              <span class="label">Tier 1</span>
+              <span class="title">Cache fast-lane</span>
+              <span class="meta">hit &lt; 2s · bypasses semaphores</span>
+            </div>
+            <div class="rail__arrow"><svg class="ic"><use href="#ic-arrow-right"/></svg></div>
+            <div class="rail__node reveal" style="--reveal-delay:480ms">
+              <span class="label">Tier 2</span>
+              <span class="title">Priority queue</span>
+              <span class="meta">FIFO · miss path</span>
+            </div>
+            <div class="rail__arrow"><svg class="ic"><use href="#ic-arrow-right"/></svg></div>
+            <div class="rail__node reveal" style="--reveal-delay:540ms">
+              <span class="label">Tier 3</span>
+              <span class="title">Leader → broadcast</span>
+              <span class="meta">1 stream, many subscribers</span>
+            </div>
           </div>
-          <div class="section-content">
-            <div class="section-inner">
+          <p class="rail__note">The <b>cache fast-lane</b> bypasses every semaphore; on a miss the request enters the priority queue and a single leader streams the answer to all identical followers.</p>
+        </div>
+      </section>
+
+      
+      <section id="architecture">
+        <p class="eyebrow"><svg class="ic"><use href="#ic-architecture"/></svg> ARCHITECTURE</p>
+        <h2>System Architecture</h2>
+        <p class="lede">
+          A decoupled, two-stage worker pipeline built for high throughput. It separates
+          fast data preparation from slow LLM interactions and executes blocking tool calls
+          concurrently to minimise latency.
+        </p>
+
+        <div class="disclosure">
+          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
+            <span class="disclosure__title">Complete architecture diagram</span>
+            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
+          </button>
+          <div class="disclosure__body">
+            <div class="disclosure__inner">
               <div class="mermaid">
   graph TD
-    subgraph Client ["🌐 Client Interface"]
+    subgraph Client ["Client Interface"]
         UI["Web Frontend / API Client"]
     end
 
-    subgraph AppServer ["⚡ Application Server"]
+    subgraph AppServer ["Application Server"]
         C["GET /chat/stream/:id"]
         A["POST /chat/submit"]
         Cancel["POST /chat/cancel/:id"]
     end
 
-    subgraph AgenticCore ["🤖 Agentic Core Engine"]
-        B["🧠 Chatbot Manager<br/>(Central State & Orchestrator)"]
+    subgraph AgenticCore ["Agentic Core Engine"]
+        B["Chatbot Manager<br/>(Central State & Orchestrator)"]
 
-        subgraph CacheFastLane ["⚡ CACHE FAST-LANE (Tier 1) - Universal Entry Point"]
-            CacheWorkers["⚡ Dedicated Cache Workers<br/>(Semaphore-Independent)"]
-            CacheCheck{"🔍 Cache Hit?"}
+        subgraph CacheFastLane ["Cache Fast-Lane (Tier 1) — Universal Entry Point"]
+            CacheWorkers["Dedicated Cache Workers<br/>(Semaphore-Independent)"]
+            CacheCheck{"Cache Hit?"}
         end
 
-        subgraph QueueSystem ["📋 Priority Queue System"]
-            QueueManager["📊 Queue Manager<br/>(Priority-Aware)"]
-            QueuedReqs["📝 Queued Requests<br/>Tracking"]
+        subgraph QueueSystem ["Priority Queue System"]
+            QueueManager["Queue Manager<br/>(Priority-Aware)"]
+            QueuedReqs["Queued Requests<br/>Tracking"]
         end
 
-        subgraph CacheReevaluation ["🔄 Cache Re-evaluation System"]
-            CacheNotifier["📢 Cache Notifier"]
-            ReevalWorker["🔄 Re-evaluation Worker"]
-            PromoteFlow["⬆️ Queue → Cache<br/>Promotion"]
+        subgraph CacheReevaluation ["Cache Re-evaluation System"]
+            CacheNotifier["Cache Notifier"]
+            ReevalWorker["Re-evaluation Worker"]
+            PromoteFlow["Queue to Cache<br/>Promotion"]
         end
 
-        subgraph RequestWorkerPool ["🔄 Priority Dispatch Workers"]
-            DispatchLogic["🎯 Intelligent Dispatcher<br/>Resource-Aware Selection"]
+        subgraph RequestWorkerPool ["Priority Dispatch Workers"]
+            DispatchLogic["Intelligent Dispatcher<br/>Resource-Aware Selection"]
             StrategyOne["Strategy 1: Follower Scan<br/>(Queue Jumping)"]
             StrategyTwo["Strategy 2: Leader FIFO<br/>(First-Come-First-Serve)"]
             StrategyThree["Strategy 3: Sleep<br/>(No Available Slots)"]
         end
 
-        subgraph ProcessingTiers ["🏃👑 Processing Tiers"]
-            FollowerTier["🏃 Follower Lane (Tier 2)<br/>Broadcast Subscription"]
-            LeaderTier["👑 Leader Lane (Tier 3)<br/>Unique Processing"]
+        subgraph ProcessingTiers ["Processing Tiers"]
+            FollowerTier["Follower Lane (Tier 2)<br/>Broadcast Subscription"]
+            LeaderTier["Leader Lane (Tier 3)<br/>Unique Processing"]
         end
 
-        subgraph BroadcastSystem ["📡 Broadcast System"]
-            Broadcaster["📻 Stream Broadcaster"]
-            FollowerSubs["🏃 Follower Subscriptions"]
+        subgraph BroadcastSystem ["Broadcast System"]
+            Broadcaster["Stream Broadcaster"]
+            FollowerSubs["Follower Subscriptions"]
         end
 
-        subgraph LeaderPath ["👑 Leader Processing Pipeline"]
-            SF["🔒 Singleflight Deduplication"]
-            Prep["⚙️ Request Preparer"]
-            Stream["📺 Response Streamer"]
+        subgraph LeaderPath ["Leader Processing Pipeline"]
+            SF["Singleflight Deduplication"]
+            Prep["Request Preparer"]
+            Stream["Response Streamer"]
         end
 
-        subgraph ToolEngine ["🛠️ Tool Engine"]
+        subgraph ToolEngine ["Tool Engine"]
             Tools["AI Tools & LLM Calls"]
         end
     end
 
-    subgraph ExtDeps ["🌍 External Dependencies"]
-        Redis["🔴 Redis Cache"]
-        ArangoDB["🟠 ArangoDB"]
-        LLM["🟢 LLM Provider"]
-        APIs["🔵 Backend APIs"]
+    subgraph ExtDeps ["External Dependencies"]
+        Redis["Redis Cache"]
+        ArangoDB["ArangoDB"]
+        LLM["LLM Provider"]
+        APIs["Backend APIs"]
     end
 
     %% Main Flow - Universal Cache Entry Point
     UI --> A
-    A -->|"1. ALL Requests"| B
-    B -->|"2. Generate Cache Key"| CacheWorkers
+    A -->|"1. All requests"| B
+    B -->|"2. Generate cache key"| CacheWorkers
     CacheWorkers --> CacheCheck
 
     %% Cache Hit Path (Fast Lane)
-    CacheCheck -->|"⚡ CACHE HIT"| Redis
-    Redis -->|"Instant Response"| C
+    CacheCheck -->|"Cache hit"| Redis
+    Redis -->|"Instant response"| C
 
     %% Cache Miss Path
-    CacheCheck -->|"❌ Cache Miss"| QueueManager
+    CacheCheck -->|"Cache miss"| QueueManager
     QueueManager -->|"3. Enqueue"| QueuedReqs
     QueuedReqs --> DispatchLogic
 
     %% Priority Dispatch Logic
-    DispatchLogic -->|"Has Follower Slots?"| StrategyOne
-    DispatchLogic -->|"Has Leader Slots?"| StrategyTwo
-    DispatchLogic -->|"No Slots Available"| StrategyThree
+    DispatchLogic -->|"Has follower slots?"| StrategyOne
+    DispatchLogic -->|"Has leader slots?"| StrategyTwo
+    DispatchLogic -->|"No slots available"| StrategyThree
 
     %% Processing Paths
-    StrategyOne -->|"Found Follower"| FollowerTier
-    StrategyTwo -->|"Selected Leader"| LeaderTier
-    StrategyThree -.->|"Sleep & Retry"| DispatchLogic
+    StrategyOne -->|"Found follower"| FollowerTier
+    StrategyTwo -->|"Selected leader"| LeaderTier
+    StrategyThree -.->|"Sleep & retry"| DispatchLogic
 
     %% Follower Processing
     FollowerTier --> FollowerSubs
@@ -159,261 +219,191 @@
     Stream --> Broadcaster
 
     %% Cache Population & Notification
-    Stream -->|"✅ Cache Write"| Redis
-    Redis -->|"🔔 Notify Cache Populated"| CacheNotifier
+    Stream -->|"Cache write"| Redis
+    Redis -->|"Notify cache populated"| CacheNotifier
     CacheNotifier --> ReevalWorker
 
     %% Cache Re-evaluation Feedback Loop
-    ReevalWorker -->|"🔍 Scan Queued Requests"| QueuedReqs
-    ReevalWorker -->|"🎯 Found Matches"| PromoteFlow
-    PromoteFlow -->|"♻️ Re-process via Cache"| CacheWorkers
-    QueueManager -->|"🗑️ Remove from Queue"| QueuedReqs
+    ReevalWorker -->|"Scan queued requests"| QueuedReqs
+    ReevalWorker -->|"Found matches"| PromoteFlow
+    PromoteFlow -->|"Re-process via cache"| CacheWorkers
+    QueueManager -->|"Remove from queue"| QueuedReqs
 
     %% Client Connections
     UI --> C
-    C -->|"Get Stream"| B
-    Broadcaster -->|"📡 Stream Events"| C
+    C -->|"Get stream"| B
+    Broadcaster -->|"Stream events"| C
 
     %% Cancellation
     UI --> Cancel
     Cancel --> B
 
     %% Database Operations
-    CacheWorkers -->|"History Fetch"| ArangoDB
-    Stream -->|"Log Results"| ArangoDB
+    CacheWorkers -->|"History fetch"| ArangoDB
+    Stream -->|"Log results"| ArangoDB
 
-    %% Styling
-    classDef clientStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    classDef serverStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    classDef coreStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    classDef cacheFastLaneStyle fill:#ffebee,stroke:#d32f2f,stroke-width:3px
-    classDef queueStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    classDef reevalStyle fill:#e0f2f1,stroke:#00695c,stroke-width:2px
-    classDef dispatchStyle fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px
-    classDef tierStyle fill:#f1f8e9,stroke:#689f38,stroke-width:2px
-    classDef broadcastStyle fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
-    classDef leaderStyle fill:#fce4ec,stroke:#c2185b,stroke-width:2px
-    classDef toolStyle fill:#f8f2ff,stroke:#6a1b9a,stroke-width:2px
-    classDef extStyle fill:#f1f8e9,stroke:#2e7d32,stroke-width:2px
+    %% Styling — 3-role palette
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    classDef ext fill:#FBFBF9,stroke:#CFCDC4
 
-    class UI clientStyle
-    class A,C,Cancel serverStyle
-    class B coreStyle
-    class CacheWorkers,CacheCheck cacheFastLaneStyle
-    class QueueManager,QueuedReqs queueStyle
-    class CacheNotifier,ReevalWorker,PromoteFlow reevalStyle
-    class DispatchLogic,StrategyOne,StrategyTwo,StrategyThree dispatchStyle
-    class FollowerTier,LeaderTier tierStyle
-    class Broadcaster,FollowerSubs broadcastStyle
-    class SF,Prep,Stream leaderStyle
-    class Tools toolStyle
-    class Redis,ArangoDB,LLM,APIs extStyle
+    class CacheWorkers,CacheCheck hot
+    class Redis,ArangoDB,LLM,APIs ext
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      
       <section id="features">
-        <h2>⚡ Core Engineering & Features</h2>
+        <p class="eyebrow"><svg class="ic"><use href="#ic-bolt"/></svg> ENGINEERING</p>
+        <h2>Core Engineering & Features</h2>
+        <p class="lede">Select any term to open a focused explanation with diagrams.</p>
 
         <div class="feature-grid">
           <div class="feature-card">
-            <h4>🚀 Performance & Architecture</h4>
+            <h4><svg class="ic"><use href="#ic-bolt"/></svg> Performance & Architecture</h4>
             <ul>
-                <li><span class="popup-trigger" onclick="showPopup('cache-fastlane')">Cache Fast-Lane System</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('priority-dispatch')">Priority Dispatch</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('two-stage-pipeline')">Two-Stage Pipeline</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('concurrent-tool-execution')">Concurrent Tool Execution</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('stateful-conversation')">Stateful Conversations</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('data-driven-tools')">Data-Driven Tooling</span></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('cache-fastlane')">Cache Fast-Lane System</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('priority-dispatch')">Priority Dispatch</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('two-stage-pipeline')">Two-Stage Pipeline</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('concurrent-tool-execution')">Concurrent Tool Execution</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('stateful-conversation')">Stateful Conversations</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('data-driven-tools')">Data-Driven Tooling</button></li>
             </ul>
           </div>
 
           <div class="feature-card">
-            <h4>🛡️ Resource Management</h4>
+            <h4><svg class="ic"><use href="#ic-shield"/></svg> Resource Management</h4>
             <ul>
-                <li><span class="popup-trigger" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('single-flight')">Single-Flight Group</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">On-Demand Broadcasting</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('state-aware-janitor')">State-Aware Janitor</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</span></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('circuit-breakers')">Anti-Fragile Circuit Breakers</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('single-flight')">Single-Flight Group</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('e2e-stream-broadcasting')">On-Demand Broadcasting</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('state-aware-janitor')">State-Aware Janitor</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</button></li>
             </ul>
           </div>
 
           <div class="feature-card">
-            <h4>📊 Data Handling & Integrity</h4>
+            <h4><svg class="ic"><use href="#ic-database"/></svg> Data Handling & Integrity</h4>
             <ul>
-                <li><span class="popup-trigger" onclick="showPopup('token-truncation')">Targeted Token Truncation</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('context-aware-caching')">Context-Aware Caching</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('enhanced-cache-metadata')">Enhanced Cache Metadata</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('detailed-tool-logging')">Detailed Tool Metadata Logging</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('rag')">Direct Stream RAG</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('automated-indexing')">Automated Schema & Indexing</span></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('token-truncation')">Targeted Token Truncation</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('context-aware-caching')">Context-Aware Caching</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('enhanced-cache-metadata')">Enhanced Cache Metadata</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('detailed-tool-logging')">Detailed Tool Metadata Logging</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('rag')">Direct Stream RAG</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('automated-indexing')">Automated Schema & Indexing</button></li>
             </ul>
           </div>
 
           <div class="feature-card">
-            <h4>🔭 Total System Observability</h4>
+            <h4><svg class="ic"><use href="#ic-activity"/></svg> System Observability</h4>
             <ul>
-                <li><span class="popup-trigger" onclick="showPopup('structured-logging')">Structured JSON Logging</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('real-time-status-tracking')">Real-Time Status Tracking</span></li>
-                <li><span class="popup-trigger" onclick="showPopup('observability')">Complete Observability Stack</span></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('structured-logging')">Structured JSON Logging</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('real-time-status-tracking')">Real-Time Status Tracking</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('observability')">Complete Observability Stack</button></li>
             </ul>
           </div>
         </div>
       </section>
 
+      
       <section id="tools">
-        <div class="expandable-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <h3>🛠️ Available Tools</h3>
-            <span class="expand-icon">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
+        <p class="eyebrow"><svg class="ic"><use href="#ic-wrench"/></svg> TOOLS</p>
+        <h2>Available Tools</h2>
+        <p class="lede">The LLM tool catalog spans market data, valuation, financial reports, ratios, and a direct-stream knowledge base.</p>
+
+        <div class="disclosure">
+          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
+            <span class="disclosure__title">Tool catalog</span>
+            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
+          </button>
+          <div class="disclosure__body">
+            <div class="disclosure__inner">
               <h4>Market & News Tools</h4>
-              <ul>
-                <li>
-                  <code>realtime_market</code>: Fetches a live snapshot of
-                  market data for one or more stocks
-                </li>
-                <li>
-                  <code>historical_marketdata</code>: Retrieves historical price
-                  and volume data
-                </li>
-                <li>
-                  <code>news_summary</code>: Fetches the 5 most recent news
-                  article summaries
-                </li>
-                <li>
-                  <code>get_current_time</code>: Returns the current date and
-                  time
-                </li>
+              <ul class="deflist">
+                <li><span class="term">realtime_market</span><span class="desc">Fetches a live snapshot of market data for one or more stocks.</span></li>
+                <li><span class="term">historical_marketdata</span><span class="desc">Retrieves historical price and volume data.</span></li>
+                <li><span class="term">news_summary</span><span class="desc">Fetches the 5 most recent news article summaries.</span></li>
+                <li><span class="term">get_current_time</span><span class="desc">Returns the current date and time.</span></li>
               </ul>
 
               <h4>Valuation & Research Tools</h4>
-              <ul>
-                <li>
-                  <code>stock_valuation</code>: Multi-faceted valuation with
-                  quality, fair value, and trading signals
-                </li>
-                <li>
-                  <code>analyze_stock</code>: Qualitative research data
-                  (business line, competitive advantage)
-                </li>
+              <ul class="deflist">
+                <li><span class="term">stock_valuation</span><span class="desc">Multi-faceted valuation with quality, fair value, and trading signals.</span></li>
+                <li><span class="term">analyze_stock</span><span class="desc">Qualitative research data (business line, competitive advantage).</span></li>
               </ul>
 
               <h4>Financial Report Tools</h4>
-              <ul>
-                <li>
-                  <code>financial_annualreport</code>: Annual financial reports
-                  over a range of years
-                </li>
-                <li>
-                  <code>financial_quarterreport</code>: Quarterly financial
-                  reports
-                </li>
-                <li>
-                  <code>financial_ttmreport</code>: Trailing Twelve Month (TTM)
-                  values
-                </li>
-                <li>
-                  <code>financial_ytdreport</code>: Year-to-Date (YTD)
-                  cumulative values
-                </li>
+              <ul class="deflist">
+                <li><span class="term">financial_annualreport</span><span class="desc">Annual financial reports over a range of years.</span></li>
+                <li><span class="term">financial_quarterreport</span><span class="desc">Quarterly financial reports.</span></li>
+                <li><span class="term">financial_ttmreport</span><span class="desc">Trailing Twelve Month (TTM) values.</span></li>
+                <li><span class="term">financial_ytdreport</span><span class="desc">Year-to-Date (YTD) cumulative values.</span></li>
               </ul>
 
               <h4>Financial Ratio Tools</h4>
-              <ul>
-                <li>
-                  <code>financial_profitability_ratio</code>: ROA TTM, ROE TTM,
-                  etc.
-                </li>
-                <li>
-                  <code>financial_solvency_ratio</code>: Current Ratio, Debt
-                  equity ratio, etc.
-                </li>
-                <li>
-                  <code>financial_valuation_ratio</code>: PER (TTM), PBV (YTD),
-                  etc.
-                </li>
-                <li>
-                  <code>financial_dividend_ratio</code>: Dividend (TTM), Payout
-                  Ratio, etc.
-                </li>
+              <ul class="deflist">
+                <li><span class="term">financial_profitability_ratio</span><span class="desc">ROA TTM, ROE TTM, and related profitability ratios.</span></li>
+                <li><span class="term">financial_solvency_ratio</span><span class="desc">Current Ratio, Debt-to-Equity, and related solvency ratios.</span></li>
+                <li><span class="term">financial_valuation_ratio</span><span class="desc">PER (TTM), PBV (YTD), and related valuation ratios.</span></li>
+                <li><span class="term">financial_dividend_ratio</span><span class="desc">Dividend (TTM), Payout Ratio, and related dividend ratios.</span></li>
               </ul>
 
               <h4>Knowledge & Support Tools</h4>
-              <ul>
-                <li>
-                  <code>frequently_asked</code>:
-                  <strong>(Direct Stream Path)</strong> Answers general
-                  questions by streaming directly from RAG pipeline
-                </li>
+              <ul class="deflist">
+                <li><span class="term">frequently_asked</span><span class="desc"><strong>(Direct Stream Path)</strong> Answers general questions by streaming directly from the RAG pipeline.</span></li>
               </ul>
             </div>
           </div>
         </div>
       </section>
 
+      
       <section id="api">
-        <div class="expandable-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <h3>🔌 API Endpoints</h3>
-            <span class="expand-icon">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
+        <p class="eyebrow"><svg class="ic"><use href="#ic-plug"/></svg> API</p>
+        <h2>API Endpoints</h2>
+        <p class="lede">A submit/stream/status/cancel lifecycle, plus reaction and history endpoints.</p>
 
+        <div class="disclosure">
+          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
+            <span class="disclosure__title">Endpoint reference</span>
+            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
+          </button>
+          <div class="disclosure__body">
+            <div class="disclosure__inner">
               <h4>Authentication</h4>
               <p>
-                Protected endpoints under the <code>/chat</code> group require
-                an <code>X-API-Key</code> header matching the configured
-                environment variable.
+                Protected endpoints under the <code>/chat</code> group require an
+                <code>X-API-Key</code> header matching the configured environment variable.
               </p>
-              <hr>
 
-              <h4>Endpoints Summary</h4>
-              <ul>
-                <li>
-                  <code>POST /chat/submit</code>: (Auth) Submits a query,
-                  returns a <code>request_id</code>
-                </li>
-                <li>
-                  <code>GET /chat/stream/:request_id</code>: (Public)
-                  Establishes SSE connection to stream response
-                </li>
-                <li>
-                  <code>GET /chat/status/:request_id</code>: (Auth) Check
-                  request state in its lifecycle
-                </li>
-                <li>
-                  <code>POST /chat/cancel/:request_id</code>: (Auth) Cancels
-                  an in-progress request
-                </li>
-                <li>
-                  <code>POST /chat/update_reaction</code>: (Auth) Updates user
-                  feedback for a response
-                </li>
-                <li>
-                  <code>GET /chat/get_chat_history</code>: (Auth) Retrieves
-                  conversation history
-                </li>
+              <h4>Endpoints</h4>
+              <ul class="deflist">
+                <li><span class="term"><span class="method-tag">POST</span>/chat/submit</span><span class="desc">(Auth) Submits a query, returns a <code>request_id</code>.</span></li>
+                <li><span class="term"><span class="method-tag">GET</span>/chat/stream/:request_id</span><span class="desc">(Public) Establishes an SSE connection to stream the response.</span></li>
+                <li><span class="term"><span class="method-tag">GET</span>/chat/status/:request_id</span><span class="desc">(Auth) Checks request state within its lifecycle.</span></li>
+                <li><span class="term"><span class="method-tag">POST</span>/chat/cancel/:request_id</span><span class="desc">(Auth) Cancels an in-progress request.</span></li>
+                <li><span class="term"><span class="method-tag">POST</span>/chat/update_reaction</span><span class="desc">(Auth) Updates user feedback for a response.</span></li>
+                <li><span class="term"><span class="method-tag">GET</span>/chat/get_chat_history</span><span class="desc">(Auth) Retrieves conversation history.</span></li>
               </ul>
             </div>
           </div>
         </div>
       </section>
 
+      
       <section id="installation">
-        <div class="expandable-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <h3>🚀 Installation & Setup</h3>
-            <span class="expand-icon">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
+        <p class="eyebrow"><svg class="ic"><use href="#ic-terminal"/></svg> SETUP</p>
+        <h2>Installation & Setup</h2>
+
+        <div class="disclosure">
+          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
+            <span class="disclosure__title">Install & run</span>
+            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
+          </button>
+          <div class="disclosure__body">
+            <div class="disclosure__inner">
               <h4>Prerequisites</h4>
               <ul>
                 <li>Go 1.24.0</li>
@@ -424,7 +414,7 @@
               </ul>
               <hr>
 
-              <h4>Running with Docker Compose (Recommended)</h4>
+              <h4>Running with Docker Compose (recommended)</h4>
               <p>This is the canonical way to run the entire system:</p>
               <ol>
                 <li>Clone the repository</li>
@@ -436,39 +426,37 @@
               <ul>
                 <li>Build the Go application container</li>
                 <li>Start ArangoDB, Redis, Loki, Grafana, and Vector</li>
-                <li>Chatbot available at <code>http://localhost:8080</code></li>
-                <li>Grafana available at <code>http://localhost:3000</code></li>
+                <li>Serve the chatbot at <code>http://localhost:8080</code></li>
+                <li>Serve Grafana at <code>http://localhost:3000</code></li>
               </ul>
               <hr>
 
-              <h4>Manual Local Setup</h4>
+              <h4>Manual local setup</h4>
               <ol>
-                <li>Clone repo and <code>cd</code> into it</li>
+                <li>Clone the repo and <code>cd</code> into it</li>
                 <li>Install dependencies: <code>go mod tidy</code></li>
                 <li>Configure <code>.env</code></li>
-                <li>
-                  Run services: Ensure Redis, ArangoDB, and dependent
-                  microservices are running
-                </li>
-                <li>Run app: <code>go run main.go</code></li>
+                <li>Run services: ensure Redis, ArangoDB, and dependent microservices are running</li>
+                <li>Run the app: <code>go run main.go</code></li>
               </ol>
             </div>
           </div>
         </div>
       </section>
 
+      
       <section id="configuration">
-        <div class="expandable-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <h3>⚙️ Configuration (.env file)</h3>
-            <span class="expand-icon">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <p>
-                This file is critical for tuning system performance and
-                behavior.
-              </p>
+        <p class="eyebrow"><svg class="ic"><use href="#ic-sliders"/></svg> CONFIG</p>
+        <h2>Configuration</h2>
+        <p class="lede">The <code>.env</code> file is the primary surface for tuning concurrency, timeouts, and caching behaviour.</p>
+
+        <div class="disclosure">
+          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
+            <span class="disclosure__title">Annotated .env</span>
+            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
+          </button>
+          <div class="disclosure__body">
+            <div class="disclosure__inner">
               <pre><code>
 # LLM Configuration
 LLM_TYPE=DEEPSEEK # Options: OPENAI, DEEPSEEK, OLLAMA
@@ -491,12 +479,12 @@ HISTORY_ITEMS=3                     # Number of past conversation turns to inclu
 QUEUE_SIZE=100                      # Buffer size for incoming requests.
 
 # --- State-Aware Janitor & Timeouts ---
-JANITOR_INTERVAL=2m                 # How often The Wolf from Pulp Fiction shows up to clean the mess.
-PROCESSING_TIMEOUT=10m              # The bomb timer in Mission: Impossible. Max time a dequeued request can run before being killed. Kills stuck jobs.
+JANITOR_INTERVAL=2m                 # Cleanup sweep interval for stuck/abandoned requests and stale tracking data.
+PROCESSING_TIMEOUT=10m              # Max time a dequeued request may run before it is force-killed. Reaps stuck jobs.
 QUEUE_TIMEOUT=1h                    # Max time a request can wait in the queue before being discarded. A safety net for extreme load.
 TOOL_TIMEOUT=30s                    # Max execution time for a single tool call. Prevents a slow dependency from stalling everything.
 CLIENT_PICKUP_TIMEOUT=1s            # Grace period for the client to connect to the stream. Solves a race condition for fast/cached responses. MUST be short.
-SUBMIT_TIMEOUT=2s                   # The bouncer's patience. Max time to wait for a spot in the main request queue before rejecting the request. Prevents callers from hanging on a full system.
+SUBMIT_TIMEOUT=2s                   # Max wait for a slot in the request queue before rejecting. Prevents callers hanging on a full system.
 
 # --- Caching & Direct Streaming ---
 REDIS_URL=redis://localhost:6379
@@ -528,7 +516,7 @@ BE_FINANCIAL_DATA_URL=http://...
 BE_FINANCIAL_DATA_ALL_QUARTER_URL=http://...
 BE_HISTORICAL_MARKET_DATA_URL=http://...
 BE_NEWS_LATEST_URL=http://...
-# This endpoint is now called directly from the `frequently_asked` streaming tool.
+# This endpoint is called directly from the `frequently_asked` streaming tool.
 TENCENT_RAG_URL=https://...
 TENCENT_RAG_BOT_APP_KEY=...
 </code></pre>
@@ -537,32 +525,35 @@ TENCENT_RAG_BOT_APP_KEY=...
         </div>
       </section>
 
+      
       <section id="usage">
-        <div class="expandable-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <h3>🎯 Usage & Testing</h3>
-            <span class="expand-icon">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <h4>Running the Application</h4>
+        <p class="eyebrow"><svg class="ic"><use href="#ic-check-circle"/></svg> TESTING</p>
+        <h2>Usage & Testing</h2>
+        <p class="lede">Ten test suites cover unit logic, concurrency, cancellation, and the cache fast-lane under contention.</p>
+
+        <div class="disclosure">
+          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
+            <span class="disclosure__title">Test suites & how to run them</span>
+            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
+          </button>
+          <div class="disclosure__body">
+            <div class="disclosure__inner">
+              <h4>Running the application</h4>
               <pre><code>go run main.go</code></pre>
-              <p>
-                The server starts on the configured host and port (default <code>http://localhost:8080</code>).
-              </p>
+              <p>The server starts on the configured host and port (default <code>http://localhost:8080</code>).</p>
 
               <hr>
 
-              <h4>Unit & Performance Tests</h4>
+              <h4>Unit & performance tests</h4>
               <p>The system includes comprehensive unit tests for all core services and sub-packages. Performance benchmarks are available for critical code paths.</p>
-              <p><strong>Important:</strong> Always clear the test cache before running tests to ensure fresh results:</p>
+              <p><strong>Important:</strong> always clear the test cache before running tests to ensure fresh results:</p>
               <pre><code>go clean -testcache</code></pre>
 
-              <h5>Running All Unit Tests</h5>
+              <h5>Running all unit tests</h5>
               <p>To run all unit tests for the entire project (excluding integration tests):</p>
               <pre><code>go clean -testcache && go test -v ./...</code></pre>
 
-              <h5>Database & Core Service Tests</h5>
+              <h5>Database & core service tests</h5>
               <p>Tests for the foundational layers, including <code>ArangoStore</code>, <code>RedisStore</code>, and <code>ResilientLLM</code>, with circuit breaker integration.</p>
               <pre><code># Test the ./db package
 go clean -testcache && go test -v ./db
@@ -570,7 +561,7 @@ go clean -testcache && go test -v ./db
 # Test the ./core package
 go clean -testcache && go test -v ./core</code></pre>
 
-              <h5>Chatbot Sub-package Tests</h5>
+              <h5>Chatbot sub-package tests</h5>
               <p>Run targeted unit tests for each sub-package within the <code>chatbot</code> module to validate its specific logic in isolation.</p>
               <pre><code># Test chatbot core logic and cache optimization that promotes queued requests to the cache fast-lane.
 go clean -testcache && go test -v -run ./chatbot
@@ -590,7 +581,7 @@ go clean -testcache && go test -v ./chatbot/processing
 # Test the queue manager (FIFO logic, requeue backoff, eviction)
 go clean -testcache && go test -v ./chatbot/queue</code></pre>
 
-              <h5>Performance Benchmarks</h5>
+              <h5>Performance benchmarks</h5>
               <p>Run benchmarks to measure the performance and memory allocations of critical hot-path functions.</p>
               <pre><code># Benchmark chatbot core logic (cache notifications, request tracking, and history processing)
 go test -bench=. -benchmem ./chatbot
@@ -617,24 +608,25 @@ TEST_REDIS_URL="redis://:password@localhost:6379" go test -tags=integration -ben
 
               <hr>
 
-              <h4>Advanced Concurrency & Integration Testing</h4>
-              <p>These scripts and tests allow you to validate the system's core concurrency and resilience models under high-contention scenarios.</p>
+              <h4>Advanced concurrency & integration testing</h4>
+              <p>These scripts and tests validate the system's core concurrency and resilience models under high-contention scenarios.</p>
 
-              <h5>1. Testing Cache Fast-Lane Integration (<code>cache_fastlane_integration_test.go</code>)</h5>
-              <div style="background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%); color: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
-                <strong>⚡ This is the CRITICAL test suite that proves cache fast-lane bypasses ALL semaphores and resource constraints.</strong>
+              <h5>1. Cache Fast-Lane integration (<code>cache_fastlane_integration_test.go</code>)</h5>
+              <div class="note--accent">
+                <span class="note__label">Critical</span>
+                This is the critical test suite that proves the cache fast-lane bypasses all semaphores and resource constraints.
               </div>
               <pre><code># Run complete cache fast-lane integration tests
 go clean -testcache && go test -v -run TestCacheFastLane</code></pre>
-              <p><strong>Critical Tests:</strong></p>
+              <p><strong>Critical tests:</strong></p>
               <ul>
                 <li><strong><code>TestCacheFastLane_BasicFlow</code>:</strong> End-to-end cache population and retrieval validation.</li>
-                <li><strong><code>TestCacheFastLane_BypassesSemaphores</code>:</strong> <strong>MOST IMPORTANT</strong> - Proves cache requests complete instantly even when ALL semaphores are blocked.</li>
+                <li><strong><code>TestCacheFastLane_BypassesSemaphores</code>:</strong> <strong>Most important</strong> — proves cache requests complete instantly even when all semaphores are blocked.</li>
                 <li><strong><code>TestCacheFastLane_ThreeTierPriority</code>:</strong> Validates the complete three-tier system (Cache → Follower → Leader).</li>
                 <li><strong><code>TestCacheFastLane_PerformanceComparison</code>:</strong> Quantifies performance improvement (&gt;1.5x speedup required).</li>
                 <li><strong><code>TestCacheFastLane_ConcurrentCacheHits</code>:</strong> High concurrency validation (5+ simultaneous cache requests).</li>
               </ul>
-              <p><strong>Expected Results:</strong></p>
+              <p><strong>Expected results:</strong></p>
               <ul>
                 <li>Cache responses complete in &lt;2 seconds.</li>
                 <li>Cache bypasses blocked semaphores completely.</li>
@@ -642,19 +634,19 @@ go clean -testcache && go test -v -run TestCacheFastLane</code></pre>
                 <li>100% response consistency between cached and original.</li>
               </ul>
 
-              <h5>2. Testing Manager Cache Integration (<code>cache_manager_integration_test.go</code>)</h5>
+              <h5>2. Manager cache integration (<code>cache_manager_integration_test.go</code>)</h5>
               <p>Validates cache fast-lane integration at the manager level:</p>
               <pre><code>go clean -testcache && go test -v -run TestManagerCacheFastLane</code></pre>
-              <p><strong>Integration Tests:</strong></p>
+              <p><strong>Integration tests:</strong></p>
               <ul>
-                <li><strong><code>TestManagerCacheFastLane_Integration</code>:</strong> Manager routing through cache fast-lane.</li>
+                <li><strong><code>TestManagerCacheFastLane_Integration</code>:</strong> Manager routing through the cache fast-lane.</li>
                 <li><strong><code>TestManagerCacheFastLane_WorkerDistribution</code>:</strong> Dedicated cache workers vs normal workers.</li>
                 <li><strong><code>TestManagerCacheFastLane_StateManagement</code>:</strong> Request lifecycle and cleanup.</li>
-                <li><strong><code>TestManagerCacheFastLane_ErrorHandling</code>:</strong> Graceful degradation when Redis unavailable.</li>
+                <li><strong><code>TestManagerCacheFastLane_ErrorHandling</code>:</strong> Graceful degradation when Redis is unavailable.</li>
                 <li><strong><code>TestManagerCacheFastLane_StressTest</code>:</strong> 50+ concurrent cache requests (&gt;90% success rate required).</li>
               </ul>
 
-              <h5>3. Running Complete Cache Fast-Lane Test Suite</h5>
+              <h5>3. Complete Cache Fast-Lane test suite</h5>
               <p>Execute the comprehensive cache test script:</p>
               <pre><code>chmod +x run_cache_tests.sh
 ./run_cache_tests.sh</code></pre>
@@ -666,17 +658,8 @@ go clean -testcache && go test -v -run TestCacheFastLane</code></pre>
                 <li>Performance benchmarks</li>
                 <li>Stress testing (optional, skipped in CI)</li>
               </ul>
-              <p><strong>Expected Output:</strong></p>
-              <pre><code>⚡ Cache Fast-Lane Test Suite Summary
-====================================
-✅ All critical cache fast-lane tests PASSED
-✅ Cache fast-lane implementation is working correctly
-✅ Three-tier processing system (Cache → Follower → Leader) verified
-✅ Semaphore bypass functionality confirmed
-✅ Performance improvements validated
-⚡ Cache fast-lane is ready for production!</code></pre>
 
-              <h5>4. Testing General Throughput (<code>test_concurrency</code>)</h5>
+              <h5>4. General throughput (<code>test_concurrency</code>)</h5>
               <p>This script validates that the server can handle many <em>different</em> requests in parallel, testing the capacity of the worker pools.</p>
               <ol>
                 <li>
@@ -685,52 +668,50 @@ go clean -testcache && go test -v -run TestCacheFastLane</code></pre>
 go run ./cmd/test_concurrency -n 20 -w 10</code></pre>
                 </li>
                 <li>
-                  <strong>Analyze results:</strong> The script generates an Excel file like <code>test_results/parallel_test_r20_w10.xlsx</code>. Check that all requests completed and the Time-To-First-Token (TTF) values are reasonable.
+                  <strong>Analyze results:</strong> the script generates an Excel file like <code>test_results/parallel_test_r20_w10.xlsx</code>. Check that all requests completed and the Time-To-First-Token (TTF) values are reasonable.
                 </li>
               </ol>
 
-              <h5>5. Testing Single-Flight Protection (<code>test_single_flight</code>)</h5>
-              <p>This script validates the "thundering herd" protection by sending many <em>identical</em> requests simultaneously.</p>
+              <h5>5. Single-Flight protection (<code>test_single_flight</code>)</h5>
+              <p>This script validates thundering-herd protection by sending many <em>identical</em> requests simultaneously.</p>
               <ol>
-                <li>
-                  <strong>(Optional but Recommended)</strong> Clear the relevant Redis cache key before testing to ensure you are not just hitting the cache.
-                </li>
+                <li><strong>(Optional but recommended)</strong> Clear the relevant Redis cache key before testing to ensure you are not just hitting the cache.</li>
                 <li>
                   <strong>Run the test:</strong>
                   <pre><code># Usage: go run ./cmd/test_single_flight -n &lt;num_requests&gt;
 go run ./cmd/test_single_flight -n 10</code></pre>
-                  <strong>CRITICAL:</strong> The proof is in the <strong>server logs</strong>. Look for one "leader" request performing the full preparation, while all other "follower" requests share its result, indicated by the <code>This request is a FOLLOWER</code> log message.
+                  <strong>Verification:</strong> the proof is in the <strong>server logs</strong>. Look for one "leader" request performing the full preparation, while all other "follower" requests share its result, indicated by the <code>This request is a FOLLOWER</code> log message.
                 </li>
               </ol>
 
-              <h5>6. Testing End-to-End Cancellation (<code>stream_test.go</code>)</h5>
-              <p>This integration test suite rigorously validates that a request can be terminated at any point in its lifecycle and that the system reclaims resources gracefully. This is crucial for preventing resource leaks from abandoned requests.</p>
-              <p>The test simulates every possible cancellation scenario:</p>
+              <h5>6. End-to-end cancellation (<code>stream_test.go</code>)</h5>
+              <p>This integration suite validates that a request can be terminated at any point in its lifecycle and that the system reclaims resources gracefully. This is crucial for preventing resource leaks from abandoned requests.</p>
+              <p>The test simulates every cancellation scenario:</p>
               <ul>
-                <li><strong>Happy Path:</strong> A standard request is submitted and streams to completion without interruption.</li>
-                <li><strong>Pre-emptive Cancellation:</strong> A request is cancelled <em>immediately</em> after submission, before the client connects to the stream. Verifies a <code>cancelled</code> status is correctly returned.</li>
-                <li><strong>Mid-Stream Cancellation:</strong> A request is cancelled after streaming has begun, proving that the <code>context</code> is correctly propagated to terminate the in-progress LLM call.</li>
-                <li><strong>Post-Completion Cancellation:</strong> A request is cancelled after it has already finished, verifying the server correctly returns a <code>not_found</code> status, proving proper state cleanup.</li>
+                <li><strong>Happy path:</strong> a standard request is submitted and streams to completion without interruption.</li>
+                <li><strong>Pre-emptive cancellation:</strong> a request is cancelled <em>immediately</em> after submission, before the client connects to the stream. Verifies a <code>cancelled</code> status is correctly returned.</li>
+                <li><strong>Mid-stream cancellation:</strong> a request is cancelled after streaming has begun, proving that the <code>context</code> is correctly propagated to terminate the in-progress LLM call.</li>
+                <li><strong>Post-completion cancellation:</strong> a request is cancelled after it has already finished, verifying the server correctly returns a <code>not_found</code> status, proving proper state cleanup.</li>
               </ul>
               <ol>
                 <li>
                   <strong>Run the test:</strong>
-                   <pre><code># This command specifically runs all tests prefixed with "TestStream"
+                  <pre><code># This command specifically runs all tests prefixed with "TestStream"
 go clean -testcache && go test -v -run ^TestStream .</code></pre>
                 </li>
                 <li>
-                  <strong>Analyze results:</strong> Observe the test logs. A successful run will show each scenario passing, confirming that the system handles all cancellation states correctly.
+                  <strong>Analyze results:</strong> observe the test logs. A successful run shows each scenario passing, confirming the system handles all cancellation states correctly.
                 </li>
               </ol>
 
-              <h5>7. Testing Real-Time Request Status (<code>get_status_test.go</code>)</h5>
-              <p>This integration test suite validates the reliability and accuracy of the new <code>GET /chat/status/:request_id</code> endpoint, which is essential for providing real-time feedback to the user.</p>
-              <p><strong>Key Validations:</strong></p>
+              <h5>7. Real-time request status (<code>get_status_test.go</code>)</h5>
+              <p>This integration suite validates the reliability and accuracy of the <code>GET /chat/status/:request_id</code> endpoint, which is essential for providing real-time feedback to the user.</p>
+              <p><strong>Key validations:</strong></p>
               <ul>
-                  <li><strong>Active States:</strong> Verifies correct status reporting for requests that are <code>queued</code>, <code>choosing_tools</code>, <code>calling_tools</code>, and <code>formulating_answer</code>.</li>
-                  <li><strong>Database Fallback:</strong> Confirms that the status for <code>completed</code> and <code>cancelled</code> requests can be retrieved from the database after they are no longer in active memory.</li>
-                  <li><strong>Progress Tracking:</strong> Ensures the detailed <code>progress</code> object (completion ratio, selected tools, etc.) is accurately reported throughout the lifecycle.</li>
-                  <li><strong>Error Handling:</strong> Checks for correct <code>404 Not Found</code> responses for non-existent requests.</li>
+                  <li><strong>Active states:</strong> verifies correct status reporting for requests that are <code>queued</code>, <code>choosing_tools</code>, <code>calling_tools</code>, and <code>formulating_answer</code>.</li>
+                  <li><strong>Database fallback:</strong> confirms that the status for <code>completed</code> and <code>cancelled</code> requests can be retrieved from the database after they are no longer in active memory.</li>
+                  <li><strong>Progress tracking:</strong> ensures the detailed <code>progress</code> object (completion ratio, selected tools, etc.) is accurately reported throughout the lifecycle.</li>
+                  <li><strong>Error handling:</strong> checks for correct <code>404 Not Found</code> responses for non-existent requests.</li>
               </ul>
               <ol>
                   <li>
@@ -739,21 +720,21 @@ go clean -testcache && go test -v -run ^TestStream .</code></pre>
 go clean -testcache && go test -v -run ^TestStatusEndpoint .</code></pre>
                   </li>
                   <li>
-                      <strong>Analyze results:</strong> A successful run confirms that the status endpoint provides a reliable and complete view of a request's journey from submission to completion.
+                      <strong>Analyze results:</strong> a successful run confirms that the status endpoint provides a reliable and complete view of a request's journey from submission to completion.
                   </li>
               </ol>
 
-              <h5>8. Testing Priority Dispatch and FIFO Integrity (<code>priority_dispatch_test.go</code>)</h5>
-              <p>This is the most advanced concurrency test, designed to rigorously validate the intelligent dispatching logic that maximizes throughput under load. It proves that the system correctly prioritizes cheap "follower" requests over expensive, blocked "leader" requests, while still maintaining fairness (FIFO) for the waiting leaders.</p>
+              <h5>8. Priority dispatch & FIFO integrity (<code>priority_dispatch_test.go</code>)</h5>
+              <p>This is the most advanced concurrency test, designed to rigorously validate the intelligent dispatching logic that maximises throughput under load. It proves that the system correctly prioritises cheap "follower" requests over expensive, blocked "leader" requests, while still maintaining fairness (FIFO) for the waiting leaders.</p>
               <p>The test constructs a precise, high-contention scenario:</p>
               <ol>
-                <li><strong>Saturates Leader Slots:</strong> Deliberately fills all <code>MaxConcurrentLeaders</code> slots with unique requests that are paused mid-stream, creating a bottleneck.</li>
-                <li><strong>Queues New Leaders:</strong> Submits additional unique requests that are forced to wait in the queue because no leader slots are available.</li>
-                <li><strong>Introduces Followers:</strong> Submits follower requests (which match the in-progress leaders) <em>after</em> the new leaders have been queued.</li>
-                <li><strong>Verifies Correct Behavior:</strong> The test passes only if two conditions are met:
+                <li><strong>Saturates leader slots:</strong> deliberately fills all <code>MaxConcurrentLeaders</code> slots with unique requests that are paused mid-stream, creating a bottleneck.</li>
+                <li><strong>Queues new leaders:</strong> submits additional unique requests that are forced to wait in the queue because no leader slots are available.</li>
+                <li><strong>Introduces followers:</strong> submits follower requests (which match the in-progress leaders) <em>after</em> the new leaders have been queued.</li>
+                <li><strong>Verifies correct behaviour:</strong> the test passes only if two conditions are met:
                     <ul>
-                        <li><strong>Follower Fast-Tracking:</strong> The follower requests must "jump the queue" and be processed immediately, bypassing the waiting leaders.</li>
-                        <li><strong>Leader FIFO Integrity:</strong> When a leader slot is freed, the test verifies that the <em>first</em> leader that was queued (<code>LeaderC</code>) is the next one to be processed, not any others that were submitted later, proving fairness is maintained.</li>
+                        <li><strong>Follower fast-tracking:</strong> the follower requests must jump the queue and be processed immediately, bypassing the waiting leaders.</li>
+                        <li><strong>Leader FIFO integrity:</strong> when a leader slot is freed, the test verifies that the <em>first</em> leader that was queued (<code>LeaderC</code>) is the next to be processed, not any submitted later — proving fairness is maintained.</li>
                     </ul>
                 </li>
               </ol>
@@ -764,22 +745,22 @@ go clean -testcache && go test -v -run ^TestStatusEndpoint .</code></pre>
 go clean -testcache && go test -v -run ^TestPriorityDispatch .</code></pre>
                 </li>
                 <li>
-                    <strong>Analyze results:</strong> The detailed test output logs the exact sequence of events. A successful run with a <code>✅ [PriorityDispatchTest] PASSED</code> message confirms the system's core scheduling and fairness guarantees are met under pressure.
+                    <strong>Analyze results:</strong> the detailed test output logs the exact sequence of events. A successful run confirms the system's core scheduling and fairness guarantees are met under pressure.
                 </li>
               </ol>
 
               <hr>
 
-              <h4>Queue Management Testing</h4>
-              <p>The queue management system implements sophisticated eviction and requeuing logic that requires specific testing to validate FIFO integrity and eviction behavior under load.</p>
+              <h4>Queue management testing</h4>
+              <p>The queue management system implements sophisticated eviction and requeuing logic that requires specific testing to validate FIFO integrity and eviction behaviour under load.</p>
 
-              <h5>9. Testing Queue Eviction Logic (<code>requeue_eviction_test.go</code>)</h5>
-              <p>These integration tests validate the queue's behavior when full and the eviction logic when requeuing older requests.</p>
+              <h5>9. Queue eviction logic (<code>requeue_eviction_test.go</code>)</h5>
+              <p>These integration tests validate the queue's behaviour when full and the eviction logic when requeuing older requests.</p>
               <p>The tests cover:</p>
               <ul>
-                  <li><strong>Simple Queue Behavior:</strong> Basic queue filling, rejection when full, and direct eviction testing</li>
-                  <li><strong>FIFO Preservation:</strong> Ensures that when an older request is requeued into a full queue, the newest item is evicted while maintaining chronological order</li>
-                  <li><strong>Queue State Validation:</strong> Verifies that queue status reporting accurately reflects the internal state after operations</li>
+                  <li><strong>Simple queue behaviour:</strong> basic queue filling, rejection when full, and direct eviction testing.</li>
+                  <li><strong>FIFO preservation:</strong> ensures that when an older request is requeued into a full queue, the newest item is evicted while maintaining chronological order.</li>
+                  <li><strong>Queue state validation:</strong> verifies that queue status reporting accurately reflects the internal state after operations.</li>
               </ul>
               <ol>
                   <li>
@@ -789,19 +770,19 @@ go clean -testcache && go test -v -run ^TestSimpleQueueBehavior .
 go clean -testcache && go test -v -run ^TestRequeueEvictionDirect .</code></pre>
                   </li>
                   <li>
-                      <strong>Analyze results:</strong> The tests log detailed queue states before and after operations. Successful runs demonstrate that FIFO order is preserved even when eviction occurs.
+                      <strong>Analyze results:</strong> the tests log detailed queue states before and after operations. Successful runs demonstrate that FIFO order is preserved even when eviction occurs.
                   </li>
               </ol>
 
-              <h5>10. Testing Queue Manager Unit Logic (<code>chatbot/queue/manager_test.go</code>)</h5>
+              <h5>10. Queue manager unit logic (<code>chatbot/queue/manager_test.go</code>)</h5>
               <p>These unit tests validate the core queue manager functionality in isolation, testing the mathematical correctness of queue operations without external dependencies.</p>
               <p>The tests validate:</p>
               <ul>
-                  <li><strong>Basic Operations:</strong> Enqueue, dequeue, and status reporting</li>
-                  <li><strong>Capacity Management:</strong> Proper rejection when queue is full</li>
-                  <li><strong>FIFO Eviction:</strong> Complex eviction scenarios with multiple requeues</li>
-                  <li><strong>Chronological Insertion:</strong> Ensures requeued requests are inserted at the correct position to maintain timestamp ordering</li>
-                  <li><strong>Integration Compliance:</strong> Verifies the queue manager works correctly with the complete request structure</li>
+                  <li><strong>Basic operations:</strong> enqueue, dequeue, and status reporting.</li>
+                  <li><strong>Capacity management:</strong> proper rejection when the queue is full.</li>
+                  <li><strong>FIFO eviction:</strong> complex eviction scenarios with multiple requeues.</li>
+                  <li><strong>Chronological insertion:</strong> ensures requeued requests are inserted at the correct position to maintain timestamp ordering.</li>
+                  <li><strong>Integration compliance:</strong> verifies the queue manager works correctly with the complete request structure.</li>
               </ul>
               <ol>
                   <li>
@@ -810,43 +791,47 @@ go clean -testcache && go test -v -run ^TestRequeueEvictionDirect .</code></pre>
 go clean -testcache && go test -v ./chatbot/queue</code></pre>
                   </li>
                   <li>
-                      <strong>Analyze results:</strong> These tests verify the mathematical correctness of queue operations. Focus on the chronological ordering validation in complex eviction scenarios.
+                      <strong>Analyze results:</strong> these tests verify the mathematical correctness of queue operations. Focus on the chronological ordering validation in complex eviction scenarios.
                   </li>
               </ol>
 
               <hr>
 
-              <h4>Other Tests</h4>
+              <h4>Other tests</h4>
 
-              <h5>Running Standard Tests</h5>
+              <h5>Running standard tests</h5>
               <p>To run all endpoint, broadcasting, cancellation, and priority dispatch tests together:</p>
               <pre><code>go clean -testcache && go test -v .</code></pre>
 
-              <h5>Running Tools Tests</h5>
+              <h5>Running tools tests</h5>
               <p>To run all tools tests:</p>
               <pre><code>go clean -testcache && go test -v ./tools/tooltest -run TestAllTools</code></pre>
 
-              <h5>Running Endpoint Health Checks</h5>
+              <h5>Running endpoint health checks</h5>
               <p>To diagnose external API connections without running the full test suite:</p>
               <pre><code>chmod +x run_health_checks.sh
 ./run_health_checks.sh tools/tooltest/extapi/&lt;tool&gt;.go</code></pre>
-              <p>For example, to test the valuation tool external apis:</p>
+              <p>For example, to test the valuation tool external APIs:</p>
               <pre><code>./run_health_checks.sh tools/tooltest/extapi/valuation.go</code></pre>
-              <p>All Go files inside <code>tools/tooltest/extapi</code> correlate to each tool file and can be used for healthchecks.</p>
+              <p>All Go files inside <code>tools/tooltest/extapi</code> correlate to each tool file and can be used for health checks.</p>
             </div>
           </div>
         </div>
       </section>
 
+      
       <section id="development">
-        <div class="expandable-section">
-          <div class="section-header" onclick="toggleSection(this)">
-            <h3>👨‍💻 Development</h3>
-            <span class="expand-icon">▼</span>
-          </div>
-          <div class="section-content">
-            <div class="section-inner">
-              <h4>Project Structure</h4>
+        <p class="eyebrow"><svg class="ic"><use href="#ic-code"/></svg> DEVELOPMENT</p>
+        <h2>Development</h2>
+
+        <div class="disclosure">
+          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
+            <span class="disclosure__title">Project structure & extending</span>
+            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
+          </button>
+          <div class="disclosure__body">
+            <div class="disclosure__inner">
+              <h4>Project structure</h4>
               <pre><code>
 tuntun-go-chatbot/
 ├── chatbot/                       # Core chatbot subsystems
@@ -895,22 +880,11 @@ tuntun-go-chatbot/
 ├── docker-compose.yml             # Service orchestration
 └── README.md
               </code></pre>
-              <h4>Adding a New Tool</h4>
+              <h4>Adding a new tool</h4>
               <ol>
-                <li>
-                  <strong>(Optional) Implement Logic:</strong> Create the core
-                  function in <code>toolbe/</code> or <code>toolnonbe/</code>
-                </li>
-                <li>
-                  <strong>Define the Tool:</strong> Modify
-                  <code>tools/toolcore/definitions.go</code> and add to
-                  <code>allTools</code> slice
-                </li>
-                <li>
-                  <strong>Add Tests:</strong> Create test in
-                  <code>tools/tooltest/</code> and healthcheck in
-                  <code>tools/tooltest/extapi/</code>
-                </li>
+                <li><strong>(Optional) Implement logic:</strong> create the core function in <code>toolbe/</code> or <code>toolnonbe/</code>.</li>
+                <li><strong>Define the tool:</strong> modify <code>tools/toolcore/definitions.go</code> and add to the <code>allTools</code> slice.</li>
+                <li><strong>Add tests:</strong> create a test in <code>tools/tooltest/</code> and a health check in <code>tools/tooltest/extapi/</code>.</li>
               </ol>
             </div>
           </div>
@@ -919,23 +893,23 @@ tuntun-go-chatbot/
 
       
       <section id="documentation">
-        <h2>📚 Documentation & Deep Dives</h2>
-        <div class="intro">
+        <p class="eyebrow"><svg class="ic"><use href="#ic-book"/></svg> DOCS</p>
+        <h2>Documentation & Deep Dives</h2>
+        <div class="closing">
           <p>
-            This page provides a high-level overview. For detailed architectural breakdowns, technical narratives, and implementation guides, explore the full documentation site.
+            This page is a high-level overview. For detailed architectural breakdowns,
+            technical narratives, and implementation guides, explore the full documentation site.
           </p>
-          <p style="text-align:center; margin-top: 20px;">
-            <a href="docs/" class="cta-button">Explore Full Documentation</a>
-          </p>
+          <a href="docs/" class="cta-button">Explore full documentation</a>
         </div>
       </section>
 
     </div>
 
     
-    <div id="popup-modal" class="modal">
+    <div id="popup-modal" class="modal" role="dialog" aria-modal="true" aria-label="Feature detail">
       <div class="modal-content">
-        <span class="close" onclick="closePopup()">×</span>
+        <button class="modal-close" type="button" aria-label="Close" onclick="closePopup()"><svg class="ic"><use href="#ic-x"/></svg></button>
         <div id="popup-content"></div>
       </div>
     </div>
@@ -946,32 +920,30 @@ tuntun-go-chatbot/
         startOnLoad: true,
         theme: "base",
         themeVariables: {
-          primaryColor: "#667eea",
-          primaryTextColor: "#333",
-          primaryBorderColor: "#764ba2",
-          lineColor: "#666",
-          secondaryColor: "#a8edea",
-          tertiaryColor: "#fed6e3",
+          fontFamily: "'IBM Plex Mono', monospace",
+          primaryColor: "#FFFFFF",
+          primaryTextColor: "#14161A",
+          primaryBorderColor: "#CFCDC4",
+          lineColor: "#8A8F98",
+          secondaryColor: "#ECF2EF",
+          tertiaryColor: "#FBFBF9",
+          clusterBkg: "#FBFBF9",
+          clusterBorder: "#E4E2DB",
         },
       });
 
-      function toggleSection(header) {
-        const section = header.parentElement;
-        const content = section.querySelector(".section-content");
-        const icon = header.querySelector(".expand-icon");
+      let lastTrigger = null;
 
-        if (content.classList.contains("expanded")) {
-          content.classList.remove("expanded");
-          section.classList.remove("expanded");
-          icon.style.transform = "rotate(0deg)";
-        } else {
-          content.classList.add("expanded");
-          section.classList.add("expanded");
-          icon.style.transform = "rotate(180deg)";
-        }
+      function toggleSection(head) {
+        const disclosure = head.closest(".disclosure");
+        const body = disclosure.querySelector(".disclosure__body");
+        const open = disclosure.classList.toggle("expanded");
+        body.classList.toggle("expanded", open);
+        head.setAttribute("aria-expanded", String(open));
       }
 
       function showPopup(type) {
+        lastTrigger = document.activeElement;
         const modal = document.getElementById("popup-modal");
         const content = document.getElementById("popup-content");
 
@@ -980,7 +952,7 @@ tuntun-go-chatbot/
         switch (type) {
 case "cache-fastlane":
   popupContent = `
-    <h2>⚡ Cache Fast-Lane System</h2>
+    <h2>Cache Fast-Lane System</h2>
     <p>A zero-semaphore bypass system with intelligent cache re-evaluation that operates completely independently of the normal worker pool.</p>
     <div class="mermaid">
 graph TD
@@ -997,7 +969,7 @@ graph TD
         Response --> CacheWrite["Write to Cache"]
     end
 
-    subgraph Notification["🔔 Cache Re-evaluation"]
+    subgraph Notification["Cache Re-evaluation"]
         CacheWrite --> Notify["NotifyCachePopulated()"]
         Notify --> ReevalWorker["Re-evaluation Worker"]
         ReevalWorker --> CheckQueued["Check Queued Requests"]
@@ -1009,15 +981,8 @@ graph TD
     Response --> Client
 
     %% Styling
-    classDef fastLane fill:#48c9b0,stroke:#2c3e50,stroke-width:3px
-    classDef normal fill:#f39c12,stroke:#e67e22,stroke-width:2px
-    classDef cache fill:#2ecc71,stroke:#27ae60,stroke-width:2px
-    classDef notification fill:#e74c3c,stroke:#c0392b,stroke-width:2px
-
-    class UserReq,CacheKey,FastLane,CacheCheck,CacheStream fastLane
-    class NormalQueue,NormalWork,Response normal
-    class CacheWrite,Client cache
-    class Notify,ReevalWorker,CheckQueued,Promote notification
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    class UserReq,CacheKey,FastLane,CacheCheck,CacheStream hot
     </div>
     <p><strong>Core Features:</strong></p>
     <ul>
@@ -1039,42 +1004,42 @@ break;
 
           case "priority-dispatch":
             popupContent = `
-                        <h2>🚀 Priority Dispatch & Follower Fast-Lane</h2>
-<p>A standard First-In-First-Out (FIFO) queue is inefficient when followers (cheap) get stuck behind leaders (expensive) who are waiting for resource slots. This creates head-of-line blocking, nullifying the benefits of the broadcast system. We solve this problem by implementing workers that selects only requests that can be immediately processed (Followers). It never removes other unique requests (Leaders) from the queue unless they can be processed right away.</p>
+                        <h2>Priority Dispatch & Follower Fast-Lane</h2>
+<p>A standard First-In-First-Out (FIFO) queue is inefficient when followers (cheap) get stuck behind leaders (expensive) who are waiting for resource slots. This creates head-of-line blocking, nullifying the benefits of the broadcast system. We solve this by implementing workers that select only requests which can be immediately processed (followers). They never remove other unique requests (leaders) from the queue unless they can be processed right away.</p>
 
         <div class="mermaid">
 graph TD
     subgraph Queue ["Request Queue (FIFO Order)"]
         direction TB
-        L_C["👑 Leader C (Position 0)"]
-        F_A["🎯 Follower A (Position 1)<br/>for Broadcast X"]
-        L_D["👑 Leader D (Position 2)"]
-        F_B["🎯 Follower B (Position 3)<br/>for Broadcast Y"]
+        L_C["Leader C (Position 0)"]
+        F_A["Follower A (Position 1)<br/>for Broadcast X"]
+        L_D["Leader D (Position 2)"]
+        F_B["Follower B (Position 3)<br/>for Broadcast Y"]
     end
 
     subgraph ActiveBcasts ["Active Broadcasts"]
-        BcastX["📡 Broadcast X"]
-        BcastY["📡 Broadcast Y"]
+        BcastX["Broadcast X"]
+        BcastY["Broadcast Y"]
     end
 
     subgraph LeaderSlots ["Leader Slots (2/2 FULL)"]
-        Slot1["👑 Leader A (Active)"]
-        Slot2["👑 Leader B (Active)"]
+        Slot1["Leader A (Active)"]
+        Slot2["Leader B (Active)"]
     end
 
     subgraph FollowerSlots ["Follower Slots (1/3 Used)"]
         direction TB
-        FSlot1["🎯 Follower (Active)"]
-        FSlot2["💤 Available"]
-        FSlot3["💤 Available"]
+        FSlot1["Follower (Active)"]
+        FSlot2["Available"]
+        FSlot3["Available"]
     end
 
-    Dispatcher["🤖 Priority Dispatch Worker"]
+    Dispatcher["Priority Dispatch Worker"]
 
     %% Flow 1: Check for followers first
     Queue -->|"1. Scan queue for followers"| Dispatcher
-    Dispatcher -->|"2. Found Follower A!"| CheckFollowerSlots{"🟢 Follower Slot Free?"}
-    CheckFollowerSlots -->|"3. YES - Pull from position 1"| FastLane[✅ Follower Fast-Lane]
+    Dispatcher -->|"2. Found Follower A"| CheckFollowerSlots{"Follower slot free?"}
+    CheckFollowerSlots -->|"3. Yes - pull from position 1"| FastLane["Follower Fast-Lane"]
     FastLane -->|"4. Subscribe instantly"| BcastX
 
     %% What happens to leaders
@@ -1082,9 +1047,9 @@ graph TD
 
     %% Queue state after follower removal
     subgraph QueueAfter ["Queue After Follower Removal"]
-        L_C2["👑 Leader C (Position 0)"]
-        L_D2["👑 Leader D (Position 1)"]
-        F_B2["🎯 Follower B (Position 2)<br/>for Broadcast Y"]
+        L_C2["Leader C (Position 0)"]
+        L_D2["Leader D (Position 1)"]
+        F_B2["Follower B (Position 2)<br/>for Broadcast Y"]
     end
 
     FastLane -.->|"Queue compacts"| QueueAfter
@@ -1092,33 +1057,31 @@ graph TD
     %% Positioning constraints
     LeaderSlots ~~~ FollowerSlots
 
-    style FastLane fill:#d4edda,stroke:#155724
-    style CheckFollowerSlots fill:#fff3cd,stroke:#856404
-    style Queue fill:#f8d7da,stroke:#721c24
-    style QueueAfter fill:#d1ecf1,stroke:#0c5460
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    class FastLane hot
         </div>
 
         <h3>Priority Strategies:</h3>
         <ul>
-            <li><strong>Strategy 1:</strong> If follower slots available → scan entire queue for followers and pull first one found (queue jumping)</li>
-            <li><strong>Strategy 2:</strong> If leader slots available → pull first item in FIFO order</li>
-            <li><strong>Strategy 3:</strong> If no slots available → return nothing, worker sleeps and retries</li>
+            <li><strong>Strategy 1:</strong> If follower slots available, scan the entire queue for followers and pull the first one found (queue jumping).</li>
+            <li><strong>Strategy 2:</strong> If leader slots available, pull the first item in FIFO order.</li>
+            <li><strong>Strategy 3:</strong> If no slots available, return nothing; the worker sleeps and retries.</li>
         </ul>
 
         <h3>Benefits:</h3>
         <ul>
-            <li>Followers can jump ahead of leaders when follower slots are available</li>
-            <li>Leaders maintain FIFO ordering among themselves</li>
-            <li>No wasteful queue manipulation (no pulling and re-queuing)</li>
-            <li>Workers sleep when no resources available instead of thrashing</li>
-            <li>Higher system throughput under load</li>
+            <li>Followers can jump ahead of leaders when follower slots are available.</li>
+            <li>Leaders maintain FIFO ordering among themselves.</li>
+            <li>No wasteful queue manipulation (no pulling and re-queuing).</li>
+            <li>Workers sleep when no resources are available instead of thrashing.</li>
+            <li>Higher system throughput under load.</li>
         </ul>
                     `;
             break;
 
           case "two-stage-pipeline":
             popupContent = `
-                        <h2>🔄 Two-Stage Pipeline</h2>
+                        <h2>Two-Stage Pipeline</h2>
                         <p>Decouples fast data-prep workers from slow LLM-streaming workers using two independent, semaphore-limited worker pools (<code>prepare</code> -> <code>stream</code>). This prevents slow LLM API calls from blocking new incoming requests, maximizing throughput.</p>
                         <p><strong>Benefits:</strong></p>
                         <ul>
@@ -1132,7 +1095,7 @@ graph TD
 
           case "rag":
             popupContent = `
-                        <h2>🚀 Direct Stream RAG</h2>
+                        <h2>Direct Stream RAG</h2>
                         <p>For designated <code>NATURAL_ANSWER_TOOLS</code> like knowledge base queries, the system activates a special RAG path. This bypasses the final LLM synthesis step, streaming the response from the knowledge tool directly to the user.</p>
                         <hr>
                         <p><strong>Standard Flow:</strong> User Query → LLM Selects Tools → Execute Tools → LLM Synthesizes Answer from Tool Output</p>
@@ -1150,7 +1113,7 @@ graph TD
 
           case "automated-indexing":
             popupContent = `
-                        <h2>⚙️ Automated Schema & Indexing</h2>
+                        <h2>Automated Schema & Indexing</h2>
                         <p>On every startup, the application runs an <code>initializeSchema</code> function (in <code>db/arango.go</code>) that verifies and creates the necessary database schema. This isn't just about creating tables; its most critical role is to <strong>guarantee that performance-critical indexes exist</strong>.</p>
                         <p>This prevents a common production issue where queries are slow after a fresh deployment because a required index is missing. The system ensures optimal performance from the very first request.</p>
                         <hr>
@@ -1158,7 +1121,7 @@ graph TD
                         <ul>
                             <li><strong><code>idx_log_user_time</code>:</strong> A persistent index on <code>user_id</code> and <code>user_query_timestamp</code>. This makes retrieving a user's chat history (<code>GetChatHistory</code>) extremely fast, avoiding slow full-collection scans.</li>
                             <li><strong><code>idx_log_request_id</code>:</strong> A unique hash index on <code>request_id</code>. This allows for instantaneous lookups when a user submits a reaction (<code>UpdateReaction</code>), turning a slow search into a direct pointer access.</li>
-                            <li><strong><code>idx_research_stock_code</code>:</strong> A unique hash index on <code>stock_code</code>. This provides near-instant retrieval of research documents (<code>GetResearchDocByStockCode</code>), which is critical for <strong>analyze_stock</strong> tool.</li>
+                            <li><strong><code>idx_research_stock_code</code>:</strong> A unique hash index on <code>stock_code</code>. This provides near-instant retrieval of research documents (<code>GetResearchDocByStockCode</code>), which is critical for the <strong>analyze_stock</strong> tool.</li>
                         </ul>
                         <hr>
                         <p><strong>Benefits:</strong></p>
@@ -1172,7 +1135,7 @@ graph TD
 
           case "circuit-breakers":
             popupContent = `
-                        <h2>🛡️ Anti-Fragile Circuit Breakers</h2>
+                        <h2>Anti-Fragile Circuit Breakers</h2>
                         <p>Every critical external dependency (LLM, Redis, ArangoDB) is wrapped in its own circuit breaker to prevent cascading failures.</p>
                         <div class="mermaid">
 graph TD
@@ -1208,12 +1171,6 @@ graph TD
     CircuitOpen ==>|"Cooldown Expires"| HalfOpen
     HalfOpen ==>|"Success (Reset)"| Normal
     HalfOpen ==>|"Failure (Re-Open)"| CircuitOpen
-
-    classDef normal fill:#d4edda,stroke:#155724
-    classDef failing fill:#f8d7da,stroke:#721c24
-    classDef open fill:#f5c6cb,stroke:#721c24,color:#000
-    classDef halfopen fill:#fff3cd,stroke:#856404
-    class Normal,Dep1,Req1 normal; class FailureDetection,Dep2,Req2,Req3 failing; class CircuitOpen,CB_Open,Req5 open; class HalfOpen,CB_Half,Dep3,Req7 halfopen;
                         </div>
                         <p>When a dependency fails repeatedly, the circuit "opens," causing subsequent calls to fail instantly without tying up resources. After a cooldown, it enters a "half-open" state to test for recovery.</p>
                         <hr>
@@ -1229,7 +1186,7 @@ graph TD
 
           case "concurrent-tool-execution":
             popupContent = `
-                <h2>⚡ Concurrent Tool Execution</h2>
+                <h2>Concurrent Tool Execution</h2>
                 <p>The system leverages Go's powerful concurrency model (goroutines) to execute multiple tool calls in parallel. Instead of waiting for each tool to finish sequentially, it launches all tool calls at once and waits for them all to complete.</p>
                 <div class="mermaid">
 graph TD
@@ -1258,13 +1215,8 @@ graph TD
     F --> TotalP
 
     %% Styling
-    classDef startEndStyle fill:#d4edda,stroke:#155724
-    classDef toolStyle fill:#cce5ff,stroke:#004085
-    classDef totalStyle fill:#f8d7da,stroke:#721c24
-
-    class A,E,B,F startEndStyle
-    class T1,T2,T3,P1,P2,P3 toolStyle
-    class TotalS,TotalP totalStyle
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    class B,P1,P2,P3,F,TotalP hot
                 </div>
                 <p>This is implemented in <code>toolutils.ExecuteToolsInParallel</code> using a <code>sync.WaitGroup</code> to manage the goroutines.</p>
                 <hr>
@@ -1274,7 +1226,7 @@ graph TD
 
         case "stateful-conversation":
             popupContent = `
-                <h2>🧠 Stateful Conversations</h2>
+                <h2>Stateful Conversations</h2>
                 <p>To provide contextually relevant answers, the chatbot maintains conversation history. Before processing a new query, it fetches the last <code>N</code> turns of the conversation (configurable via <code>HISTORY_ITEMS</code>) from ArangoDB.</p>
                 <p>This history is formatted and injected into the LLM prompt, giving the model the necessary context to understand follow-up questions and references to previous messages.</p>
                 <p><strong>Code Logic:</strong> The <code>preparer.fetchAndFormatHistory</code> function retrieves data using <code>arangoStore.GetChatHistory</code> and builds a string like:</p>
@@ -1289,99 +1241,85 @@ Assistant: The market cap for GOOGL is $1.7T.</code></pre>
 
         case "single-flight":
             popupContent = `
-                        <h2>🛡️ Single-Flight Group (<a href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/" target="_blank" rel="noopener noreferrer">Sauron</a>)</h2>
-                        <p>This is the first layer of Sauron's defense against the "thundering herd" problem. When multiple, identical requests arrive, Go's <code>singleflight.Group</code> is exploited to ensure only the <strong>first</strong> request (the Leader) forges the broadcast infrastructure.</p>
+                        <h2>Single-Flight Group (<a href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/" target="_blank" rel="noopener noreferrer">deep dive</a>)</h2>
+                        <p>This is the first layer of defense against the "thundering herd" problem. When multiple identical requests arrive, Go's <code>singleflight.Group</code> ensures that only the <strong>first</strong> request (the leader) forges the broadcast infrastructure.</p>
                         <div class="mermaid">
 graph TD
-    subgraph After ["Sauron's Dominion"]
+    subgraph After ["Single-Flight Deduplication"]
         R4["Follower Req"]
         R5["Follower Req"]
         R6["Leader Req"]
-        SF{"👁️ singleflight.Group<br/>(The Eye of Sauron)"}
+        SF{"singleflight.Group — request dedup"}
         W4["Leader's Worker"]
-        Broadcast["🚀 On-Demand Broadcast"]
+        Broadcast["On-Demand Broadcast"]
     end
 
     %% Flow Definitions
     R4 --> SF; R5 --> SF; R6 --> SF
-    SF -->|"One Ring to rule them all..."| W4
-    W4 -->|"...and in the darkness bind them"| Broadcast
-    Broadcast -->|"Share power"| SF
-    SF -->|"Enslave all"| R4 & R5 & R6
+    SF -->|"first request becomes leader"| W4
+    W4 -->|"forges shared broadcast"| Broadcast
+    Broadcast -->|"subscribe to broadcast"| SF
+    SF -->|"subscribe to broadcast"| R4 & R5 & R6
 
     %% Styling
-    classDef reqStyle fill:#cce5ff,stroke:#004085
-    classDef workerStyle fill:#d4edda,stroke:#155724
-    classDef sfStyle fill:#ffb366,stroke:#e65c00,color:#000
-    classDef broadcastStyle fill:#e1d5e7,stroke:#6f42c1
-
-    class R4,R5,R6 reqStyle
-    class W4 workerStyle
-    class SF sfStyle
-    class Broadcast broadcastStyle
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    class SF hot
                         </div>
-                        <p>All other identical requests (the Followers) do no work. They are held captive by the single-flight and, upon its completion, are given a handle to the one true broadcast forged by their Leader. This is visible in the logs: one <code>"This request is the LEADER"</code> followed by many <code>"This request is a FOLLOWER"</code> messages.</p>
+                        <p>All other identical requests (the followers) do no work. They are held by the single-flight and, upon its completion, are given a handle to the one broadcast created by their leader. This is visible in the logs: one <code>"This request is the LEADER"</code> followed by many <code>"This request is a FOLLOWER"</code> messages.</p>
                         <hr>
-                        <p>This pattern is the key to creating the broadcast on-demand, forming the foundation for the ultimate weapon: <span class="popup-trigger" onclick="showPopup('e2e-stream-broadcasting')">On-Demand Stream Broadcasting</span>.</p>
+                        <p>This pattern creates the broadcast on demand, forming the foundation for <button class="popup-trigger" type="button" onclick="showPopup('e2e-stream-broadcasting')">On-Demand Stream Broadcasting</button>.</p>
                     `;
             break;
 
         case "e2e-stream-broadcasting":
             popupContent = `
-                        <h2>🚀 On-Demand Broadcasting (<a href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/" target="_blank" rel="noopener noreferrer">Sauron</a>)</h2>
-                        <p>This is Sauron's ultimate weapon against waste and inefficiency. Forged on-demand by the <span class="popup-trigger" onclick="showPopup('single-flight')">single-flight leader</span>, it ensures that for any number of identical requests, only one expensive LLM stream is ever created. It is the One Ring of stream management.</p>
+                        <h2>On-Demand Broadcasting (<a href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/" target="_blank" rel="noopener noreferrer">deep dive</a>)</h2>
+                        <p>Forged on demand by the <button class="popup-trigger" type="button" onclick="showPopup('single-flight')">single-flight leader</button>, the broadcast ensures that for any number of identical requests, only one expensive LLM stream is ever created.</p>
                         <div class="mermaid">
 graph TD
-    subgraph Old ["The Age of Men (Wasteful)"]
-        Req1["Identical Req A"] --> LLM1["🔥 Expensive LLM Stream 1"]
-        Req2["Identical Req B"] --> LLM2["🔥 Expensive LLM Stream 2"]
-        Req3["Identical Req C"] --> LLM3["🔥 Expensive LLM Stream 3"]
+    subgraph Old ["Without Deduplication"]
+        Req1["Identical Req A"] --> LLM1["Expensive LLM stream 1"]
+        Req2["Identical Req B"] --> LLM2["Expensive LLM stream 2"]
+        Req3["Identical Req C"] --> LLM3["Expensive LLM stream 3"]
     end
-    subgraph New ["The Age of the Orc (Sauron's Dominion)"]
-        Leader["Leader Req A"] --> LLM4["✅ One LLM Stream to Rule Them All"]
-        LLM4 -- "feeds" --> Broadcaster["One Ring<br/>(StreamBroadcaster)"]
-        FollowerB["Follower Req B"] -- "subscribes & obeys" --> Broadcaster
-        FollowerC["Follower Req C"] -- "subscribes & obeys" --> Broadcaster
+    subgraph New ["With On-Demand Broadcast"]
+        Leader["Leader Req A"] --> LLM4["Single shared LLM stream"]
+        LLM4 -- "feeds" --> Broadcaster["StreamBroadcaster"]
+        FollowerB["Follower Req B"] -- "subscribes" --> Broadcaster
+        FollowerC["Follower Req C"] -- "subscribes" --> Broadcaster
     end
 
     %% Styling
-    classDef reqStyle fill:#cce5ff,stroke:#004085
-    classDef llmStyle fill:#f8d7da,stroke:#721c24
-    classDef goodLlmStyle fill:#d4edda,stroke:#155724
-    classDef broadcasterStyle fill:#ffb366,stroke:#e65c00,color:#000
-
-    class Req1,Req2,Req3,Leader,FollowerB,FollowerC reqStyle
-    class LLM1,LLM2,LLM3 llmStyle
-    class LLM4 goodLlmStyle
-    class Broadcaster broadcasterStyle
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    class LLM4,Broadcaster hot
                         </div>
-                        <p>The Leader forges the broadcast. All Followers subscribe and receive the same stream. The broadcaster is race-condition proof: it maintains a history of all events, ensuring that even late-arriving followers are atomically caught up with the full, identical response.</p>
+                        <p>The leader forges the broadcast. All followers subscribe and receive the same stream. The broadcaster is race-condition proof: it maintains a history of all events, ensuring that even late-arriving followers are atomically caught up with the full, identical response.</p>
                         <hr>
-                        <p><strong>The Leader is Immortal and Devious:</strong> A cancellation from the Leader's client is a deception. That client's stream is terminated with a fake 'cancelled' message, but the underlying broadcast continues uninterrupted for all Followers, preserving the integrity of the operation.</p>
+                        <p><strong>Leader cancellation is isolated:</strong> a cancellation from the leader's client terminates only that client's stream with a 'cancelled' message. The underlying broadcast continues uninterrupted for all followers, preserving the integrity of the operation.</p>
                         <hr>
                         <p><strong>Benefits:</strong></p>
                         <ul>
-                            <li><strong>Absolute Cost Efficiency:</strong> One LLM call for a legion of identical requests.</li>
-                            <li><strong>Blistering Performance:</strong> Followers get data instantly.</li>
-                            <li><strong>Total System Stability:</strong> The LLM provider API is shielded from the thundering herd.</li>
-                            <li><strong>Guaranteed Consistency:</strong> All users bow to the same truth.</li>
+                            <li><strong>Cost Efficiency:</strong> One LLM call serves many identical requests.</li>
+                            <li><strong>Performance:</strong> Followers receive data instantly.</li>
+                            <li><strong>System Stability:</strong> The LLM provider API is shielded from the thundering herd.</li>
+                            <li><strong>Consistency:</strong> All subscribers receive identical events.</li>
                         </ul>
             `;
             break;
 
 case "state-aware-janitor":
     popupContent = `
-        <h2>🧹 State-Aware Janitor</h2>
-        <p>A background goroutine that acts as a comprehensive "cleaner" for the system, inspired by The Wolf from Pulp Fiction. It periodically scans for stuck requests, abandoned resources, and stale tracking data to prevent memory leaks and resource exhaustion.</p>
+        <h2>State-Aware Janitor</h2>
+        <p>A background goroutine that acts as a comprehensive cleaner for the system. It periodically scans for stuck requests, abandoned resources, and stale tracking data to prevent memory leaks and resource exhaustion.</p>
 
         <p>The janitor runs three distinct cleanup operations every <code>JANITOR_INTERVAL</code>:</p>
 
         <h3>1. State-Aware Request Cleanup</h3>
         <p>Applies different timeout logic based on the request's current state:</p>
         <ul>
-            <li><strong><code>StateCancelled</code>:</strong> Very short timeout (<code>CLIENT_PICKUP_TIMEOUT</code>, ~1s) - if client doesn't pick up cancellation quickly, cleanup immediately</li>
-            <li><strong><code>StateQueued</code>:</strong> Long timeout (<code>QUEUE_TIMEOUT</code>, ~1h) - allows requests to wait patiently in busy queues</li>
-            <li><strong><code>StateProcessing</code>:</strong> Medium timeout (<code>PROCESSING_TIMEOUT</code>, ~10m) - kills genuinely stuck jobs in execution</li>
+            <li><strong><code>StateCancelled</code>:</strong> Very short timeout (<code>CLIENT_PICKUP_TIMEOUT</code>, ~1s) — if the client doesn't pick up the cancellation quickly, clean up immediately.</li>
+            <li><strong><code>StateQueued</code>:</strong> Long timeout (<code>QUEUE_TIMEOUT</code>, ~1h) — allows requests to wait patiently in busy queues.</li>
+            <li><strong><code>StateProcessing</code>:</strong> Medium timeout (<code>PROCESSING_TIMEOUT</code>, ~10m) — kills genuinely stuck jobs in execution.</li>
         </ul>
 
         <h3>2. Requeue Tracker Cleanup</h3>
@@ -1405,24 +1343,24 @@ case "state-aware-janitor":
 
         case "e2e-cancellation":
             popupContent = `
-                <h2>🛑 End-to-End Cancellation</h2>
+                <h2>End-to-End Cancellation</h2>
                 <p>When a user cancels a request via the <code>POST /chat/cancel/:request_id</code> endpoint, a cancellation signal is propagated through the entire system using Go's <code>context.Context</code>.</p>
                 <div class="mermaid">
 graph TD
     subgraph Client ["Client Interface"]
-        UI["🖱️ Client clicks 'Stop'"]
+        UI["Client clicks 'Stop'"]
     end
-    subgraph AppServer ["⚡ Application Server (Go Gin)"]
+    subgraph AppServer ["Application Server (Go Gin)"]
         Cancel["POST /chat/cancel/:id"]
     end
-    subgraph AgenticCore ["🤖 Agentic Core Engine"]
-        B["🧠 Chatbot Manager"]
-        ActiveWorker["🏃 Active Worker<br/>(Goroutine with context)"]
-        subgraph ToolEngine ["⚡ Tool Engine"]
+    subgraph AgenticCore ["Agentic Core Engine"]
+        B["Chatbot Manager"]
+        ActiveWorker["Active Worker<br/>(Goroutine with context)"]
+        subgraph ToolEngine ["Tool Engine"]
             T["Active Tool Calls"]
         end
     end
-    subgraph ExtDeps ["🌍 External Dependencies"]
+    subgraph ExtDeps ["External Dependencies"]
         P["LLM Provider Stream"]
     end
 
@@ -1434,22 +1372,8 @@ graph TD
     ActiveWorker -->|"4b. Abort Tool Execution"| T
 
     %% Styling
-    classDef clientStyle fill:#cce5ff,stroke:#004085
-    classDef serverStyle fill:#d4edda,stroke:#155724
-    classDef coreStyle fill:#fff3cd,stroke:#856404
-    classDef stage1Style fill:#f8d7da,stroke:#721c24
-    classDef toolStyle fill:#e1d5e7,stroke:#6f42c1
-    classDef stage2Style fill:#d1ecf1,stroke:#0c5460
-    classDef extStyle fill:#e2f3e4,stroke:#28a745
-    classDef janitorStyle fill:#f5c6cb,stroke:#721c24
-    classDef queueStyle fill:#d6d8db,stroke:#383d41
-    classDef obsStyle fill:#e0e0e0,stroke:#6c757d
-    class UI clientStyle
-    class Cancel serverStyle
-    class B coreStyle
-    class ActiveWorker stage1Style
-    class T toolStyle
-    class P extStyle
+    classDef ext fill:#FBFBF9,stroke:#CFCDC4
+    class P ext
                 </div>
                 <p>This signal travels from the API handler down to the specific worker goroutine, terminating database queries, tool calls, and LLM streams immediately. The worker regularly checks <code>ctx.Done()</code> to see if it should abort its work.</p>
                 <hr>
@@ -1464,9 +1388,9 @@ graph TD
 
         case "token-truncation":
             popupContent = `
-                <h2>✂️ Targeted Token Truncation</h2>
+                <h2>Targeted Token Truncation</h2>
                 <p>When the combined output from all tools exceeds the LLM's context window (<code>MAX_TOTAL_TOOL_OUTPUT_TOKENS</code>), a naive system might truncate everything, losing valuable data. This system intelligently truncates only the output from tools designated as verbose in the <code>.env</code> file (via <code>LONG_TEXT_TOOLS</code>).</p>
-                <p><strong>Example:</strong> A request needs a stock price (short, critical) and a news summary (long, less critical). If the total output is too long, the system will shorten the news summary while leaving the stock price intact.</p>
+                <p><strong>Example:</strong> A request needs a stock price (short, critical) and a news summary (long, less critical). If the total output is too long, the system shortens the news summary while leaving the stock price intact.</p>
                 <p>This logic resides in <code>toolutils.TruncateToolOutputs</code>.</p>
                 <hr>
                 <p><strong>Benefit:</strong> Preserves the full, precise output of critical data tools while summarizing less critical, long-form text. This leads to higher-quality inputs and more accurate answers from the LLM.</p>
@@ -1475,7 +1399,7 @@ graph TD
 
         case "context-aware-caching":
             popupContent = `
-                <h2>🧠 Context-Aware Caching</h2>
+                <h2>Context-Aware Caching</h2>
                 <p>The system uses Redis to cache the results of expensive operations. However, caching everything can lead to stale data (e.g., serving yesterday's stock price).</p>
                 <p>The caching is "context-aware" because it is automatically bypassed if the request involves any tool designated as time-sensitive in the <code>.env</code> file (<code>TIMEBOUND_TOOLS=realtime_market,...</code>).</p>
                 <p>The <code>RequestPreparer</code> checks if any selected tool is in this list. If so, it prevents the result from being cached in Redis, ensuring the user always gets live data for that query.</p>
@@ -1486,7 +1410,7 @@ graph TD
 
         case "structured-logging":
             popupContent = `
-                <h2>📝 Structured JSON Logging</h2>
+                <h2>Structured JSON Logging</h2>
                 <p>Every log entry in the system is a structured, machine-readable JSON object, powered by the <code>zerolog</code> library. Instead of ambiguous text lines, each log contains queryable key-value pairs.</p>
                 <p><strong>Example Log Entry:</strong></p>
                 <pre><code>{
@@ -1505,22 +1429,19 @@ graph TD
 
           case "observability":
             popupContent = `
-                        <h2>🔭 Complete Observability Stack</h2>
+                        <h2>Complete Observability Stack</h2>
                         <p>Total system visibility through structured logging and modern observability tools.</p>
                         <div class="mermaid">
 graph TD
-    AppServer["⚡ Go Gin Application"] -- "Writes structured JSON logs to stdout" --> Docker
+    AppServer["Go Gin Application"] -- "Writes structured JSON logs to stdout" --> Docker
     subgraph DockerHost["Docker Host"]
         Docker["Docker Log Driver"] -- "Captures all container stdout" --> Vector
     end
-    subgraph ObservabilityStack ["🔭 Observability Stack (in Docker Compose)"]
+    subgraph ObservabilityStack ["Observability Stack (in Docker Compose)"]
         Vector["VECTOR<br/>(Log Collector/Router)"] -- "Parses, cleans & forwards logs" --> Loki
         Loki["LOKI<br/>(Log Aggregation & Indexing)"] -- "Stores & indexes logs by labels<br/>(e.g., level, request_id)" --> Grafana
         Grafana["GRAFANA<br/>(Dashboard & Query UI)"]
     end
-
-    style AppServer fill:#d4edda,stroke:#155724
-    style ObservabilityStack fill:#d1ecf1,stroke:#0c5460
                         </div>
                         <p><strong>Stack Components:</strong></p>
                         <ul>
@@ -1536,20 +1457,20 @@ graph TD
 
           case "data-driven-tools":
             popupContent = `
-                        <h2>🛠️ Data-Driven Tooling (Open/Closed Principle)</h2>
+                        <h2>Data-Driven Tooling (Open/Closed Principle)</h2>
                         <p>The system's tool architecture is not hard-coded. Instead, all available tools are defined as a list of data structures in a single file (<code>toolcore/definitions.go</code>). The core engine is generic and simply processes this list.</p>
                         <p>This design adheres to the <strong>Open/Closed Principle</strong>: the system is <strong>open for extension</strong> (you can add new tools easily) but <strong>closed for modification</strong> (you don't need to change the core engine to add them).</p>
                         <div class="mermaid">
 graph TD
-    subgraph BadWay ["❌ Brittle: Hard-coded Logic"]
+    subgraph BadWay ["Brittle: hard-coded logic"]
         CoreEngine["Core Engine<br/>(Big switch statement)"]
         Tool1["case 'tool1': ..."]
         Tool2["case 'tool2': ..."]
-        NewTool["// MUST EDIT THIS FILE!"]
+        NewTool["// MUST EDIT THIS FILE"]
         CoreEngine --> Tool1; CoreEngine --> Tool2; CoreEngine --> NewTool
     end
 
-    subgraph GoodWay ["✅ Robust: Data-Driven"]
+    subgraph GoodWay ["Robust: data-driven"]
         GenericEngine["Generic Core Engine"]
         ToolManifest["Tool Manifest<br/>(List of Tool Structs)"]
         NewToolData["Add new Tool struct here.<br/>No engine change needed."]
@@ -1557,8 +1478,8 @@ graph TD
         ToolManifest -.-> NewToolData
     end
 
-    style BadWay fill:#f8d7da,stroke:#721c24
-    style GoodWay fill:#d4edda,stroke:#155724
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    class GenericEngine,ToolManifest,NewToolData hot
                         </div>
                         <p><strong>Benefits:</strong></p>
                         <ul>
@@ -1571,35 +1492,35 @@ graph TD
 
           case "enhanced-cache-metadata":
             popupContent = `
-                <h2>📊 Enhanced Cache Metadata</h2>
-                <p>The cache system now stores rich metadata alongside responses, dramatically improving cache transparency and user experience. Instead of simple string caching, the system preserves complete execution context.</p>
-                
-                <h3>🔍 What's Cached:</h3>
+                <h2>Enhanced Cache Metadata</h2>
+                <p>The cache system stores rich metadata alongside responses, dramatically improving cache transparency and user experience. Instead of simple string caching, the system preserves complete execution context.</p>
+
+                <h3>What's Cached</h3>
                 <ul>
                     <li><strong>Response Content:</strong> The actual chatbot response</li>
                     <li><strong>Tool Execution Details:</strong> Complete metadata for all tools used</li>
                     <li><strong>Performance Metrics:</strong> Time-to-first-token and completion status</li>
                     <li><strong>Execution Timeline:</strong> When the response was originally generated and cached</li>
                 </ul>
-                
-                <h3>⚡ Cache Fast-Lane Benefits:</h3>
+
+                <h3>Cache Fast-Lane Benefits</h3>
                 <ul>
                     <li><strong>Full Transparency:</strong> Users see exactly which tools were used, even from cache</li>
                     <li><strong>Consistent UI Experience:</strong> Cache responses show the same detailed status as fresh requests</li>
                     <li><strong>Debug Capability:</strong> Complete audit trail of tool usage preserved in cache</li>
                     <li><strong>Performance Insights:</strong> Original execution timing data available for analysis</li>
                 </ul>
-                
-                <p>This transforms the cache from a "black box" optimization into a fully transparent acceleration layer that maintains complete fidelity with the original processing pipeline.</p>
+
+                <p>This transforms the cache from a black-box optimization into a fully transparent acceleration layer that maintains complete fidelity with the original processing pipeline.</p>
             `;
             break;
 
           case "detailed-tool-logging":
             popupContent = `
-                <h2>📋 Detailed Tool Metadata Logging</h2>
-                <p>The logging system now captures comprehensive metadata for every tool execution, creating a complete audit trail and enabling deep analytics of system behavior.</p>
-                
-                <h3>🛠️ Tool Execution Data Captured:</h3>
+                <h2>Detailed Tool Metadata Logging</h2>
+                <p>The logging system captures comprehensive metadata for every tool execution, creating a complete audit trail and enabling deep analytics of system behavior.</p>
+
+                <h3>Tool Execution Data Captured</h3>
                 <ul>
                     <li><strong>Input Parameters:</strong> Complete key-value pairs of tool arguments</li>
                     <li><strong>Output Analysis:</strong> Token count and full response content</li>
@@ -1607,68 +1528,59 @@ graph TD
                     <li><strong>Error Tracking:</strong> Detailed error messages when tools fail</li>
                     <li><strong>Execution Timeline:</strong> Timestamp of when each tool was invoked</li>
                 </ul>
-                
-                <h3>📊 Multiple Tool Support:</h3>
+
+                <h3>Multiple Tool Support</h3>
                 <ul>
                     <li><strong>Multi-Call Tracking:</strong> Same tool called multiple times in one request</li>
                     <li><strong>Parallel Execution Log:</strong> Complete record of concurrent tool operations</li>
                     <li><strong>Tool Chain Analysis:</strong> Understanding of tool interaction patterns</li>
                 </ul>
-                
-                <h3>🎯 Analytics & Insights:</h3>
+
+                <h3>Analytics & Insights</h3>
                 <ul>
                     <li><strong>Performance Analysis:</strong> Which tools are slowest/fastest</li>
                     <li><strong>Usage Patterns:</strong> Most frequently used tool combinations</li>
                     <li><strong>Error Analysis:</strong> Tool failure rates and common issues</li>
                     <li><strong>Resource Optimization:</strong> Token usage patterns across different tools</li>
                 </ul>
-                
+
                 <p>This creates a comprehensive dataset for system optimization, debugging, and understanding user interaction patterns with the tool ecosystem.</p>
             `;
             break;
 
           case "real-time-status-tracking":
             popupContent = `
-                <h2>🔍 Real-Time Status Tracking</h2>
-                <p>The <code>GET /chat/status/:request_id</code> endpoint provides unprecedented visibility into the chatbot's internal processing pipeline, giving users real-time insight into what's happening behind the scenes.</p>
-                
+                <h2>Real-Time Status Tracking</h2>
+                <p>The <code>GET /chat/status/:request_id</code> endpoint provides detailed visibility into the chatbot's internal processing pipeline, giving users real-time insight into what is happening behind the scenes.</p>
+
                 <div class="mermaid">
 graph TD
-    subgraph StatusAPI["🔍 Status API Pipeline"]
-        Client[\"👤 Client Request\"] --> StatusEndpoint[\"GET /chat/status/:id\"]
-        StatusEndpoint --> StateCheck{\"Request State?\"}
-        
-        StateCheck -->|\"Active\"| ActiveMemory[\"📊 Live Memory State\"]
-        StateCheck -->|\"Completed\"| Database[\"💾 ArangoDB Lookup\"]
-        
-        ActiveMemory --> RealTimeData[\"⚡ Real-Time Progress\"]
-        Database --> HistoricalData[\"📚 Historical Record\"]
+    subgraph StatusAPI["Status API Pipeline"]
+        Client["Client Request"] --> StatusEndpoint["GET /chat/status/:id"]
+        StatusEndpoint --> StateCheck{"Request State?"}
+
+        StateCheck -->|"Active"| ActiveMemory["Live Memory State"]
+        StateCheck -->|"Completed"| Database["ArangoDB Lookup"]
+
+        ActiveMemory --> RealTimeData["Real-Time Progress"]
+        Database --> HistoricalData["Historical Record"]
     end
-    
-    subgraph ProcessingStates["🔄 Processing States Tracked"]
+
+    subgraph ProcessingStates["Processing States Tracked"]
         direction TB
-        Queued[\"📋 Queued\"]
-        ChoosingTools[\"🔧 Choosing Tools\"]
-        CallingTools[\"⚙️ Calling Tools\"]
-        FormulatingAnswer[\"✍️ Formulating Answer\"]
-        ReadyToStream[\"📺 Ready to Stream\"]
-        Completed[\"✅ Completed\"]
+        Queued["Queued"]
+        ChoosingTools["Choosing Tools"]
+        CallingTools["Calling Tools"]
+        FormulatingAnswer["Formulating Answer"]
+        ReadyToStream["Ready to Stream"]
+        Completed["Completed"]
     end
-    
+
     RealTimeData --> ProcessingStates
     HistoricalData --> ProcessingStates
-    
-    %% Styling
-    classDef apiStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
-    classDef stateStyle fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    classDef dataStyle fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    
-    class StatusEndpoint,StateCheck,ActiveMemory,Database apiStyle
-    class Queued,ChoosingTools,CallingTools,FormulatingAnswer,ReadyToStream,Completed stateStyle
-    class RealTimeData,HistoricalData dataStyle
                 </div>
-                
-                <h3>📊 Status Information Provided:</h3>
+
+                <h3>Status Information Provided</h3>
                 <ul>
                     <li><strong>Current Processing Stage:</strong> Exactly where the request is in the pipeline</li>
                     <li><strong>Tool Selection Progress:</strong> Which tools have been chosen for execution</li>
@@ -1676,16 +1588,16 @@ graph TD
                     <li><strong>Completion Ratio:</strong> Percentage progress through the entire pipeline</li>
                     <li><strong>Estimated ETA:</strong> Projected completion time for active requests</li>
                 </ul>
-                
-                <h3>🎯 Frontend Integration:</h3>
+
+                <h3>Frontend Integration</h3>
                 <ul>
                     <li><strong>Real-Time Polling:</strong> Status updates every 750ms during processing</li>
                     <li><strong>Visual Progress Indicators:</strong> Dynamic status boxes with tool progression</li>
                     <li><strong>Tool-by-Tool Tracking:</strong> Individual checkmarks as each tool completes</li>
                     <li><strong>Transparent Cache Hits:</strong> Instant status finalization for cached responses</li>
                 </ul>
-                
-                <p><strong>User Experience Impact:</strong> Users no longer see a "black box" processing delay. They get Netflix-style transparency into what's happening: "Choosing the right tools... ✓ Calling market data API... ⏳ Analyzing company financials..."</p>
+
+                <p><strong>User Experience Impact:</strong> Users no longer face a black-box processing delay. They get step-by-step visibility into the processing pipeline: choosing tools, calling the market data API, then analyzing company financials.</p>
             `;
             break;
 
@@ -1707,6 +1619,10 @@ graph TD
 
       function closePopup() {
         document.getElementById("popup-modal").style.display = "none";
+        if (lastTrigger && typeof lastTrigger.focus === "function") {
+          lastTrigger.focus();
+          lastTrigger = null;
+        }
       }
 
       
@@ -1725,40 +1641,15 @@ graph TD
       });
 
       
-      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-        anchor.addEventListener("click", function (e) {
-          e.preventDefault();
-          const target = document.querySelector(this.getAttribute("href"));
-          if (target) {
-            target.scrollIntoView({
-              behavior: "smooth",
-              block: "start",
-            });
-          }
-        });
-      });
-
-      
-      document.querySelectorAll('.toc a[href^="#"]').forEach((anchor) => {
-        anchor.addEventListener("click", function (e) {
+      document.querySelectorAll('.masthead__nav a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function () {
           const targetId = this.getAttribute("href").substring(1);
           const targetSection = document.getElementById(targetId);
-          if (targetSection) {
-            const expandableSection = targetSection.querySelector(
-              ".expandable-section",
-            );
-            if (expandableSection) {
-              const content =
-                expandableSection.querySelector(".section-content");
-              const header = expandableSection.querySelector(".section-header");
-              const icon = header.querySelector(".expand-icon");
-
-              if (!content.classList.contains("expanded")) {
-                content.classList.add("expanded");
-                expandableSection.classList.add("expanded");
-                icon.style.transform = "rotate(180deg)";
-              }
-            }
+          if (!targetSection) return;
+          const disclosure = targetSection.querySelector(".disclosure");
+          if (disclosure && !disclosure.classList.contains("expanded")) {
+            const head = disclosure.querySelector(".disclosure__head");
+            if (head) toggleSection(head);
           }
         });
       });
