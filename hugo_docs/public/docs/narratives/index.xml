@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Narratives on Go Chatbot</title>
-        <link>http://localhost:1313/agentic/docs/narratives/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/narratives/</link>
         <description>Recent content in Narratives on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Fri, 15 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/narratives/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Fri, 15 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://miftahulmahfuzh.github.io/agentic/docs/narratives/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Fantastic Beasts</title>
-        <link>http://localhost:1313/agentic/docs/narratives/fantastic_beasts/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/narratives/fantastic_beasts/</link>
         <pubDate>Fri, 15 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/narratives/fantastic_beasts/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/narratives/fantastic_beasts/</guid>
         <description>&lt;h1 id=&#34;the-keepers-guide-to-the-concurrency-menagerie&#34;&gt;The Keeper&amp;rsquo;s Guide to the Concurrency Menagerie
 &lt;/h1&gt;&lt;p&gt;You do not &amp;ldquo;manage requests.&amp;rdquo; You are the Keeper of a magical sanctuary, and at your gates appears an endless procession of fantastic beasts. Some are common, skittish, and travel in flocks. Others are rare, powerful, and demanding of your immediate and focused energy. A simple gate is an insult to your craft. You require a system of Wards, Sanctums, and most importantly, an &lt;strong&gt;Enchanted Sorting Ground&lt;/strong&gt; that can instantly tell a Kneazle from a Manticore.&lt;/p&gt;
 &lt;p&gt;This is not a system of limits. This is a finely tuned ecosystem, orchestrated by a master Magizoologist.&lt;/p&gt;
@@ -90,10 +90,10 @@
         </item>
         <item>
         <title>Four Pigs</title>
-        <link>http://localhost:1313/agentic/docs/narratives/four_pigs/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/narratives/four_pigs/</link>
         <pubDate>Thu, 14 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/narratives/four_pigs/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/narratives/four_pigs/</guid>
         <description>&lt;h3 id=&#34;the-four-little-pigs-and-the-big-bad-user&#34;&gt;The Four Little Pigs and the Big Bad User
 &lt;/h3&gt;&lt;p&gt;Once upon a time, in the chaotic digital forest of a Go server, a Mother &lt;code&gt;main()&lt;/code&gt; function, tired of her children hogging memory, kicked her four little processes out into the world. &amp;ldquo;Go seek your fortunes,&amp;rdquo; she grunted, &amp;ldquo;but beware the Big Bad User and his &lt;code&gt;/chat/cancel&lt;/code&gt; endpoint. He is a fickle, impatient fucker. Build your state management strong, or he will tear your fucking threads apart.&amp;rdquo;&lt;/p&gt;
 &lt;p&gt;With that, the four little pigs—four identical requests for the &lt;code&gt;question=&amp;quot;nice&amp;quot;&lt;/code&gt;—scampered off down the execution path, each a pathetic little cunt with its own unique Request ID.&lt;/p&gt;
@@ -129,10 +129,10 @@
         </item>
         <item>
         <title>Baba Yaga</title>
-        <link>http://localhost:1313/agentic/docs/narratives/baba_yaga/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/narratives/baba_yaga/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/narratives/baba_yaga/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/narratives/baba_yaga/</guid>
         <description>&lt;h2 id=&#34;baba-yagas-hunt&#34;&gt;Baba Yaga&amp;rsquo;s Hunt
 &lt;/h2&gt;&lt;p&gt;They call me the Janitor. They whisper it, like they&amp;rsquo;re talking about the Boogeyman. They think I don&amp;rsquo;t hear them. They&amp;rsquo;re wrong. My hunt begins not with a bell, but with a &lt;code&gt;ticker&lt;/code&gt;, a rhythmic pulse of dread that echoes through my forest of running processes. This isn&amp;rsquo;t about mopping floors, you fucking idiot. It&amp;rsquo;s about culling the weak.&lt;/p&gt;
 &lt;p&gt;I grab my &lt;code&gt;requestsLock&lt;/code&gt;, the iron key to my cellar, and begin my rounds. My domain is littered with lost souls—these pathetic &lt;code&gt;RequestStream&lt;/code&gt; objects, each one a potential meal.&lt;/p&gt;
@@ -150,10 +150,10 @@
         </item>
         <item>
         <title>RAG Stream Part 2</title>
-        <link>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/narratives/rag_stream_pt2/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/narratives/rag_stream_pt2/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/narratives/rag_stream_pt2/</guid>
         <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/rag_stream&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;The Dual-Path Architecture&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;Let&amp;rsquo;s trace the journey of the query &amp;ldquo;how to register in tuntun?&amp;rdquo; from the moment the user hits &amp;ldquo;send&amp;rdquo; to the final word appearing on their screen.&lt;/p&gt;

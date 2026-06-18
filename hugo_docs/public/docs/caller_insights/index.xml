@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Caller Insights on Go Chatbot</title>
-        <link>http://localhost:1313/agentic/docs/caller_insights/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/</link>
         <description>Recent content in Caller Insights on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Wed, 10 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/caller_insights/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 10 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Tools Documentation</title>
-        <link>http://localhost:1313/agentic/docs/caller_insights/tools/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/tools/</link>
         <pubDate>Wed, 10 Sep 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/caller_insights/tools/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/tools/</guid>
         <description>&lt;p&gt;This document provides a detailed overview of all the tools available to the agent. Each tool&amp;rsquo;s purpose, input arguments, output format, and internal logic are described to aid in understanding, debugging, and future development.&lt;/p&gt;
 &lt;hr&gt;
 &lt;h2 id=&#34;tool-get_current_time&#34;&gt;Tool: &lt;code&gt;get_current_time&lt;/code&gt;
@@ -481,10 +481,10 @@
         </item>
         <item>
         <title>Concurrent Caller</title>
-        <link>http://localhost:1313/agentic/docs/caller_insights/concurrent_caller/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/concurrent_caller/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/caller_insights/concurrent_caller/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/concurrent_caller/</guid>
         <description>&lt;h1 id=&#34;analysis-of-callergo-why-concurrency-is-a-mission-critical-upgrade&#34;&gt;Analysis of caller.go: Why Concurrency is a Mission-Critical Upgrade
 &lt;/h1&gt;&lt;p&gt;The old &lt;code&gt;caller.go&lt;/code&gt; implementation was fundamentally flawed for any production system due to its sequential nature. It processed each tool call one by one, creating an unacceptable bottleneck. The new, concurrent implementation isn&amp;rsquo;t just an improvement; it&amp;rsquo;s a necessary evolution from a simple script to a robust, high-performance system.&lt;/p&gt;
 &lt;p&gt;Here&amp;rsquo;s why the new version is vastly superior:&lt;/p&gt;
@@ -529,10 +529,10 @@
         </item>
         <item>
         <title>RAG Stream</title>
-        <link>http://localhost:1313/agentic/docs/caller_insights/rag_stream/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/rag_stream/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/caller_insights/rag_stream/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/caller_insights/rag_stream/</guid>
         <description>&lt;p&gt;&lt;strong&gt;Next Episode:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/narratives/rag_stream_pt2&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;RAG Stream Journey&lt;/a&gt;&lt;/p&gt;
 &lt;h1 id=&#34;architectural-blueprint-dual-path-request-processing&#34;&gt;Architectural Blueprint: Dual-Path Request Processing

@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Architectures on Go Chatbot</title>
-        <link>http://localhost:1313/agentic/docs/architectures/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/</link>
         <description>Recent content in Architectures on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Thu, 14 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/architectures/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Thu, 14 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://miftahulmahfuzh.github.io/agentic/docs/architectures/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Design Patterns</title>
-        <link>http://localhost:1313/agentic/docs/architectures/design_pattern/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/design_pattern/</link>
         <pubDate>Thu, 14 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/design_pattern/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/design_pattern/</guid>
         <description>&lt;p&gt;Tuntun Go Chatbot effectively uses a combination of creational, structural, behavioral, and concurrency patterns.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Concurrency Patterns:&lt;/strong&gt;&lt;/li&gt;
@@ -318,10 +318,10 @@ This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root c
         </item>
         <item>
         <title>Circuit Breaker Pattern</title>
-        <link>http://localhost:1313/agentic/docs/architectures/circuit_breaker/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/circuit_breaker/</link>
         <pubDate>Tue, 12 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/circuit_breaker/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/circuit_breaker/</guid>
         <description>&lt;h2 id=&#34;overview&#34;&gt;Overview
 &lt;/h2&gt;&lt;p&gt;The Circuit Breaker pattern is a resilience pattern designed to prevent cascading failures in distributed systems. It acts as a protective barrier between your application and potentially unreliable external services, preventing your entire system from failing when a downstream dependency becomes unavailable or starts responding slowly.&lt;/p&gt;
 &lt;p&gt;This implementation uses the &lt;code&gt;gobreaker&lt;/code&gt; library to create circuit breakers for different services (LLM, Redis, and ArangoDB) with customized configurations based on each service&amp;rsquo;s characteristics and reliability expectations.&lt;/p&gt;
@@ -473,10 +473,10 @@ This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root c
         </item>
         <item>
         <title>StreamBroadcaster Pattern</title>
-        <link>http://localhost:1313/agentic/docs/architectures/stream_broadcaster/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/stream_broadcaster/</link>
         <pubDate>Tue, 12 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/stream_broadcaster/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/stream_broadcaster/</guid>
         <description>&lt;h3 id=&#34;context-and-inquiry&#34;&gt;Context and Inquiry
 &lt;/h3&gt;&lt;p&gt;A load test was conducted by sending 10 identical, concurrent requests to the server to validate the end-to-end &lt;code&gt;StreamBroadcaster&lt;/code&gt; implementation. The test yielded the following key observations:&lt;/p&gt;
 &lt;ul&gt;
@@ -587,10 +587,10 @@ This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root c
         </item>
         <item>
         <title>Data Driven Tool</title>
-        <link>http://localhost:1313/agentic/docs/architectures/data_driven_tool/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/data_driven_tool/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/data_driven_tool/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/data_driven_tool/</guid>
         <description>&lt;h1 id=&#34;the-data-driven-tool-architecture&#34;&gt;The Data-Driven Tool Architecture
 &lt;/h1&gt;&lt;h2 id=&#34;1-overview-the-armory-philosophy&#34;&gt;1. Overview: The Armory Philosophy
 &lt;/h2&gt;&lt;p&gt;The term &amp;ldquo;data-driven&amp;rdquo; here doesn&amp;rsquo;t mean it uses analytics to make decisions. It means the system&amp;rsquo;s fundamental capabilities—the tools themselves—are defined as declarative &lt;strong&gt;data&lt;/strong&gt; structures, not as hard-coded imperative logic.&lt;/p&gt;
@@ -705,10 +705,10 @@ This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root c
         </item>
         <item>
         <title>Jsonless</title>
-        <link>http://localhost:1313/agentic/docs/architectures/jsonless/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/jsonless/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/jsonless/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/jsonless/</guid>
         <description>&lt;h1 id=&#34;architectural-note-on-the-sanctity-of-the-compile-time-binary&#34;&gt;Architectural Note: On the Sanctity of the Compile-Time Binary
 &lt;/h1&gt;&lt;p&gt;This document addresses the suggestion to refactor static assets—specifically prompt templates and tool descriptions—into external JSON files to be loaded at runtime. The argument, rooted in patterns common to interpreted languages like Python, is that this improves modularity and ease of modification.&lt;/p&gt;
 &lt;p&gt;This document asserts that this approach is a critical design flaw in the context of a compiled Go application. It sacrifices the core Go tenets of safety, simplicity, and performance for a brittle and inappropriate form of &amp;ldquo;flexibility.&amp;rdquo;&lt;/p&gt;
@@ -780,10 +780,10 @@ This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root c
         </item>
         <item>
         <title>Persistent Queues</title>
-        <link>http://localhost:1313/agentic/docs/architectures/persistent_queue/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/persistent_queue/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/persistent_queue/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/persistent_queue/</guid>
         <description>&lt;h1 id=&#34;architectural-note-on-the-deliberate-rejection-of-persistent-queues&#34;&gt;Architectural Note: On the Deliberate Rejection of Persistent Queues
 &lt;/h1&gt;&lt;p&gt;This document addresses the perceived weakness of using in-memory Go channels for request queuing (&lt;code&gt;requestQueue&lt;/code&gt;, &lt;code&gt;preparedQueue&lt;/code&gt;) within &lt;code&gt;manager.go&lt;/code&gt;. If the application restarts, any requests currently in these channels are lost. The seemingly obvious solution is to replace these channels with a durable, external message queue like Redis Streams, RabbitMQ, or NATS.&lt;/p&gt;
 &lt;p&gt;This document asserts that for this specific application, such a change would be a critical design error. It is a solution that is far more dangerous than the problem it purports to solve.&lt;/p&gt;
@@ -893,10 +893,10 @@ This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root c
         </item>
         <item>
         <title>Polling Janitor</title>
-        <link>http://localhost:1313/agentic/docs/architectures/event_driven_janitor/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/event_driven_janitor/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/event_driven_janitor/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/event_driven_janitor/</guid>
         <description>&lt;h1 id=&#34;architectural-note-why-we-use-a-polling-janitor&#34;&gt;Architectural Note: Why We Use a Polling Janitor
 &lt;/h1&gt;&lt;p&gt;This document addresses a design choice in the &lt;code&gt;manager.go&lt;/code&gt; lifecycle management: the use of a periodic, polling &amp;ldquo;janitor&amp;rdquo; to clean up timed-out requests, rather than a purely event-driven timeout mechanism for each request. This choice is deliberate and grounded in engineering pragmatism.&lt;/p&gt;
 &lt;h2 id=&#34;the-question-can-the-janitor-be-event-driven&#34;&gt;The Question: Can the Janitor Be Event-Driven?
@@ -985,10 +985,10 @@ This creates a &amp;ldquo;tree&amp;rdquo; of contexts, and cancelling the root c
         </item>
         <item>
         <title>Pre-stream Deadlock</title>
-        <link>http://localhost:1313/agentic/docs/architectures/prestream_deadlock/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/prestream_deadlock/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/prestream_deadlock/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/prestream_deadlock/</guid>
         <description>&lt;h1 id=&#34;architectural-deep-dive-the-manager-as-the-wolf&#34;&gt;Architectural Deep Dive: The Manager as &amp;ldquo;The Wolf&amp;rdquo;
 &lt;/h1&gt;&lt;p&gt;This document details the architecture for handling real-time request cancellation. The previous design was vulnerable to a deadlock. The current design eliminates it with a precise, encapsulated pattern within the Chatbot Manager, inspired by the cool efficiency of a crime scene cleaner like &amp;ldquo;The Wolf&amp;rdquo; from &lt;em&gt;Pulp Fiction&lt;/em&gt;.&lt;/p&gt;
 &lt;h2 id=&#34;1-context-the-race-to-stream&#34;&gt;1. Context: The Race to Stream
@@ -1095,10 +1095,10 @@ sequenceDiagram
         </item>
         <item>
         <title>Static Concurrency</title>
-        <link>http://localhost:1313/agentic/docs/architectures/frozen_concurrency/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/architectures/frozen_concurrency/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/architectures/frozen_concurrency/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/architectures/frozen_concurrency/</guid>
         <description>&lt;h1 id=&#34;architectural-note-on-the-deliberate-enforcement-of-static-concurrency-limits&#34;&gt;Architectural Note: On the Deliberate Enforcement of Static Concurrency Limits
 &lt;/h1&gt;&lt;p&gt;This document addresses the suggestion that the service&amp;rsquo;s concurrency limits (&lt;code&gt;MaxConcurrentRequests&lt;/code&gt;, &lt;code&gt;MaxConcurrentLLMStreams&lt;/code&gt;) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system&amp;rsquo;s capacity in response to changing load without requiring a restart.&lt;/p&gt;
 &lt;p&gt;This document asserts that such a feature would be a critical design flaw. It sacrifices stability, predictability, and safety for an illusory and dangerous form of flexibility.&lt;/p&gt;

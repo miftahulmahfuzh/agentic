@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Manager Insights on Go Chatbot</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/</link>
         <description>Recent content in Manager Insights on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Mon, 18 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/manager_insights/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Mon, 18 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Adapter Pattern</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/adapter_pattern/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/adapter_pattern/</link>
         <pubDate>Mon, 18 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/adapter_pattern/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/adapter_pattern/</guid>
         <description>&lt;p&gt;The &lt;code&gt;chatbot&lt;/code&gt; package is an excellent example of the Adapter pattern used to achieve high levels of decoupling. Let&amp;rsquo;s break it down in detail, package by package, to see how this &amp;ldquo;beautiful symphony&amp;rdquo; is composed.&lt;/p&gt;
 &lt;h3 id=&#34;the-core-concept-the-adapter-pattern&#34;&gt;The Core Concept: The Adapter Pattern
 &lt;/h3&gt;&lt;p&gt;Think of a real-world power adapter. You have a laptop with a US plug (the &lt;code&gt;*chatbot.Manager&lt;/code&gt;), but you&amp;rsquo;re in Europe with a European wall socket (the &lt;code&gt;cache.FastLane&lt;/code&gt; component). Your laptop can&amp;rsquo;t plug directly into the wall.&lt;/p&gt;
@@ -176,10 +176,10 @@ Each test is lightweight and targets a specific, complex state-management path.&
         </item>
         <item>
         <title>Solving Problems</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/solving_problems/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/solving_problems/</link>
         <pubDate>Thu, 14 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/solving_problems/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/solving_problems/</guid>
         <description>&lt;h3 id=&#34;part-1-the-big-picture---what-problem-is-this-code-solving&#34;&gt;Part 1: The Big Picture - What Problem is this Code Solving?
 &lt;/h3&gt;&lt;p&gt;Imagine you&amp;rsquo;re running a very popular chatbot service. You&amp;rsquo;ll face a few key challenges:&lt;/p&gt;
 &lt;ol&gt;
@@ -358,10 +358,10 @@ Each test is lightweight and targets a specific, complex state-management path.&
         </item>
         <item>
         <title>Broadcast Pattern</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/broadcast_pattern/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/broadcast_pattern/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/</guid>
         <description>&lt;h1 id=&#34;architecture-analysis-from-dual-worker-pools-to-a-broadcast-pattern&#34;&gt;Architecture Analysis: From Dual Worker Pools to a Broadcast Pattern
 &lt;/h1&gt;&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;The Age of Sauron&lt;/a&gt; | &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
@@ -504,10 +504,10 @@ Each test is lightweight and targets a specific, complex state-management path.&
         </item>
         <item>
         <title>Concurrent &amp; Parallel</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/concurrent_and_parallel/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/concurrent_and_parallel/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/concurrent_and_parallel/</guid>
         <description>&lt;h1 id=&#34;concurrency--parallelism-the-ops-center-of-managergo&#34;&gt;Concurrency &amp;amp; Parallelism: The Ops Center of &lt;code&gt;manager.go&lt;/code&gt;
 &lt;/h1&gt;&lt;p&gt;Welcome to the mission briefing. Our &lt;code&gt;manager.go&lt;/code&gt; file is the central nervous system of our chatbot operation, much like an MI6 Ops Center. It needs to handle a flood of incoming requests from agents (users) all over the world. To do this without melting down, it masterfully employs the arts of &lt;strong&gt;concurrency&lt;/strong&gt; and &lt;strong&gt;parallelism&lt;/strong&gt;.&lt;/p&gt;
 &lt;h2 id=&#34;concurrency-juggling-multiple-missions-at-once&#34;&gt;Concurrency: Juggling Multiple Missions at Once
@@ -606,10 +606,10 @@ Each test is lightweight and targets a specific, complex state-management path.&
         </item>
         <item>
         <title>Implicit Decoupling</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/implicit_decoupling/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/</guid>
         <description>&lt;h1 id=&#34;analysis-implicit-decoupling-in-the-single-pool-architecture&#34;&gt;Analysis: Implicit Decoupling in the Single-Pool Architecture
 &lt;/h1&gt;&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;Broadcast Pattern&lt;/a&gt; | &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
@@ -692,10 +692,10 @@ Each test is lightweight and targets a specific, complex state-management path.&
         </item>
         <item>
         <title>The Age of Sauron</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/sauron/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/sauron/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/sauron/</guid>
         <description>&lt;h1 id=&#34;sauron-the-immortal-the-devious-the-exploiter&#34;&gt;Sauron: The Immortal, The Devious, The Exploiter
 &lt;/h1&gt;&lt;p&gt;&lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/implicit_decoupling/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;Implicit Decoupling&lt;/a&gt; | &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/broadcast_pattern/&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
@@ -758,10 +758,10 @@ Each test is lightweight and targets a specific, complex state-management path.&
         </item>
         <item>
         <title>For The Greater Good</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/bigger_picture/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/bigger_picture/</link>
         <pubDate>Thu, 07 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/bigger_picture/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/bigger_picture/</guid>
         <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/race_war&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;A War Against Race Conditions&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Directive:&lt;/strong&gt; To justify the complex engineering effort undertaken to eradicate goroutine leaks and race conditions, in the face of the argument: &lt;em&gt;&amp;ldquo;Why not just let the Janitor clean it up?&amp;rdquo;&lt;/em&gt;&lt;/p&gt;
@@ -831,10 +831,10 @@ Each test is lightweight and targets a specific, complex state-management path.&
         </item>
         <item>
         <title>A War Against Race Conditions</title>
-        <link>http://localhost:1313/agentic/docs/manager_insights/race_war/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/race_war/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/manager_insights/race_war/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/manager_insights/race_war/</guid>
         <description>&lt;p&gt;&lt;strong&gt;Next Episode:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/architectures/bigger_picture&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;For The Greater Good&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;The goal was simple: a stable, high-concurrency streaming chatbot. The reality was a series of cascading failures rooted in the subtle complexities of Go&amp;rsquo;s concurrency model. This document details the problems we faced, from the obvious memory leaks to the treacherous race conditions that followed, and the specific architectural changes in &lt;code&gt;manager.go&lt;/code&gt; and &lt;code&gt;streamer.go&lt;/code&gt; that were required to achieve true stability.&lt;/p&gt;

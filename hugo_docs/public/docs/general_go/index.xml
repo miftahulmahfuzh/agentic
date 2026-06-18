@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>General Go on Go Chatbot</title>
-        <link>http://localhost:1313/agentic/docs/general_go/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/general_go/</link>
         <description>Recent content in General Go on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/general_go/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Sat, 02 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://miftahulmahfuzh.github.io/agentic/docs/general_go/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Busy Wait Loops</title>
-        <link>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/general_go/busy_wait_loops/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/general_go/busy_wait_loops/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/general_go/busy_wait_loops/</guid>
         <description>&lt;p&gt;&lt;strong&gt;Next Episode:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/general_go/superior_event_driven&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;Superior Event-Driven&lt;/a&gt;&lt;/p&gt;
 &lt;h1 id=&#34;what-are-busy-wait-loops-and-why-are-they-terrible&#34;&gt;What Are Busy-Wait Loops and Why Are They Terrible?
@@ -68,10 +68,10 @@
         </item>
         <item>
         <title>Go Arrow</title>
-        <link>http://localhost:1313/agentic/docs/general_go/go_arrow/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/general_go/go_arrow/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/general_go/go_arrow/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/general_go/go_arrow/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;p&gt;I don&amp;rsquo;t understand the declaration of one way arrow in streamHolder:&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-Go&#34; data-lang=&#34;Go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;type&lt;/span&gt; RequestStream &lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;struct&lt;/span&gt; {
@@ -286,10 +286,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Goroutines</title>
-        <link>http://localhost:1313/agentic/docs/general_go/goroutines/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/general_go/goroutines/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/general_go/goroutines/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/general_go/goroutines/</guid>
         <description>&lt;p&gt;Goroutines get to the very heart of what makes Go so powerful for concurrent programming. As a Python programmer, you&amp;rsquo;re used to concepts like threads, &lt;code&gt;asyncio&lt;/code&gt;, and &lt;code&gt;multiprocessing&lt;/code&gt;, and understanding how goroutines relate to them is key.&lt;/p&gt;
 &lt;h3 id=&#34;what-are-goroutines-an-analogy-for-python-programmers&#34;&gt;What are Goroutines? (An Analogy for Python Programmers)
 &lt;/h3&gt;&lt;p&gt;Imagine you&amp;rsquo;re managing an office.&lt;/p&gt;
@@ -387,10 +387,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Request Lock</title>
-        <link>http://localhost:1313/agentic/docs/general_go/request_lock/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/general_go/request_lock/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/general_go/request_lock/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/general_go/request_lock/</guid>
         <description>&lt;h1 id=&#34;concurrency-and-lock-strategy&#34;&gt;Concurrency and Lock Strategy
 &lt;/h1&gt;&lt;h2 id=&#34;1-overview-the-need-for-speed-and-safety&#34;&gt;1. Overview: The Need for Speed and Safety
 &lt;/h2&gt;&lt;p&gt;The chatbot manager is a highly concurrent system. Multiple requests are processed in parallel across different stages (preparation, streaming), while background tasks like the &lt;code&gt;janitor&lt;/code&gt; perform system-wide maintenance. This is not &lt;em&gt;12 Angry Men&lt;/em&gt; where everyone waits their turn to speak; this is the trading floor from &lt;em&gt;The Wolf of Wall Street&lt;/em&gt;—chaotic, fast, and every action must be precise.&lt;/p&gt;
@@ -548,10 +548,10 @@ You can only receive from this channel: &lt;code&gt;value := &amp;lt;-recvOnlyCh
         </item>
         <item>
         <title>Superior Event-Driven</title>
-        <link>http://localhost:1313/agentic/docs/general_go/superior_event_driven/</link>
+        <link>https://miftahulmahfuzh.github.io/agentic/docs/general_go/superior_event_driven/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>http://localhost:1313/agentic/docs/general_go/superior_event_driven/</guid>
+        <guid>https://miftahulmahfuzh.github.io/agentic/docs/general_go/superior_event_driven/</guid>
         <description>&lt;p&gt;&lt;strong&gt;Previously On:&lt;/strong&gt; &lt;a class=&#34;link&#34; href=&#34;https://miftahulmahfuzh.github.io/agentic/docs/general_go/busy_wait_loops&#34;  target=&#34;_blank&#34; rel=&#34;noopener&#34;
     &gt;Busy-Wait Loops&lt;/a&gt;&lt;/p&gt;
 &lt;h1 id=&#34;the-flaw-of-polling-vs-the-power-of-event-driven-design&#34;&gt;The Flaw of Polling vs. The Power of Event-Driven Design
