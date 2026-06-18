@@ -716,8 +716,21 @@ pre code {
   font-size: 0.9375rem;
 }
 
+/* Endpoint reference: fix the method+path column width so every description
+   (the "(Auth)" / "(Public)" labels) starts at the same column. Each .deflist
+   li is its own grid, so a fixed track is what keeps rows aligned. */
+#api .deflist .term {
+  white-space: nowrap;
+}
+
+#api .deflist li {
+  grid-template-columns: 18rem 1fr;
+}
+
 .method-tag {
   display: inline-block;
+  min-width: 46px;
+  text-align: center;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 500;
@@ -913,9 +926,13 @@ pre code {
   .feature-grid {
     grid-template-columns: 1fr;
   }
-  .deflist li {
+  .deflist li,
+  #api .deflist li {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+  #api .deflist .term {
+    white-space: normal;
   }
   .modal-content {
     width: 95%;

@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Python Stuff on Go Chatbot</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/python_stuff/</link>
+        <link>http://localhost:1313/agentic/docs/python_stuff/</link>
         <description>Recent content in Python Stuff on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Wed, 13 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://miftahulmahfuzh.github.io/agentic/docs/python_stuff/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Wed, 13 Aug 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/python_stuff/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Python vs Go</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/python_stuff/python_vs_go/</link>
+        <link>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</link>
         <pubDate>Wed, 13 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>https://miftahulmahfuzh.github.io/agentic/docs/python_stuff/python_vs_go/</guid>
+        <guid>http://localhost:1313/agentic/docs/python_stuff/python_vs_go/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;p&gt;Please explain in detail the superiority of the new Golang code. back then, i thought about the concurrency problem the old Python program would&amp;rsquo;ve had, in case there are hundreds of people using the chatbot at the same time. i was afraid the Python code won&amp;rsquo;t hold.&lt;/p&gt;
 &lt;p&gt;That&amp;rsquo;s what motivated me to burn ship and start anew in Go.&lt;/p&gt;
@@ -119,10 +119,10 @@ Every query, no matter how simple, was forced through this expensive, multi-step
         </item>
         <item>
         <title>Python Workers</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/python_stuff/python_workers/</link>
+        <link>http://localhost:1313/agentic/docs/python_stuff/python_workers/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>https://miftahulmahfuzh.github.io/agentic/docs/python_stuff/python_workers/</guid>
+        <guid>http://localhost:1313/agentic/docs/python_stuff/python_workers/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;p&gt;About the old Python code.&lt;/p&gt;
 &lt;p&gt;You said Python only use a single Thread. Then what about:&lt;/p&gt;

@@ -2,16 +2,16 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
         <title>Frequently Asked on Go Chatbot</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/</link>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/</link>
         <description>Recent content in Frequently Asked on Go Chatbot</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>en-us</language>
-        <lastBuildDate>Tue, 09 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
+        <lastBuildDate>Tue, 09 Sep 2025 00:00:00 +0000</lastBuildDate><atom:link href="http://localhost:1313/agentic/docs/frequently_asked/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Dual Optimization</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/optimization_qa_1/</link>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/optimization_qa_1/</link>
         <pubDate>Tue, 09 Sep 2025 00:00:00 +0000</pubDate>
         
-        <guid>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/optimization_qa_1/</guid>
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/optimization_qa_1/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question:
 &lt;/h2&gt;&lt;p&gt;Our system implements a cache fast-lane that checks every request at the beginning of its lifecycle. To optimize cache fast-lane, we also have a cache notification system that scans the queue whenever a new cache entry is added, looking for requests that can bypass the normal queue and jump directly to the cache fast-lane.&lt;/p&gt;
 &lt;p&gt;With the new addition of PeekAndSelectRequest, which implements smart dispatch optimization that allows requests in the normal queue to jump ahead to the follower fast-lane, how do these two optimization systems correlate with each other? Are they completely separate, or do they interact? Additionally, how does the new PeekAndSelectRequest approach to queue jumping differ from the cache notification system&amp;rsquo;s approach?&lt;/p&gt;
@@ -91,10 +91,10 @@ Leader A remains queued until leader slot available
         </item>
         <item>
         <title>Semaphore Q&amp;A Part 1</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/semaphore_qa_1/</link>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/semaphore_qa_1/</link>
         <pubDate>Thu, 28 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/semaphore_qa_1/</guid>
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/semaphore_qa_1/</guid>
         <description>&lt;h3 id=&#34;questions&#34;&gt;Questions
 &lt;/h3&gt;&lt;ol&gt;
 &lt;li&gt;
@@ -215,10 +215,10 @@ Leader A remains queued until leader slot available
         </item>
         <item>
         <title>RAG Stream Q&amp;A Part 1</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/rag_qa_1/</link>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/rag_qa_1/</link>
         <pubDate>Wed, 06 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/rag_qa_1/</guid>
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/rag_qa_1/</guid>
         <description>&lt;h2 id=&#34;question-1&#34;&gt;Question 1
 &lt;/h2&gt;&lt;p&gt;The delta calculation seems convoluted.&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#8be9fd;font-style:italic&#34;&gt;var&lt;/span&gt; delta &lt;span style=&#34;color:#8be9fd&#34;&gt;string&lt;/span&gt;
@@ -336,10 +336,10 @@ Leader A remains queued until leader slot available
         </item>
         <item>
         <title>Design Q&amp;A Part 1</title>
-        <link>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/design_qa_1/</link>
+        <link>http://localhost:1313/agentic/docs/frequently_asked/design_qa_1/</link>
         <pubDate>Sat, 02 Aug 2025 00:00:00 +0000</pubDate>
         
-        <guid>https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/design_qa_1/</guid>
+        <guid>http://localhost:1313/agentic/docs/frequently_asked/design_qa_1/</guid>
         <description>&lt;h2 id=&#34;question&#34;&gt;Question
 &lt;/h2&gt;&lt;ol&gt;
 &lt;li&gt;Why do you think we need to create a new goroutine here? it&amp;rsquo;s just 1 tool though, what is the wisdom behind this? (is this another Go Idiom?)&lt;/li&gt;
