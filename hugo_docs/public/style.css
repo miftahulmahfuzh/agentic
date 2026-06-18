@@ -471,53 +471,87 @@ section > p {
   margin: 20px 0 8px;
 }
 
-/* --- Zoomable architecture diagram ---------------------------------------- */
+/* --- Architecture diagram: open-in-modal button --------------------------- */
 
-.diagram-zoom {
-  position: relative;
-  cursor: zoom-in;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: 4px;
+.diagram-open {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  margin: 16px 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
   transition: border-color 0.18s var(--ease), background 0.18s var(--ease);
 }
 
-.diagram-zoom:hover,
-.diagram-zoom:focus-visible {
-  border-color: var(--line);
+.diagram-open:hover {
+  border-color: var(--line-strong);
   background: var(--canvas);
 }
 
-.diagram-zoom__hint {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 1;
+.diagram-open__icon {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-faint);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-sm);
-  padding: 4px 8px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s var(--ease);
+  background: var(--accent-wash);
+  color: var(--accent);
 }
 
-.diagram-zoom:hover .diagram-zoom__hint,
-.diagram-zoom:focus-visible .diagram-zoom__hint {
-  opacity: 1;
+.diagram-open__icon .ic {
+  width: 20px;
+  height: 20px;
 }
 
-.diagram-zoom__hint .ic {
-  width: 13px;
-  height: 13px;
+.diagram-open__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.diagram-open__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  color: var(--ink);
+}
+
+.diagram-open__meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.diagram-open__arrow {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: var(--ink-faint);
+  transition: transform 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.diagram-open:hover .diagram-open__arrow {
+  color: var(--accent);
+  transform: translate(2px, -2px);
+}
+
+/* Off-screen source — rendered by Mermaid on load, cloned into the modal */
+.diagram-source {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 1200px;
 }
 
 .diagram-modal {

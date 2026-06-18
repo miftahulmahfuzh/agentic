@@ -110,18 +110,18 @@
           concurrently to minimise latency.
         </p>
 
-        <div class="disclosure">
-          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
-            <span class="disclosure__title">Complete architecture diagram</span>
-            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
-          </button>
-          <div class="disclosure__body">
-            <div class="disclosure__inner">
-              <div class="diagram-zoom" role="button" tabindex="0" aria-label="Enlarge architecture diagram"
-                   onclick="openDiagramModal(this)"
-                   onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openDiagramModal(this);}">
-                <span class="diagram-zoom__hint"><svg class="ic"><use href="#ic-arrow-up-right"/></svg> Click to enlarge</span>
-              <div class="mermaid">
+        <button class="diagram-open" type="button" onclick="openDiagramModal()">
+          <span class="diagram-open__icon"><svg class="ic"><use href="#ic-architecture"/></svg></span>
+          <span class="diagram-open__text">
+            <span class="diagram-open__title">Complete architecture diagram</span>
+            <span class="diagram-open__meta">Click to open the full pipeline in a large view</span>
+          </span>
+          <svg class="ic diagram-open__arrow"><use href="#ic-arrow-up-right"/></svg>
+        </button>
+
+        <!-- Off-screen source: rendered once by Mermaid on load, cloned into the modal -->
+        <div id="architecture-diagram-source" class="diagram-source" aria-hidden="true">
+          <div class="mermaid">
   graph TD
     subgraph Client ["Client Interface"]
         UI["Web Frontend / API Client"]
@@ -255,9 +255,6 @@
 
     class CacheWorkers,CacheCheck hot
     class Redis,ArangoDB,LLM,APIs ext
-              </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -1636,8 +1633,9 @@ graph TD
       }
 
       // Enlarge the architecture diagram by cloning its rendered SVG into the modal
-      function openDiagramModal(el) {
-        const svg = el.querySelector(".mermaid svg");
+      function openDiagramModal() {
+        const source = document.getElementById("architecture-diagram-source");
+        const svg = source && source.querySelector(".mermaid svg");
         if (!svg) return;
         lastTrigger = document.activeElement;
         const modal = document.getElementById("popup-modal");
