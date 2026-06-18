@@ -1,1 +1,5 @@
 docs/
+
+# Hugo build output — regenerated fresh by .github/workflows/deploy.yml on
+# every push to main, so the committed copy never affects the live site.
+hugo_docs/public/
