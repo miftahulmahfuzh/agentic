@@ -68,31 +68,35 @@
         <div class="rail reveal" style="--reveal-delay:320ms">
           <div class="rail__head">Agentic engine · request lifecycle</div>
           <div class="rail__flow">
-            <div class="rail__node reveal" style="--reveal-delay:360ms">
+            <div class="rail__node reveal" tabindex="0" style="--reveal-delay:360ms"
+                 data-note="Every request enters through a single endpoint and is handed to the <b>Chatbot Manager</b>, which generates a cache key before any work begins.">
               <span class="label">Entry</span>
               <span class="title">POST /submit</span>
               <span class="meta">all requests</span>
             </div>
             <div class="rail__arrow"><svg class="ic"><use href="#ic-arrow-right"/></svg></div>
-            <div class="rail__node rail__node--hot reveal" style="--reveal-delay:420ms">
+            <div class="rail__node rail__node--hot reveal" tabindex="0" style="--reveal-delay:420ms"
+                 data-note="The <b>cache fast-lane</b> bypasses every semaphore. A hit returns in under two seconds; a miss falls through to the priority queue.">
               <span class="label">Tier 1</span>
               <span class="title">Cache fast-lane</span>
               <span class="meta">hit &lt; 2s · bypasses semaphores</span>
             </div>
             <div class="rail__arrow"><svg class="ic"><use href="#ic-arrow-right"/></svg></div>
-            <div class="rail__node reveal" style="--reveal-delay:480ms">
+            <div class="rail__node reveal" tabindex="0" style="--reveal-delay:480ms"
+                 data-note="On a miss the request is <b>enqueued</b>. Cheap followers jump ahead of blocked leaders, while leaders keep strict first-come-first-serve ordering.">
               <span class="label">Tier 2</span>
               <span class="title">Priority queue</span>
               <span class="meta">FIFO · miss path</span>
             </div>
             <div class="rail__arrow"><svg class="ic"><use href="#ic-arrow-right"/></svg></div>
-            <div class="rail__node reveal" style="--reveal-delay:540ms">
+            <div class="rail__node reveal" tabindex="0" style="--reveal-delay:540ms"
+                 data-note="A single <b>leader</b> runs the expensive LLM stream while all identical followers subscribe to one broadcast — one stream, many subscribers.">
               <span class="label">Tier 3</span>
               <span class="title">Leader → broadcast</span>
               <span class="meta">1 stream, many subscribers</span>
             </div>
           </div>
-          <p class="rail__note">The <b>cache fast-lane</b> bypasses every semaphore; on a miss the request enters the priority queue and a single leader streams the answer to all identical followers.</p>
+          <p class="rail__note">The <b>cache fast-lane</b> bypasses every semaphore. A hit returns in under two seconds; a miss falls through to the priority queue.</p>
         </div>
       </section>
 
@@ -106,14 +110,18 @@
           concurrently to minimise latency.
         </p>
 
-        <div class="disclosure">
-          <button class="disclosure__head" type="button" aria-expanded="false" onclick="toggleSection(this)">
-            <span class="disclosure__title">Complete architecture diagram</span>
-            <svg class="ic disclosure__chevron"><use href="#ic-chevron"/></svg>
-          </button>
-          <div class="disclosure__body">
-            <div class="disclosure__inner">
-              <div class="mermaid">
+        <button class="diagram-open" type="button" onclick="openDiagramModal()">
+          <span class="diagram-open__icon"><svg class="ic"><use href="#ic-architecture"/></svg></span>
+          <span class="diagram-open__text">
+            <span class="diagram-open__title">Complete architecture diagram</span>
+            <span class="diagram-open__meta">Click to open the full pipeline in a large view</span>
+          </span>
+          <svg class="ic diagram-open__arrow"><use href="#ic-arrow-up-right"/></svg>
+        </button>
+
+        <!-- Off-screen source: rendered once by Mermaid on load, cloned into the modal -->
+        <div id="architecture-diagram-source" class="diagram-source" aria-hidden="true">
+          <div class="mermaid">
   graph TD
     subgraph Client ["Client Interface"]
         UI["Web Frontend / API Client"]
@@ -247,8 +255,6 @@
 
     class CacheWorkers,CacheCheck hot
     class Redis,ArangoDB,LLM,APIs ext
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -1617,12 +1623,53 @@ graph TD
       }
 
       function closePopup() {
-        document.getElementById("popup-modal").style.display = "none";
+        const modal = document.getElementById("popup-modal");
+        modal.style.display = "none";
+        modal.classList.remove("modal--wide");
         if (lastTrigger && typeof lastTrigger.focus === "function") {
           lastTrigger.focus();
           lastTrigger = null;
         }
       }
+
+      // Enlarge the architecture diagram by cloning its rendered SVG into the modal
+      function openDiagramModal() {
+        const source = document.getElementById("architecture-diagram-source");
+        const svg = source && source.querySelector(".mermaid svg");
+        if (!svg) return;
+        lastTrigger = document.activeElement;
+        const modal = document.getElementById("popup-modal");
+        const content = document.getElementById("popup-content");
+        content.innerHTML = "<h2>System Architecture</h2>";
+        const wrap = document.createElement("div");
+        wrap.className = "diagram-modal";
+        const clone = svg.cloneNode(true);
+        clone.removeAttribute("style");
+        clone.removeAttribute("width");
+        clone.removeAttribute("height");
+        wrap.appendChild(clone);
+        content.appendChild(wrap);
+        modal.classList.add("modal--wide");
+        modal.style.display = "block";
+      }
+
+      // Request-lifecycle rail: highlight the hovered/focused node and show its note
+      (function initRail() {
+        const flow = document.querySelector(".rail__flow");
+        const note = document.querySelector(".rail__note");
+        if (!flow || !note) return;
+        const nodes = Array.from(flow.querySelectorAll(".rail__node"));
+        const defaultNode = flow.querySelector(".rail__node--hot") || nodes[0];
+        function activate(node) {
+          nodes.forEach((n) => n.classList.toggle("rail__node--hot", n === node));
+          if (node.dataset.note) note.innerHTML = node.dataset.note;
+        }
+        nodes.forEach((node) => {
+          node.addEventListener("mouseenter", () => activate(node));
+          node.addEventListener("focusin", () => activate(node));
+        });
+        flow.addEventListener("mouseleave", () => activate(defaultNode));
+      })();
 
       // Close modal when clicking outside of it
       window.onclick = function (event) {
