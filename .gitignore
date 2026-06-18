@@ -1,4 +1,1 @@
 docs/
-
-# Hugo fingerprinted JS bundles (regenerated with new hashes on every build)
-hugo_docs/public/ts/*.js
