@@ -547,21 +547,8 @@ section > p {
 }
 
 /* Off-screen source — rendered by Mermaid on load, cloned into the modal */
-.diagram-source {
-  position: absolute;
-  left: -10000px;
-  top: 0;
-  width: 1200px;
-}
-
-.diagram-modal {
-  overflow-x: auto;
-}
-
-.diagram-modal svg {
-  width: 100%;
-  height: auto;
-  max-width: none;
+.diagram-source[hidden] {
+  display: none;
 }
 
 /* --- Feature cards -------------------------------------------------------- */
@@ -813,10 +800,6 @@ pre code {
   max-height: 90vh;
   overflow-y: auto;
   animation: modal-in 0.2s var(--ease);
-}
-
-.modal--wide .modal-content {
-  max-width: 1400px;
 }
 
 .modal-content h2 {

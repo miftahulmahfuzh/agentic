@@ -117,18 +117,19 @@
           dropping mid-answer.
         </p>
 
-        <button class="diagram-open" type="button" onclick="openDiagramModal()">
+        <button class="diagram-open" type="button" onclick="openDiagramTab('architecture')">
           <span class="diagram-open__icon"><svg class="ic"><use href="#ic-architecture"/></svg></span>
           <span class="diagram-open__text">
             <span class="diagram-open__title">Complete architecture diagram</span>
-            <span class="diagram-open__meta">Click to open the full pipeline in a large view</span>
+            <span class="diagram-open__meta">Opens in a new tab &middot; pinch to zoom, drag to pan</span>
           </span>
           <svg class="ic diagram-open__arrow"><use href="#ic-arrow-up-right"/></svg>
         </button>
 
-        <!-- Off-screen source: rendered once by Mermaid on load, cloned into the modal -->
-        <div id="architecture-diagram-source" class="diagram-source" aria-hidden="true">
-          <div class="mermaid">
+        <!-- Diagram source. Not rendered here: the viewer tab reads this text. -->
+        <div class="diagram-source" data-diagram-id="architecture"
+             data-diagram-title="System Architecture" hidden>
+          <script type="text/plain" class="diagram-code">
   graph TD
     subgraph CLIENT ["Client"]
         FE["Browser / mobile client"]
@@ -300,7 +301,7 @@
 
     class CCH,FL,BW,BOWL,DISPA hot
     class REDIS,ARANGO,LLM,BEAPI,DISK ext
-          </div>
+          </script>
         </div>
       </section>
 
@@ -315,7 +316,19 @@
           injection point, one canonical read gate, and five LLM call sites that ground on the pixels.
         </p>
 
-        <div class="mermaid">
+        <button class="diagram-open" type="button" onclick="openDiagramTab('agents')">
+          <span class="diagram-open__icon"><svg class="ic"><use href="#ic-architecture"/></svg></span>
+          <span class="diagram-open__text">
+            <span class="diagram-open__title">Agent routing diagram</span>
+            <span class="diagram-open__meta">Opens in a new tab &middot; pinch to zoom, drag to pan</span>
+          </span>
+          <svg class="ic diagram-open__arrow"><use href="#ic-arrow-up-right"/></svg>
+        </button>
+
+        <!-- Diagram source. Not rendered here: the viewer tab reads this text. -->
+        <div class="diagram-source" data-diagram-id="agents"
+             data-diagram-title="Multi-Agent Routing" hidden>
+          <script type="text/plain" class="diagram-code">
 graph TD
     U["User turn<br/>text and/or up to 3 image parts"]
     IMGCTX["requestcontext.WithImageAttachments<br/>single injection point"]
@@ -390,6 +403,7 @@ graph TD
 
     class ENF,DER,SEL,TA,CS hot
     class S1,S2 ext
+          </script>
         </div>
 
         <div class="feature-grid">
@@ -2504,32 +2518,35 @@ graph TD
       function closePopup() {
         const modal = document.getElementById("popup-modal");
         modal.style.display = "none";
-        modal.classList.remove("modal--wide");
         if (lastTrigger && typeof lastTrigger.focus === "function") {
           lastTrigger.focus();
           lastTrigger = null;
         }
       }
 
-      // Enlarge the architecture diagram by cloning its rendered SVG into the modal
-      function openDiagramModal() {
-        const source = document.getElementById("architecture-diagram-source");
-        const svg = source && source.querySelector(".mermaid svg");
-        if (!svg) return;
-        lastTrigger = document.activeElement;
-        const modal = document.getElementById("popup-modal");
-        const content = document.getElementById("popup-content");
-        content.innerHTML = "<h2>System Architecture</h2>";
-        const wrap = document.createElement("div");
-        wrap.className = "diagram-modal";
-        const clone = svg.cloneNode(true);
-        clone.removeAttribute("style");
-        clone.removeAttribute("width");
-        clone.removeAttribute("height");
-        wrap.appendChild(clone);
-        content.appendChild(wrap);
-        modal.classList.add("modal--wide");
-        modal.style.display = "block";
+      // Hand a diagram's source to the standalone viewer and open it in a new
+      // tab. The source lives in a hidden <script type="text/plain"> next to
+      // the button, so it is never rendered twice.
+      // html/template is in a JS context here, so it emits a quoted string
+      // literal on its own - piping through jsonify would double-quote it.
+      var DIAGRAM_VIEWER = {{ "diagram.html" | absURL }};
+
+      function openDiagramTab(id) {
+        const host = document.querySelector('[data-diagram-id="' + id + '"]');
+        const code = host && host.querySelector(".diagram-code");
+        if (!code) return;
+        try {
+          localStorage.setItem(
+            "tuntun:diagram:" + id,
+            JSON.stringify({
+              title: host.getAttribute("data-diagram-title") || "Diagram",
+              code: code.textContent,
+            })
+          );
+        } catch (err) {
+          // Storage blocked - the viewer shows its own explanation.
+        }
+        window.open(DIAGRAM_VIEWER + "?d=" + encodeURIComponent(id), "_blank", "noopener");
       }
 
       // Request-lifecycle rail: highlight the hovered/focused node and show its note

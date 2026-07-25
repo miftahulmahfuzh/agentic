@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Diagram · tuntun-go-chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+      :root {
+        --paper:   #FBFBF9;
+        --ink:     #14161A;
+        --muted:   #8A8F98;
+        --hair:    #E4E2DB;
+        --hair-2:  #CFCDC4;
+        --accent:  #2E6F5E;
+        --tint:    #ECF2EF;
+        --bar: 52px;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ---- top bar ------------------------------------------------------ */
+      .bar {
+        position: fixed;
+        inset: 0 0 auto 0;
+        height: var(--bar);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 16px;
+        background: rgba(251, 251, 249, 0.92);
+        backdrop-filter: saturate(1.4) blur(8px);
+        border-bottom: 1px solid var(--hair);
+        z-index: 10;
+      }
+
+      .bar__back {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        text-decoration: none;
+        padding: 6px 10px 6px 6px;
+        border-radius: 6px;
+        white-space: nowrap;
+      }
+      .bar__back:hover { color: var(--ink); background: var(--tint); }
+      .bar__back svg { width: 15px; height: 15px; }
+
+      .bar__title {
+        font-family: "Space Grotesk", sans-serif;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: -0.01em;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .bar__spacer { flex: 1 1 auto; }
+
+      .bar__hint {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .bar__hint kbd {
+        font: inherit;
+        border: 1px solid var(--hair-2);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        padding: 1px 5px;
+        background: #fff;
+        color: var(--ink);
+      }
+      @media (max-width: 860px) { .bar__hint { display: none; } }
+
+      /* ---- canvas -------------------------------------------------------
+         The drafting grid is painted on the viewport and driven from the
+         same (tx, ty, scale) as the diagram, so the sheet moves with the
+         drawing and the zoom reads as physical distance.                  */
+      .viewport {
+        position: fixed;
+        inset: var(--bar) 0 0 0;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        background-color: var(--paper);
+        background-repeat: repeat, repeat;
+        background-image:
+          linear-gradient(to right, var(--hair) 1px, transparent 1px),
+          linear-gradient(to bottom, var(--hair) 1px, transparent 1px);
+      }
+      .viewport[data-fine="off"] { background-image: none; }
+      .viewport.is-panning { cursor: grabbing; }
+      .viewport:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+      .stage {
+        position: absolute;
+        top: 0; left: 0;
+        transform-origin: 0 0;
+        will-change: transform;
+      }
+      .stage svg { display: block; max-width: none !important; height: auto; }
+
+      /* ---- controls ----------------------------------------------------- */
+      .controls {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        display: flex;
+        align-items: stretch;
+        background: #fff;
+        border: 1px solid var(--hair-2);
+        border-radius: 9px;
+        box-shadow: 0 1px 2px rgba(20, 22, 26, 0.05), 0 8px 24px rgba(20, 22, 26, 0.07);
+        overflow: hidden;
+        z-index: 10;
+      }
+      .controls button {
+        appearance: none;
+        border: 0;
+        background: #fff;
+        color: var(--ink);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 13px;
+        padding: 0 13px;
+        height: 38px;
+        cursor: pointer;
+        border-left: 1px solid var(--hair);
+      }
+      .controls button:first-child { border-left: 0; }
+      .controls button:hover { background: var(--tint); color: var(--accent); }
+      .controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+      .controls__zoom {
+        min-width: 66px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+        color: var(--muted) !important;
+      }
+      .controls__zoom:hover { color: var(--accent) !important; }
+
+      /* ---- states -------------------------------------------------------- */
+      .state {
+        position: fixed;
+        inset: var(--bar) 0 0 0;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        gap: 14px;
+        text-align: center;
+        padding: 24px;
+        background: var(--paper);
+        z-index: 5;
+      }
+      .state[hidden] { display: none; }
+      .state h2 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .state p { margin: 0; font-size: 14px; color: var(--muted); max-width: 42ch; line-height: 1.55; }
+      .state a {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid currentColor;
+        padding-bottom: 1px;
+      }
+      .spinner {
+        width: 18px; height: 18px;
+        border: 2px solid var(--hair-2);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      @media (prefers-reduced-motion: reduce) {
+        .spinner { animation-duration: 2.4s; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <header class="bar">
+      <a class="bar__back" href="./">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Overview
+      </a>
+      <h1 class="bar__title" id="title">Diagram</h1>
+      <span class="bar__spacer"></span>
+      <span class="bar__hint">
+        pinch or <kbd>⌘</kbd>+scroll to zoom · drag to pan · <kbd>F</kbd> fit · <kbd>0</kbd> reset
+      </span>
+    </header>
+
+    <div class="viewport" id="viewport" tabindex="0" aria-label="Diagram canvas. Drag to pan, pinch or hold command and scroll to zoom.">
+      <div class="stage" id="stage"></div>
+    </div>
+
+    <div class="controls" role="group" aria-label="Zoom controls">
+      <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+      <button type="button" id="zoom-reset" class="controls__zoom" aria-label="Reset zoom to 100 percent">100%</button>
+      <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+      <button type="button" id="fit" aria-label="Fit diagram to screen">Fit</button>
+    </div>
+
+    <div class="state" id="state-loading">
+      <div class="spinner" role="status" aria-label="Rendering diagram"></div>
+      <p>Rendering diagram…</p>
+    </div>
+
+    <div class="state" id="state-empty" hidden>
+      <h2 id="empty-title">No diagram to show</h2>
+      <p id="empty-body">Open a diagram from the architecture page and it will appear here.</p>
+      <a href="./">Go to the overview</a>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var STORE_PREFIX = "tuntun:diagram:";
+        var MIN = 0.1, MAX = 8, STEP = 1.25;
+        var GRID = 24; // drafting-sheet pitch, in diagram units
+
+        var viewport = document.getElementById("viewport");
+        var stage = document.getElementById("stage");
+        var zoomLabel = document.getElementById("zoom-reset");
+        var loading = document.getElementById("state-loading");
+        var empty = document.getElementById("state-empty");
+
+        var scale = 1, tx = 0, ty = 0;
+        var natural = { w: 0, h: 0 };
+        var ready = false;
+
+        function clamp(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+        function apply() {
+          stage.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + scale + ")";
+          zoomLabel.textContent = Math.round(scale * 100) + "%";
+          // Grid tracks the same transform so the sheet moves with the drawing.
+          var p = GRID * scale;
+          viewport.style.backgroundSize = p + "px " + p + "px, " + p + "px " + p + "px";
+          viewport.style.backgroundPosition = tx + "px " + ty + "px, " + tx + "px " + ty + "px";
+          // Below ~8px the grid turns into noise, so drop it.
+          viewport.dataset.fine = p < 8 ? "off" : "on";
+        }
+
+        function zoomAt(cx, cy, next) {
+          next = clamp(next, MIN, MAX);
+          if (next === scale) return;
+          var r = viewport.getBoundingClientRect();
+          var px = cx - r.left, py = cy - r.top;
+          // Keep the point under the cursor pinned while the scale changes.
+          tx = px - (px - tx) * (next / scale);
+          ty = py - (py - ty) * (next / scale);
+          scale = next;
+          apply();
+        }
+
+        function centre() {
+          var r = viewport.getBoundingClientRect();
+          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        }
+
+        function fit() {
+          if (!natural.w || !natural.h) return;
+          var r = viewport.getBoundingClientRect();
+          var pad = 48;
+          var s = Math.min((r.width - pad) / natural.w, (r.height - pad) / natural.h);
+          scale = clamp(s, MIN, MAX);
+          tx = (r.width - natural.w * scale) / 2;
+          ty = (r.height - natural.h * scale) / 2;
+          apply();
+        }
+
+        function resetZoom() {
+          var r = viewport.getBoundingClientRect();
+          scale = 1;
+          tx = (r.width - natural.w) / 2;
+          ty = (r.height - natural.h) / 2;
+          apply();
+        }
+
+        // ---- wheel: pinch (ctrl/meta) zooms, plain scroll pans ------------
+        viewport.addEventListener("wheel", function (e) {
+          if (!ready) return;
+          e.preventDefault();
+          if (e.ctrlKey || e.metaKey) {
+            zoomAt(e.clientX, e.clientY, scale * Math.exp(-e.deltaY * 0.01));
+          } else {
+            tx -= e.deltaX;
+            ty -= e.deltaY;
+            apply();
+          }
+        }, { passive: false });
+
+        // ---- pointer drag to pan ------------------------------------------
+        var dragging = false, lastX = 0, lastY = 0, pointerId = null;
+
+        viewport.addEventListener("pointerdown", function (e) {
+          if (!ready || e.button !== 0) return;
+          dragging = true;
+          pointerId = e.pointerId;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          viewport.setPointerCapture(pointerId);
+          viewport.classList.add("is-panning");
+        });
+
+        viewport.addEventListener("pointermove", function (e) {
+          if (!dragging || e.pointerId !== pointerId) return;
+          tx += e.clientX - lastX;
+          ty += e.clientY - lastY;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          apply();
+        });
+
+        function endDrag(e) {
+          if (!dragging || (e && e.pointerId !== pointerId)) return;
+          dragging = false;
+          viewport.classList.remove("is-panning");
+          if (pointerId !== null && viewport.hasPointerCapture(pointerId)) {
+            viewport.releasePointerCapture(pointerId);
+          }
+          pointerId = null;
+        }
+        viewport.addEventListener("pointerup", endDrag);
+        viewport.addEventListener("pointercancel", endDrag);
+
+        // ---- touch pinch (tablets) ----------------------------------------
+        var pinchFrom = 0, pinchScale = 1;
+        function dist(t) {
+          var dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY;
+          return Math.hypot(dx, dy);
+        }
+        viewport.addEventListener("touchstart", function (e) {
+          if (e.touches.length === 2) {
+            pinchFrom = dist(e.touches);
+            pinchScale = scale;
+            dragging = false;
+            viewport.classList.remove("is-panning");
+          }
+        }, { passive: true });
+
+        viewport.addEventListener("touchmove", function (e) {
+          if (e.touches.length === 2 && pinchFrom > 0) {
+            e.preventDefault();
+            var mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            var my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            zoomAt(mx, my, pinchScale * (dist(e.touches) / pinchFrom));
+          }
+        }, { passive: false });
+
+        viewport.addEventListener("touchend", function (e) {
+          if (e.touches.length < 2) pinchFrom = 0;
+        });
+
+        viewport.addEventListener("dblclick", function (e) {
+          if (ready) zoomAt(e.clientX, e.clientY, scale * STEP);
+        });
+
+        // ---- buttons + keyboard --------------------------------------------
+        document.getElementById("zoom-in").addEventListener("click", function () {
+          var c = centre(); zoomAt(c.x, c.y, scale * STEP);
+        });
+        document.getElementById("zoom-out").addEventListener("click", function () {
+          var c = centre(); zoomAt(c.x, c.y, scale / STEP);
+        });
+        document.getElementById("fit").addEventListener("click", fit);
+        zoomLabel.addEventListener("click", resetZoom);
+
+        document.addEventListener("keydown", function (e) {
+          if (!ready) return;
+          var k = e.key, c;
+          if (k === "+" || k === "=") { c = centre(); zoomAt(c.x, c.y, scale * STEP); }
+          else if (k === "-" || k === "_") { c = centre(); zoomAt(c.x, c.y, scale / STEP); }
+          else if (k === "0") { resetZoom(); }
+          else if (k === "f" || k === "F") { fit(); }
+          else if (k === "ArrowLeft")  { tx += 60; apply(); }
+          else if (k === "ArrowRight") { tx -= 60; apply(); }
+          else if (k === "ArrowUp")    { ty += 60; apply(); }
+          else if (k === "ArrowDown")  { ty -= 60; apply(); }
+          else return;
+          e.preventDefault();
+        });
+
+        var fitOnResize = true;
+        window.addEventListener("resize", function () { if (ready && fitOnResize) fit(); });
+        viewport.addEventListener("pointerdown", function () { fitOnResize = false; });
+        viewport.addEventListener("wheel", function () { fitOnResize = false; }, { passive: true });
+
+        // ---- load + render ---------------------------------------------------
+        function showEmpty(title, body) {
+          loading.hidden = true;
+          if (title) document.getElementById("empty-title").textContent = title;
+          if (body) document.getElementById("empty-body").textContent = body;
+          empty.hidden = false;
+        }
+
+        function param(name) {
+          return new URLSearchParams(window.location.search).get(name);
+        }
+
+        var id = param("d");
+        if (!id) { showEmpty(); return; }
+
+        var payload = null;
+        try {
+          var raw = window.localStorage.getItem(STORE_PREFIX + id);
+          if (raw) payload = JSON.parse(raw);
+        } catch (err) {
+          showEmpty("Cannot read the diagram", "This browser blocked local storage, so the diagram could not be handed over from the overview page.");
+          return;
+        }
+
+        if (!payload || !payload.code) { showEmpty(); return; }
+
+        document.title = payload.title
+          ? payload.title + " · tuntun-go-chatbot"
+          : "Diagram · tuntun-go-chatbot";
+        if (payload.title) document.getElementById("title").textContent = payload.title;
+
+        // Same theme as the overview page so a diagram looks identical here.
+        // securityLevel is left at mermaid's default: this page renders text
+        // read from localStorage, so there is no reason to loosen sanitising.
+        // useMaxWidth:false makes mermaid emit intrinsic width/height, which
+        // is what the fit calculation below needs.
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "base",
+          flowchart: { useMaxWidth: false },
+          themeVariables: {
+            fontFamily: "'IBM Plex Mono', monospace",
+            primaryColor: "#FFFFFF",
+            primaryTextColor: "#14161A",
+            primaryBorderColor: "#CFCDC4",
+            lineColor: "#8A8F98",
+            secondaryColor: "#ECF2EF",
+            tertiaryColor: "#FBFBF9",
+            clusterBkg: "#FBFBF9",
+            clusterBorder: "#E4E2DB",
+          },
+        });
+
+        mermaid
+          .render("diagram-svg", payload.code)
+          .then(function (res) {
+            stage.innerHTML = res.svg;
+            var svg = stage.querySelector("svg");
+            if (!svg) throw new Error("no svg produced");
+
+            // Pin the SVG to its intrinsic size; the stage handles all scaling.
+            var vb = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
+            natural.w = vb.length === 4 && vb[2] ? vb[2] : svg.getBoundingClientRect().width;
+            natural.h = vb.length === 4 && vb[3] ? vb[3] : svg.getBoundingClientRect().height;
+            svg.removeAttribute("style");
+            svg.setAttribute("width", natural.w);
+            svg.setAttribute("height", natural.h);
+
+            loading.hidden = true;
+            ready = true;
+            fit();
+            viewport.focus({ preventScroll: true });
+          })
+          .catch(function (err) {
+            showEmpty("This diagram could not be drawn", String((err && err.message) || err));
+          });
+      })();
+    </script>
+  </body>
+</html>
