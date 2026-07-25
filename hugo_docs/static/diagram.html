@@ -93,10 +93,7 @@
       }
       @media (max-width: 860px) { .bar__hint { display: none; } }
 
-      /* ---- canvas -------------------------------------------------------
-         The drafting grid is painted on the viewport and driven from the
-         same (tx, ty, scale) as the diagram, so the sheet moves with the
-         drawing and the zoom reads as physical distance.                  */
+      /* ---- canvas ------------------------------------------------------ */
       .viewport {
         position: fixed;
         inset: var(--bar) 0 0 0;
@@ -104,12 +101,7 @@
         cursor: grab;
         touch-action: none;
         background-color: var(--paper);
-        background-repeat: repeat, repeat;
-        background-image:
-          linear-gradient(to right, var(--hair) 1px, transparent 1px),
-          linear-gradient(to bottom, var(--hair) 1px, transparent 1px);
       }
-      .viewport[data-fine="off"] { background-image: none; }
       .viewport.is-panning { cursor: grabbing; }
       .viewport:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
@@ -246,7 +238,6 @@
 
         var STORE_PREFIX = "tuntun:diagram:";
         var MIN = 0.1, MAX = 8, STEP = 1.25;
-        var GRID = 24; // drafting-sheet pitch, in diagram units
 
         var viewport = document.getElementById("viewport");
         var stage = document.getElementById("stage");
@@ -263,12 +254,6 @@
         function apply() {
           stage.style.transform = "translate(" + tx + "px," + ty + "px) scale(" + scale + ")";
           zoomLabel.textContent = Math.round(scale * 100) + "%";
-          // Grid tracks the same transform so the sheet moves with the drawing.
-          var p = GRID * scale;
-          viewport.style.backgroundSize = p + "px " + p + "px, " + p + "px " + p + "px";
-          viewport.style.backgroundPosition = tx + "px " + ty + "px, " + tx + "px " + ty + "px";
-          // Below ~8px the grid turns into noise, so drop it.
-          viewport.dataset.fine = p < 8 ? "off" : "on";
         }
 
         function zoomAt(cx, cy, next) {
@@ -469,8 +454,22 @@
           },
         });
 
-        mermaid
-          .render("diagram-svg", payload.code)
+        // Mermaid sizes every node by measuring its label, so it must not run
+        // until the webfonts are in. Measuring against the fallback font and
+        // then swapping in IBM Plex Mono makes the text outgrow the box it was
+        // given, which clips the second line of every multi-line node.
+        var fontsReady = document.fonts
+          ? document.fonts.ready.then(function () {
+              return Promise.all([
+                document.fonts.load("400 14px 'IBM Plex Mono'"),
+                document.fonts.load("500 14px 'IBM Plex Mono'"),
+              ]);
+            })
+          : Promise.resolve();
+
+        fontsReady
+          .catch(function () { /* render anyway if the font API is unavailable */ })
+          .then(function () { return mermaid.render("diagram-svg", payload.code); })
           .then(function (res) {
             stage.innerHTML = res.svg;
             var svg = stage.querySelector("svg");

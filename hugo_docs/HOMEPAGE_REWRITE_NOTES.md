@@ -244,6 +244,31 @@ bucket assignments and old-feature verdicts).
 If a future session needs them regenerated, the method was: read-only subagents, each
 briefed to cite `file:line` and to report "could not verify" rather than infer.
 
+### Gotcha: mermaid must not render before the webfonts load
+
+Mermaid sizes every node by measuring its label. If it measures against the fallback font and
+the real face (IBM Plex Mono) arrives afterwards, the text grows past the box it was given and
+**the second line of every multi-line node is clipped**. It looks like a text-length problem
+and is not — shortening labels only hides it.
+
+The fix, in `static/diagram.html`, is to await `document.fonts.ready` plus an explicit
+`document.fonts.load()` for each weight before calling `mermaid.render()`. Any new page that
+renders mermaid must do the same. The overview page is fine because its popup diagrams render
+on click, by which time the fonts are in.
+
+Symptom to watch for: nodes whose label box is taller than the shape around it. A headless
+check that catches it is to compare `label.getBoundingClientRect().height` against
+`shape.getBoundingClientRect().height` — `scrollHeight` will *not* catch it, because the
+foreignObject does not clip.
+
+### Gotcha: cycles invert the whole dagre layout
+
+Two feedback edges (`SSE → client` and the cache-promotion loop) made dagre rank the queue
+first and put the entry points at the bottom, so the diagram read upwards. Removing the
+`SSE → client` edge — the delivery direction is obvious without it — restored a clean
+top-to-bottom flow and cut the canvas from 6971x2930 to 1682x2240. Keep at most one feedback
+edge per diagram.
+
 ### Gotcha: Hugo eats `{{ ... }}`
 
 `layouts/page/custom-home.html` is a **Hugo template**, so any literal `{{ ... }}` in prose is

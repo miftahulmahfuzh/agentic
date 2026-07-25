@@ -130,176 +130,96 @@
         <div class="diagram-source" data-diagram-id="architecture"
              data-diagram-title="System Architecture" hidden>
           <script type="text/plain" class="diagram-code">
-  graph TD
-    subgraph CLIENT ["Client"]
-        FE["Browser / mobile client"]
+graph TD
+    FE["Browser / mobile client"]
+
+    subgraph EDGE ["HTTP edge"]
+        SUB["POST /chat/submit<br/>POST /v2/chat/submit"]
+        ADM["Admission<br/>auth · ownership · usage limit<br/>image validation · de-duplication"]
     end
 
-    subgraph HTTPL ["HTTP layer — Gin"]
-        RT["Router<br/>AccessLog · CORS · RequireAuth"]
-        SUB["POST /chat/submit<br/>POST /v2/chat/submit · multipart"]
-        STR["GET /chat/stream/:request_id · SSE"]
-        RES["GET /chat/resume/:request_id · SSE"]
-        CSSSE["GET /chat/cs_manager/answer/:request_id · SSE"]
-        STAT["GET /chat/status/:request_id"]
-        CAN["POST /chat/cancel/:request_id"]
+    subgraph MGR ["Chatbot Manager"]
+        KEY["Cache key<br/>questions + language + image fingerprint"]
+        DISP["Dispatch"]
     end
 
-    subgraph ADMIT ["Admission"]
-        AZ["authz.EnforceOwnership"]
-        IMGV["extractImageAttachments<br/>validate · sniff MIME · max 3"]
-        USG["usage.Tracker.CheckLimit"]
-        DEDUP["CheckRequestExistsAndCanReprocess"]
+    subgraph LANES ["Admission lanes"]
+        FL["Cache fast-lane<br/>3 dedicated workers, no semaphore"]
+        QUEUE["FIFO queue<br/>QUEUE_SIZE 100"]
+        POOL["Worker pool<br/>processingSemaphore 50"]
+        PROM["Cache promotion<br/>the only queue jump"]
     end
 
-    subgraph MGR ["Chatbot Manager — submit"]
-        INTR["resolveInterruption<br/>cancel or defer the in-flight turn"]
-        DEFERQ["deferredByConversation"]
-        CKEY["GenerateCacheKeyWithHistory<br/>question · language · image fingerprint"]
-        HOLD["activeRequests<br/>RequestStream + cancel func"]
-        TITLE["early title generation · detached"]
-        LOGQ["logQueue → asyncLogWorker"]
-        DISP["dispatchForProcessing"]
+    subgraph WORK ["Plan and execute"]
+        PREP["Preparer<br/>language · profile · cacheability"]
+        PLAN["Planner<br/>classify_and_plan, derives the agents"]
+        PIPE["Tool pipeline<br/>30 tools, single and map steps"]
     end
 
-    subgraph LANES ["Dispatch lanes"]
-        CCH["cacheRequestChan<br/>3 dedicated cache workers"]
-        FL["cache fast-lane<br/>Redis GET · replay stored answer"]
-        QM["queue.Manager<br/>strict FIFO · QUEUE_SIZE 100"]
-        NW["normalRequestWorker<br/>processingSemaphore · 50"]
-        PW["priorityRequestWorker<br/>promoted requests only"]
-        REW["ReevaluationWorker<br/>PromoteForCache"]
+    subgraph AGENTS ["Agents"]
+        TAI["tuntun_ai<br/>streamed synthesis"]
+        CSM["customer_service_manager<br/>one-shot follow-up"]
     end
 
-    subgraph PROC ["Processing pipeline"]
-        PREP["Preparer<br/>language · plan-only · ShouldCache"]
-        PLAN["planner.PlanOnly<br/>pipeline + selected agents"]
-        STRM["Streamer.Stream<br/>llmStreamSemaphore · 5"]
-        PIPE["pipeline executor<br/>each tool runs once · parallel steps"]
-        DISPA["dispatchAgents"]
-        TAI["tuntun_ai<br/>streaming synthesis"]
-        CSM["customer_service_manager<br/>one-shot answer"]
+    subgraph DELIVER ["Delivery"]
+        STRM["Streamer<br/>llmStreamSemaphore 5"]
+        BOWL["Bowl<br/>one per request, one open pipe<br/>replays after a dropped connection"]
+        SSE["SSE endpoints<br/>/chat/stream · /chat/resume<br/>/chat/cs_manager/answer"]
     end
 
-    subgraph OUT ["Stream ownership"]
-        CLICH["clientChan<br/>STREAM_TOKEN_BUFFER 100"]
-        BW["bowl-writer goroutine<br/>USE_BOWL"]
-        BOWL["ResponseBowl<br/>one per request_id<br/>accumulates every event<br/>exactly one active pipe"]
-        CSREG["csManagerTasks registry"]
+    subgraph EXT ["Backing services"]
+        REDIS[("Redis")]
+        ARANGO[("ArangoDB")]
+        LLM["LLM providers"]
+        BEAPI["Market-data APIs"]
+        DISK[("File blob store")]
     end
 
-    subgraph MM ["Multimodal"]
-        IMGCTX["request context<br/>image attachments"]
-        MMGATE["core.ImageAttachmentsFromContext<br/>single read gate"]
-        DL["GET /files/image/:image_file_id"]
-    end
+    %% request path
+    FE --> SUB
+    SUB --> ADM
+    ADM --> KEY
+    KEY --> DISP
+    ADM -.->|"image bytes"| DISK
 
-    subgraph OPS ["Lifecycle"]
-        CANH["cancellation.Handler"]
-        JAN["janitors<br/>requests 2m · bowls 5m"]
-    end
+    %% lane selection
+    DISP -->|"text turn"| FL
+    DISP -->|"image turn, never cached"| QUEUE
+    FL -->|"hit"| BOWL
+    FL -->|"miss"| QUEUE
+    QUEUE --> POOL
+    POOL --> PREP
 
-    subgraph EXTDEPS ["External dependencies"]
-        REDIS[("Redis<br/>responses · suggestions · credentials")]
-        ARANGO[("ArangoDB<br/>chat_logs · sessions · file_assets")]
-        LLM["LLM providers<br/>Gemini · DeepSeek"]
-        BEAPI["Market-data APIs · web search"]
-        DISK["Blob store"]
-    end
-
-    %% ---------- Ingress ----------
-    FE --> RT
-    RT --> SUB
-    RT --> STR
-    RT --> RES
-    RT --> CSSSE
-    RT --> STAT
-    RT --> CAN
-    RT --> DL
-
-    SUB --> AZ
-    AZ --> IMGV
-    IMGV --> USG
-    USG --> DEDUP
-    DEDUP --> INTR
-
-    %% ---------- Multimodal ----------
-    IMGV -.->|"PersistAsync"| DISK
-    IMGV -.->|"file_assets metadata"| ARANGO
-    IMGV --> IMGCTX
-    IMGCTX --> MMGATE
-    DL --> DISK
-
-    %% ---------- Manager ----------
-    INTR --> CKEY
-    INTR -.->|"stage 2 or 3"| DEFERQ
-    DEFERQ -.->|"on finalize"| DISP
-    CKEY --> HOLD
-    HOLD --> DISP
-    HOLD --> LOGQ
-    HOLD --> TITLE
-    LOGQ --> ARANGO
-    TITLE --> LLM
-
-    %% ---------- Lanes ----------
-    DISP -->|"text turn"| CCH
-    DISP -->|"image turn or lane busy"| QM
-    CCH --> FL
-    FL --> REDIS
-    FL -->|"hit"| CLICH
-    FL -->|"miss"| NW
-    QM --> NW
-    QM -->|"cache promotion — the only queue jump"| PW
-    REW --> QM
-    NW --> PREP
-    PW -->|"genuine miss"| PREP
-
-    %% ---------- Pipeline ----------
+    %% work
     PREP --> PLAN
+    PLAN --> PIPE
+    PIPE --> TAI
+    PIPE --> CSM
+
+    %% delivery
+    TAI --> STRM
+    STRM --> BOWL
+    BOWL --> SSE
+    CSM --> SSE
+
+    %% the one feedback loop
+    STRM -->|"write + notify"| REDIS
+    REDIS --> PROM
+    PROM -->|"served from cache"| QUEUE
+
+    %% backing services
+    FL --> REDIS
     PLAN --> LLM
-    PREP --> STRM
-    STRM --> PIPE
-    PIPE --> BEAPI
-    PIPE --> DISPA
-    DISPA --> TAI
-    DISPA --> CSM
     TAI --> LLM
     CSM --> LLM
-    CSM --> CSREG
-    CSREG --> CSSSE
-    MMGATE -.->|"image parts"| PLAN
-    MMGATE -.->|"inline data"| PIPE
-    MMGATE -.->|"image parts"| DISPA
-
-    %% ---------- Cache write-back ----------
-    STRM -->|"cache write"| REDIS
-    STRM -->|"NotifyCachePopulated"| REW
+    PIPE --> BEAPI
+    PREP --> ARANGO
     STRM --> ARANGO
 
-    %% ---------- Stream ownership ----------
-    TAI --> CLICH
-    CLICH --> BW
-    BW --> BOWL
-    BOWL -->|"stream pipe"| STR
-    BOWL -->|"resume pipe + catch-up token"| RES
-    CLICH -.->|"USE_BOWL=false only"| STR
-    STR -.->|"disconnect purges the slot, the bowl keeps filling"| BOWL
-
-    %% ---------- Status, cancel, cleanup ----------
-    STAT --> HOLD
-    STAT -.->|"progress mirror"| BOWL
-    CAN --> CANH
-    CANH --> HOLD
-    CANH -->|"persist partial output"| ARANGO
-    CANH -->|"cancel and delete the bowl"| BOWL
-    JAN --> HOLD
-    JAN --> BOWL
-
-    %% Styling — 3-role palette
     classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
     classDef ext fill:#FBFBF9,stroke:#CFCDC4
 
-    class CCH,FL,BW,BOWL,DISPA hot
+    class FL,PROM,BOWL,TAI,CSM hot
     class REDIS,ARANGO,LLM,BEAPI,DISK ext
           </script>
         </div>
@@ -330,28 +250,28 @@
              data-diagram-title="Multi-Agent Routing" hidden>
           <script type="text/plain" class="diagram-code">
 graph TD
-    U["User turn<br/>text and/or up to 3 image parts"]
-    IMGCTX["requestcontext.WithImageAttachments<br/>single injection point"]
-    GATE["core.ImageAttachmentsFromContext<br/>canonical flag + context gate"]
+    U["User turn<br/>text and up to 3 images"]
+    IMGCTX["Image attachments<br/>one injection point"]
+    GATE["One read gate<br/>flag + context"]
 
-    subgraph PlanCall ["One LLM Call — classify_and_plan"]
-        CP["classify_and_plan<br/>multimodal-capable<br/>images ride on the human message"]
-        NOD["Prompt states the model does NOT<br/>decide which agents respond"]
-        MODE["mode<br/>simple / pipeline / fixed_answer"]
+    subgraph PlanCall ["One LLM call"]
+        CP["classify_and_plan<br/>multimodal"]
+        NOD["Prompt: the model does<br/>not pick the agents"]
+        MODE["mode<br/>simple · pipeline · fixed"]
         B1["need_professional_analysis"]
         B2["need_personalization"]
         B3["marketing_opportunity"]
     end
 
     subgraph Srv ["Server-Owned Routing"]
-        ENF["EnforceRoutingRules<br/>flag gate, fixed_answer, missing-block default,<br/>marketing guard, reply_to override"]
+        ENF["EnforceRoutingRules<br/>six ordered guards"]
         DER["DeriveSelectedAgents<br/>truth table"]
-        SEL["selected_agents<br/>re-derived unconditionally"]
+        SEL["selected_agents<br/>re-derived server-side"]
     end
 
-    PROF["User Profile block<br/>lifecycle tag + marketing target"]
+    PROF["User profile<br/>lifecycle + target"]
     FA["fixed_answer<br/>no agent, no tools"]
-    TP["Tool pipeline executes ONCE"]
+    TP["Tool pipeline<br/>runs once"]
     TR["One shared ToolResult"]
 
     subgraph Agents ["Response Agents"]
@@ -359,10 +279,10 @@ graph TD
         CS["customer_service_manager<br/>one-shot follow-up"]
     end
 
-    USTM["User Short-Term Memory<br/>reader-view projection"]
-    PERS["Persona prompt file<br/>Luna / Kevin / Mia"]
-    S1["GET /chat/stream/:request_id<br/>token stream"]
-    S2["GET /chat/cs_manager/answer/:request_id<br/>one-shot SSE"]
+    USTM["Short-term memory<br/>reader view"]
+    PERS["Persona<br/>Luna · Kevin · Mia"]
+    S1["/chat/stream<br/>token stream"]
+    S2["/chat/cs_manager/answer<br/>one-shot SSE"]
 
     U --> IMGCTX
     IMGCTX --> GATE
@@ -378,14 +298,14 @@ graph TD
     B2 --> ENF
     B3 --> ENF
     PROF --> CP
-    PROF -->|"empty marketing target forces false"| ENF
+    PROF -->|"no target, forced false"| ENF
     ENF --> DER
     DER --> SEL
 
     MODE -->|"fixed_answer"| FA
     MODE -->|"simple / pipeline"| TP
     TP --> TR
-    SEL -->|"gates who consumes it"| TR
+    SEL -->|"gates the consumer"| TR
 
     TR --> TA
     TR --> CS
@@ -395,7 +315,7 @@ graph TD
     PERS --> CS
 
     TA --> S1
-    TA -->|"finished output injected as the AI Answer seam marker"| CS
+    TA -->|"injected at the seam marker"| CS
     CS --> S2
 
     classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
