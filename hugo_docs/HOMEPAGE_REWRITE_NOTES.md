@@ -65,6 +65,63 @@ mention it, say so explicitly.
 
 ---
 
+## 2b. Syncing `content/docs/` from the Go repo
+
+Each Hugo docs section mirrors a directory in `~/agentic_golang/docs/`. The Go repo is the
+source of truth for body text; Hugo owns front matter and `_index.md`.
+
+A sync script lives in the session scratchpad (`scratchpad/sync_docs.py`). What it does:
+
+- takes the Go repo body verbatim, drops the leading `# H1` (the theme renders the
+  front-matter title, so keeping it double-headed the page)
+- **preserves** an existing page's `title` and `date` so sidebar labels and ordering do not
+  churn, and stamps `lastmod`
+- new pages get a concise title from a `TITLES` map, else the H1, plus today's date
+- rewrites relative `*.md` links to Hugo page URLs
+  (`../architectures/foo.md` → `../../architectures/foo/`)
+- never touches `_index.md`
+- reports target files with no source counterpart rather than deleting them
+
+Usage: `python3 sync_docs.py <section>` to preview, `--apply` to write,
+`--only <file.md>` for a single page.
+
+### Status
+
+| Section | State |
+|---|---|
+| `caller_insights` | **synced** 2026-07-25 — 3 updated, `go_closures.md` added |
+| `architectures` | partial — only `custom_pipeline_vs_frameworks.md` (pulled in as a link target) |
+| `frequently_asked` | not synced — source has 2 files, Hugo has 4 different ones; expect a full swap |
+| `general_go` | not synced — `generics.md` to add |
+| `python_stuff` | not synced — `python_workers.md` to add |
+| `manager_insights` | **deleted** |
+| `narratives` | **deleted** |
+
+### Left for the architectures pass
+
+`content/docs/architectures/stream_broadcaster.md` has **no source counterpart** — the Go repo
+deleted it in the 2026-07-09 sweep — and it documents the removed broadcast subsystem. It
+should go when that section is synced. It is the last page on the site still describing the
+retired architecture.
+
+### Gotcha: mermaid inside theme-rendered pages
+
+Docs pages use the Stack theme, which does not load mermaid, so ```mermaid fences rendered as
+syntax-highlighted source. `layouts/partials/head/custom.html` now converts them and renders
+them. Three separate defects had to be fixed to get there, all worth knowing:
+
+1. The partial is injected into `<head>`, so it must wait for `DOMContentLoaded` before
+   looking for code blocks.
+2. Mermaid emits `width="100%"` with no height, which **collapses to zero** inside the
+   theme's article container — the diagram was rendering but invisible. The partial now pins
+   width/height from the `viewBox` and scales down with CSS.
+3. `htmlLabels` must be **off**. With HTML labels, mermaid measures the text in a detached
+   container and then the theme's article typography cascades into the `<foreignObject>`,
+   growing the text past its box. `htmlLabels: false` renders labels as SVG `<text>`
+   measured with `getComputedTextLength`, which no page CSS can perturb.
+
+The partial also redraws on the theme's light/dark toggle (`data-scheme` on `<html>`).
+
 ## 3. Docs pages that still contain dead architecture
 
 These live under `content/docs/` and were **not** touched. Grep hits for

@@ -1,0 +1,195 @@
+<!--
+  Render ```mermaid fenced blocks on theme-rendered pages.
+
+  Goldmark emits them as <pre><code class="language-mermaid">, i.e. syntax-
+  highlighted source rather than a diagram. This swaps each one for a
+  <div class="mermaid"> and runs mermaid over it.
+
+  Mermaid is fetched only on pages that actually contain a diagram, and only
+  after the webfonts have loaded: it sizes every node by measuring its label,
+  so rendering against a fallback font makes the text outgrow its box and clips
+  the second line of every multi-line node.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  .mermaid { margin: 1.75rem 0; overflow-x: auto; }
+  .mermaid > svg { max-width: 100%; height: auto; }
+</style>
+<script>
+  (function () {
+    "use strict";
+
+    var MONO = "'IBM Plex Mono', ui-monospace, monospace";
+
+    var MERMAID_SRC =
+      "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js";
+
+    function collect() {
+      return Array.prototype.slice.call(
+        document.querySelectorAll("code.language-mermaid")
+      );
+    }
+
+    function themeVars(dark) {
+      return dark
+        ? {
+            fontFamily: MONO,
+            primaryColor: "#1B1E23",
+            primaryTextColor: "#E8E6E1",
+            primaryBorderColor: "#4A4F57",
+            lineColor: "#8A8F98",
+            secondaryColor: "#22312C",
+            tertiaryColor: "#16181C",
+            clusterBkg: "#16181C",
+            clusterBorder: "#33383F",
+          }
+        : {
+            fontFamily: MONO,
+            primaryColor: "#FFFFFF",
+            primaryTextColor: "#14161A",
+            primaryBorderColor: "#CFCDC4",
+            lineColor: "#8A8F98",
+            secondaryColor: "#ECF2EF",
+            tertiaryColor: "#FBFBF9",
+            clusterBkg: "#FBFBF9",
+            clusterBorder: "#E4E2DB",
+          };
+    }
+
+    function isDark() {
+      return document.documentElement.dataset.scheme === "dark";
+    }
+
+    // This partial is injected into <head>, so the article does not exist yet.
+    function start() {
+      var blocks = collect();
+      if (blocks.length) run(blocks);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", start);
+    } else {
+      start();
+    }
+
+    function run(blocks) {
+
+    // Keep the source so the diagram can be redrawn when the theme flips.
+    var sources = blocks.map(function (code) {
+      var host = document.createElement("div");
+      host.className = "mermaid";
+      host.dataset.src = code.textContent;
+      var replace = code.closest(".highlight") || code.closest("pre") || code;
+      replace.parentNode.replaceChild(host, replace);
+      return host;
+    });
+
+    function draw(mermaid) {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: "base",
+        // htmlLabels:false renders labels as SVG <text>, measured with
+        // getComputedTextLength. HTML labels live in a <foreignObject> that
+        // mermaid measures in a detached container, then inherits the theme's
+        // article typography once inserted - the text grows and gets clipped.
+        flowchart: { htmlLabels: false, useMaxWidth: true },
+        htmlLabels: false,
+        themeVariables: themeVars(isDark()),
+      });
+      sources.forEach(function (host, i) {
+        host.removeAttribute("data-processed");
+        mermaid
+          .render("mmd-" + i + "-" + Date.now().toString(36), host.dataset.src)
+          .then(function (res) {
+            host.innerHTML = res.svg;
+            // mermaid emits width="100%" with no height, which collapses to
+            // zero inside the theme's article container. Pin the intrinsic
+            // size from the viewBox and let CSS scale it down responsively.
+            var svg = host.querySelector("svg");
+            if (!svg) return;
+            var vb = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
+            if (vb.length === 4 && vb[2] && vb[3]) {
+              svg.removeAttribute("style");
+              svg.setAttribute("width", vb[2]);
+              svg.setAttribute("height", vb[3]);
+              svg.style.maxWidth = "100%";
+              svg.style.height = "auto";
+              svg.style.display = "block";
+              svg.style.margin = "0 auto";
+            }
+          })
+          .catch(function (err) {
+            host.innerHTML =
+              '<pre style="white-space:pre-wrap">' +
+              String((err && err.message) || err) +
+              "</pre>";
+          });
+      });
+    }
+
+    function load() {
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement("script");
+        s.src = MERMAID_SRC;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    // Order matters. fonts.load() before the stylesheet has registered the
+    // @font-face matches nothing and resolves instantly, so mermaid would
+    // measure against a fallback and the real face would arrive afterwards -
+    // which is exactly what clips the labels. Wait for the stylesheet first
+    // (fonts.ready), then force the face in, then settle again.
+    var FACE = "16px 'IBM Plex Mono'";
+
+    function ensureFont() {
+      if (!document.fonts) return Promise.resolve();
+      return document.fonts.ready
+        .then(function () {
+          return Promise.all([
+            document.fonts.load("400 " + FACE),
+            document.fonts.load("500 " + FACE),
+          ]);
+        })
+        .then(function () {
+          return document.fonts.ready;
+        })
+        .then(function () {
+          // If the face still is not there, fall back to a system stack so
+          // measurement and painting at least agree with each other.
+          if (!document.fonts.check("400 " + FACE)) {
+            MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+          }
+        });
+    }
+
+    var fonts = ensureFont();
+
+    fonts
+      .catch(function () {})
+      .then(load)
+      .then(function () {
+        draw(window.mermaid);
+        // Redraw on the theme toggle so the diagram never sits at the wrong
+        // contrast against the page.
+        var last = isDark();
+        new MutationObserver(function () {
+          if (isDark() !== last) {
+            last = isDark();
+            draw(window.mermaid);
+          }
+        }).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["data-scheme"],
+        });
+      })
+      .catch(function () {
+        /* CDN unreachable: the source stays visible as plain text */
+      });
+    }
+  })();
+</script>

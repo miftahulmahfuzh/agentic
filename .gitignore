@@ -1,4 +1,6 @@
-docs/
+# Anchored: an unanchored `docs/` also matched hugo_docs/content/docs/, which
+# silently dropped every newly added documentation page from commits.
+/docs/
 
 # Hugo build output — regenerated fresh by .github/workflows/deploy.yml on
 # every push to main, so the committed copy never affects the live site.
