@@ -6,6 +6,14 @@ theme = "hugo-theme-stack"
 
 [params]
     mainSections = ["docs"]
+
+    # Feeds <meta name="description"> and og:description on every page,
+    # including the link-preview card scrapers read. The theme falls back to
+    # params.sidebar.subtitle ("Documentation") when this is unset, which is
+    # what LinkedIn used to quote. Keep it under ~200 chars: LinkedIn and
+    # Slack both truncate past that.
+    description = "A multi-agent, multimodal, high-concurrency agentic chatbot engine in Go — plan-and-execute over 30 tools, a cache fast-lane, resumable SSE streams and circuit breakers."
+
     featuredImageField = "image"
     rssFullContent = true
     favicon = "favicon.png"

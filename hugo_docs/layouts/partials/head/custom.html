@@ -1,3 +1,27 @@
+{{- /*
+  Fallback link-preview image for the theme-rendered documentation pages.
+
+  head/opengraph/provider emits og:image only when the page itself declares a
+  featured image, so a docs page would otherwise be scraped with no artwork at
+  all. Emit the site card only when the page has none of its own — two
+  og:image tags leave the scraper to pick, and it will not pick this one.
+
+  The theme's own params.defaultImage hook is not used: it resolves through
+  relURL and then absURL, which on a baseURL carrying a path ("/agentic/")
+  yields /agentic/agentic/og-image.png.
+*/ -}}
+{{- $image := partialCached "helper/image" (dict "Context" . "Type" "opengraph") .RelPermalink "opengraph" -}}
+{{- if not $image.exists -}}
+{{- $ogImage := "og-image.png" | absURL }}
+<meta property="og:image" content="{{ $ogImage }}">
+<meta property="og:image:secure_url" content="{{ $ogImage }}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ $ogImage }}">
+{{- end }}
+
 <!--
   Render ```mermaid fenced blocks on theme-rendered pages.
 

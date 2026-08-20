@@ -5,3 +5,6 @@
 # Hugo build output — regenerated fresh by .github/workflows/deploy.yml on
 # every push to main, so the committed copy never affects the live site.
 hugo_docs/public/
+
+# Webfonts cached by hugo_docs/scripts/gen_og_image.py, fetched on demand.
+hugo_docs/scripts/.fontcache/
