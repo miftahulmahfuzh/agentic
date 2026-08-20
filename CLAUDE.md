@@ -23,13 +23,23 @@ When you need the canonical, up-to-date description of *what the system is and h
 
 Markdown content rendered into the documentation site. Organized into sections (each has an `_index.md` with the section title/blurb):
 
-- `architectures/` — architectures the chatbot uses (circuit breaker, data-driven tools, design patterns, event-driven janitor, frozen concurrency, jsonless, persistent queue, prestream deadlock, stream broadcaster).
-- `caller_insights/` — discussions of the caller tools (concurrent caller, RAG stream, tools).
-- `general_go/` — Go patterns used in the chatbot (busy-wait loops, channels/`go_arrow`, goroutines, request locking, event-driven design).
-- `manager_insights/` — architectural docs on the Manager module (adapter pattern, broadcast pattern, concurrency vs parallelism, decoupling, race conditions, observability/`sauron`).
-- `narratives/` — feature stories told as narratives.
+- `architectures/` — architectures the chatbot uses (circuit breaker, custom pipeline vs frameworks, data-driven tools, design patterns, event-driven janitor, frozen concurrency, jsonless, persistent queue, prestream deadlock, proactive cancellation, v2.3.0 API versioning / dual agent).
+- `caller_insights/` — discussions of the caller tools (concurrent caller, Go closures, RAG stream, tools).
+- `general_go/` — Go patterns used in the chatbot (busy-wait loops, generics, channels/`go_arrow`, goroutines, request locking, event-driven design).
 - `python_stuff/` — Python-paradigm discussions (Python vs Go, Python workers).
-- `frequently_asked/` — FAQ entries (design, optimization, RAG, semaphore Q&A).
+- `frequently_asked/` — FAQ entries (RAG streaming, tool streaming adapter).
+
+> [!IMPORTANT]
+> **`content/docs/` is generated, not authored here.** Every page is a rendering
+> of the matching file in the Go repo's `docs/<section>/`, which is the single
+> source of truth. Do not hand-edit these pages and do not reword them — fix the
+> prose in `agentic_golang/docs/` and run `/update-hugo-docs <section>
+> <anchor_absolute_dir>` to pull it down. Frontmatter dates come from the
+> anchor's git log, so they are not yours to set either. Only `_index.md` and a
+> page's `title` belong to this repo.
+
+The `manager_insights/` and `narratives/` sections were retired: the Go repo
+deleted their source docs as describing the removed leader/follower architecture.
 
 ## Working with the Hugo site
 
