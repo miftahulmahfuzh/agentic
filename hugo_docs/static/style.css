@@ -207,14 +207,35 @@ hr {
 /* --- Section pattern ------------------------------------------------------ */
 
 section {
-  padding-top: 64px;
+  /* Measured from the previous section's closing hairline (a rail, card or
+     disclosure border) to the next eyebrow. 64px read as a gap rather than a
+     seam; 40px still separates the two without stranding the label. */
+  padding-top: 40px;
   scroll-margin-top: 72px;
+  /* Contain the last child's bottom margin. #architecture ends in a
+     .diagram-open button (margin-bottom: 16px) followed only by the hidden
+     .diagram-source, so that margin collapsed out through the section and
+     pushed the next eyebrow 16px further down than every other boundary.
+     flow-root keeps it inside, so one padding value governs every seam. */
+  display: flow-root;
+}
+
+/* A trailing disclosure adds its own 16px bottom margin on top of the
+   padding above, so sections ending in one sat 16px further apart than the
+   rest. Drop it and every section boundary measures the same. */
+section > .disclosure:last-child {
+  margin-bottom: 0;
 }
 
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  /* The eyebrows are <p> children of <section>, so `section > p` caps them at
+     70ch. At mono 12px that is 505.7px, and the hero's stack line measures
+     506px — clamped by a third of a pixel and wrapped "REDIS" onto its own
+     row. These are single-line labels; the measure limit is for prose. */
+  max-width: none;
   font-family: var(--font-mono);
   font-weight: 500;
   font-size: 0.75rem;
