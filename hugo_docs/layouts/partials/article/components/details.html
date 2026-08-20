@@ -1,0 +1,73 @@
+<div class="article-details">
+    {{ if .Params.categories }}
+    <header class="article-category">
+        {{ range (.GetTerms "categories") }}
+            <a href="{{ .RelPermalink }}" {{ with .Params.style }}style="background-color: {{ .background }}; color: {{ .color }};"{{ end }}>
+                {{ .LinkTitle }}
+            </a>
+        {{ end }}
+    </header>
+    {{ end }}
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="{{ .RelPermalink }}">
+                {{- .Title -}}
+            </a>
+        </h2>
+    
+        {{ with .Params.description }}
+        <h3 class="article-subtitle">
+            {{ . }}
+        </h3>
+        {{ end }}
+    </div>
+
+    {{/*
+        Override of the theme partial: lead with the date the page was last
+        revised, not the date it was created. These pages are synced from the
+        Go repo and several were rewritten wholesale long after they were first
+        written, so the creation date advertises prose that no longer exists.
+        A page still identical to its first commit has Lastmod == Date and
+        shows a plain date with no "Updated" label. Creation moves to the
+        article footer.
+    */}}
+    {{ $showReadingTime := .Params.readingTime | default (.Site.Params.article.readingTime) }}
+    {{ $revised := ne .Lastmod .Date }}
+    {{ $stamp := cond $revised .Lastmod .Date }}
+    {{ $showDate := not $stamp.IsZero }}
+    {{ $showFooter := or $showDate $showReadingTime }}
+    {{ if $showFooter }}
+    <footer class="article-time">
+        {{ if $showDate }}
+            <div>
+                {{ partial "helper/icon" "date" }}
+                <time class="article-time--published">
+                    {{- if $revised }}Updated {{ end }}
+                    {{- $stamp | time.Format (or .Site.Params.dateFormat.published "Jan 02, 2006") -}}
+                </time>
+            </div>
+        {{ end }}
+
+        {{ if $showReadingTime }}
+            <div>
+                {{ partial "helper/icon" "clock" }}
+                <time class="article-time--reading">
+                    {{ T "article.readingTime" .ReadingTime }}
+                </time>
+            </div>
+        {{ end }}
+    </footer>
+    {{ end }}
+
+    {{ if .IsTranslated }}
+        <footer class="article-translations">
+            {{ partial "helper/icon" "language" }}
+            <div>
+                {{ range .Translations }}
+                    <a href="{{ .Permalink }}" class="link">{{ .Language.LanguageName }}</a>
+                {{ end }}
+            </div>
+        </footer>
+    {{ end }}
+</div>

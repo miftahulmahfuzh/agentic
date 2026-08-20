@@ -1,0 +1,27 @@
+<footer class="article-footer">
+    {{ partial "article/components/tags" . }}
+
+    {{ if and (.Site.Params.article.license.enabled) (not (eq .Params.license false)) }}
+    <section class="article-copyright">
+        {{ partial "helper/icon" "copyright" }}
+        <span>{{ default .Site.Params.article.license.default .Params.license | markdownify }}</span>
+    </section>
+    {{ end }}
+
+    {{/*
+        Override of the theme partial: the header now carries the revised date
+        (see article/components/details.html), so this slot carries the
+        creation date instead of repeating it. Uses the `published` format so
+        it reads "Aug 14, 2025" rather than the lastUpdated format's
+        "Aug 14, 2025 00:00 UTC" — these dates come from git commits and have
+        no meaningful time of day.
+    */}}
+    {{- if ne .Lastmod .Date -}}
+    <section class="article-lastmod">
+        {{ partial "helper/icon" "clock" }}
+        <span>
+            Created {{ .Date | time.Format ( or .Site.Params.dateFormat.published "Jan 02, 2006" ) }}
+        </span>
+    </section>
+    {{- end -}}
+</footer>
