@@ -1,6 +1,7 @@
 ---
 title: "Goroutines"
-date: 2025-08-02
+date: 2025-07-09
+lastmod: 2026-07-09
 draft: false
 ---
 
@@ -25,66 +26,313 @@ They are **NOT** the same as Python workers. They are a much more fundamental, e
 
 ---
 
-# Goroutines in the Assembly Line Architecture (`manager.go`)
+# Goroutines in This Codebase (`chatbot.Manager`)
 
-Goroutines are the heart of Go's concurrency model. They are extremely lightweight threads managed by the Go runtime, not the OS. This allows you to run hundreds of thousands of them concurrently, making them perfect for I/O-bound and parallel tasks.
+The chatbot `Manager` is where all the long-lived goroutines are spawned. They are created once, in `NewManager()` (`chatbot/manager_core.go:100-338`), and run for the lifetime of the process (until `Shutdown()` at `chatbot/manager_core.go:342` tears them down).
 
-Your `manager.go` has evolved from a simple worker pool into a more sophisticated, two-stage **assembly line pipeline**. This design explicitly recognizes that request processing has two phases with different resource requirements: a fast, cheap "preparation" phase and a slow, expensive "streaming" phase. The architecture uses distinct goroutine pools for each, preventing the slow phase from blocking the fast one. This maximizes throughput and resource utilization.
+Think of the Manager as the "office manager" from the analogy: it hires several distinct **pools** of interns, each pool specialised for a different kind of work, and it hands each incoming request to the right pool.
 
-Let's break down the roles of the goroutines in this superior architecture.
+The pools and background goroutines that actually exist today are:
 
-### 1. The Singleton "Manager" Goroutines (The Foremen)
+1.  **Cache worker pool** — serve cache hits instantly, bypassing the processing semaphore.
+2.  **Normal request worker pool** — FIFO processing of full requests, bounded by a single `processingSemaphore`.
+3.  **Priority request worker pool** — a fast-lane for cache-promoted requests.
+4.  **Cache re-evaluation worker** — exactly one; promotes queued requests when their cache key gets populated.
+5.  **Janitor** — periodic cleanup of timed-out / stale requests.
+6.  **Async log writer** — non-blocking database log writes.
+7.  **Bowl system** — replays/fans-out streamed events to attached pipes (and enables resume).
 
-*   **Where they are started:** In `Init()`, with `go prepareWorkerManager(ctx)` and `go streamWorkerManager(ctx)`.
-*   **How many:** Exactly **two** manager goroutines for the entire application lifetime.
-    1.  `prepareWorkerManager`: The "Prep Foreman."
-    2.  `streamWorkerManager`: The "Baking Foreman."
-*   **Purpose:** These are the master coordinators for each stage of the assembly line. They are simple, non-blocking loops.
-    *   The **Prep Foreman**'s only job is to listen on the initial `requestQueue`. When a request arrives, it acquires a "prep station" slot from `prepareSemaphore` and immediately spawns a "Preparation Worker" goroutine to handle that task.
-    *   The **Streaming Foreman**'s only job is to listen on the `preparedQueue`. When a "prepared" request arrives, it acquires an expensive "oven" slot from `llmStreamSemaphore` and immediately spawns a "Streaming Worker" goroutine.
+On top of these long-lived goroutines, individual requests spawn short-lived goroutines while they are processed (LLM streaming, parallel language detection, parallel tool execution). Those are covered at the end.
 
-By delegating the actual work, these foremen remain free to manage the flow of tasks into their respective stages without ever getting blocked.
+Everything the Manager owns is declared on the struct in `chatbot/manager_core.go:42-97`.
 
-### 2. The "Preparation Worker" Goroutine Pool (The Apprentices)
+---
 
-*   **Where it's started:** Inside `prepareWorkerManager`.
-*   **How many:** A pool of up to `config.AppSettings.MaxConcurrentRequests`.
-*   **Purpose:** This is the "first stage" worker, the cook's apprentice. Its job is to perform all the fast, non-streaming preparation for a single request. This is a well-defined, bounded set of tasks:
-    1.  Transition the request's state in the central `activeRequests` map from `Queued` to `Processing`.
-    2.  Fetch chat history from the database.
-    3.  Check Redis for a cached response.
-    4.  Execute the first LLM call for tool selection (`toolcore.ProcessTools`).
-    5.  Assemble the final prompt.
-*   **Key Behavior & Handoff:** Once preparation is complete, its job is done. It packages all its work into a `PreparedRequestData` struct and places it onto the `preparedQueue`. Then, crucially, **it immediately releases its `prepareSemaphore` slot and exits**. It does **not** wait for the streaming to start. This frees up the "prep station" for the next request.
+## 1. Cache Worker Pool (The Express Lane Team)
 
-### 3. The "Streaming Worker" Goroutine Pool (The Senior Cooks)
+**Spawned:** `NewManager()` — `chatbot/manager_core.go:294-302`
 
-*   **Where it's started:** Inside `streamWorkerManager`.
-*   **How many:** A smaller, more exclusive pool of up to `config.AppSettings.MaxConcurrentLLMStreams`.
-*   **Purpose:** This is the "second stage" worker, the senior cook with access to the expensive ovens. It picks up a fully prepared request from the `preparedQueue` and performs the final, blocking, resource-intensive work:
-    1.  Check for a cached response (a final check in case the request was for a common, already-cached item that didn't need tools).
-    2.  Call the main LLM with the final prompt (`llms.GenerateFromSinglePrompt`). This is the slow, expensive part.
-    3.  Stream the LLM's token responses back to the client via the `streamChan`.
-    4.  Perform final logging to the database.
-    5.  **Perform final cleanup.** This worker is responsible for removing the completed request from the central `activeRequests` and `cancellableStreams` maps.
-*   **Lifespan:** This goroutine lives for the duration of the LLM stream. It releases its `llmStreamSemaphore` slot only when it is completely finished.
+**Run loop:** `func (cw *cacheWorker) run(ctx context.Context)` — `chatbot/manager.go:432`
 
-### Visualizing the Handoff: A Request's Journey
+**How many:** `cfg.TotalCacheWorkers`
 
-This architecture creates a clean, efficient flow, communicating through channels and a shared map.
+**Lifespan:** Application lifetime.
 
-1.  **Client -> `SubmitRequest`:** A request is born. A `RequestStream` holder is created and placed in the central `activeRequests` map with `State: StateQueued`. A `SubmitRequestArgs` struct is put on the **`requestQueue` channel**.
+```go
+// chatbot/manager_core.go:294
+for i := range cacheWorkerCount {
+    worker := &cacheWorker{
+        id:       i,
+        manager:  m,
+        stopChan: make(chan struct{}),
+    }
+    m.cacheWorkerPool[i] = worker
+    go worker.run(ctx)
+}
+```
 
-2.  **`requestQueue` -> `prepareWorkerManager` (Prep Foreman):** The foreman sees the new task. It acquires a slot from `prepareSemaphore` and spins up a **Preparation Worker**.
+Each worker blocks on the buffered channel `cacheRequestChan chan types.SubmitRequestArgs` (`manager_core.go:80`). When a request arrives it:
 
-3.  **Preparation Worker:** This goroutine executes. It locks the `requestsLock`, finds its request in `activeRequests`, and updates its state to `StateProcessing`. It then does its work (history, tools, etc.). After creating the `PreparedRequestData` struct, its last act is to send this struct to the **`preparedQueue` channel**. The worker then exits, releasing its `prepareSemaphore` slot.
+1.  Skips it if it is the health-check probe or already cancelled.
+2.  Calls `cw.manager.cacheFastLane.HandleCachedRequest(...)` (`manager.go:465`).
+3.  On a **cache hit**, streams the cached answer directly.
+4.  On a **cache miss**, calls `cw.manager.routeToNormalProcessing(request)` (`manager.go:475`) to hand it off to the normal path.
 
-4.  **`preparedQueue` -> `streamWorkerManager` (Streaming Foreman):** This foreman sees the prepared data. It acquires a slot from `llmStreamSemaphore` and spins up a **Streaming Worker**.
+**Why this matters:** cache workers never touch the `processingSemaphore`. That is what keeps cache hits cheap and instant — they are a completely independent lane.
 
-5.  **Streaming Worker:** This goroutine executes. It finds its `RequestStream` holder in `activeRequests` to get the `Stream` and `Err` channels. It sends the real `streamChan` to the holder, waking up the client-facing `GetRequestResultStream` function. It then performs the LLM call and streams tokens. Finally, it cleans up the `activeRequests` and `cancellableStreams` maps and exits, releasing its `llmStreamSemaphore` slot.
+---
 
-6.  **`GetRequestResultStream` -> Client:** This function, called by the client, simply waits on the channels inside the `RequestStream` holder. It is a passive observer. When the Streaming Worker sends the `streamChan`, it receives it and begins forwarding tokens to the client.
+## 2. Normal Request Worker Pool (Full Processing, FIFO)
 
-This is a true pipeline. The fast "preparation" workers are never held hostage by the slow "streaming" workers, allowing the system to process a high volume of incoming requests efficiently, even when the final LLM calls are slow.
+**Spawned:** `NewManager()` — `chatbot/manager_core.go:306-309`
 
-**Related QA:** [Design Q&A 1](https://miftahulmahfuzh.github.io/agentic/docs/frequently_asked/design_qa_1)
+**Run loop:** `func (m *Manager) normalRequestWorker(ctx context.Context)` — `chatbot/manager.go:841`
+
+**How many:** `cfg.MaxConcurrentRequests`
+
+**Lifespan:** Application lifetime.
+
+```go
+// chatbot/manager_core.go:306
+normalWorkerCount := cfg.MaxConcurrentRequests
+for range normalWorkerCount {
+    go m.normalRequestWorker(ctx)
+}
+```
+
+Each worker waits on the queue's "normal" signal channel and then dequeues in FIFO order:
+
+```go
+// chatbot/manager.go:841
+func (m *Manager) normalRequestWorker(ctx context.Context) {
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        case <-m.queueManager.GetNormalChannel():
+            request, found := m.queueManager.DequeueRequestNormal()
+            if found {
+                if m.isRequestValid(request.RequestID) {
+                    m.processRequest(ctx, *request)
+                }
+            }
+        }
+    }
+}
+```
+
+`DequeueRequestNormal()` is an alias for `DequeueRequest()` (`chatbot/queue/manager.go:247` / `:285`), which pops the next FIFO request.
+
+### The single processing semaphore
+
+The key concurrency control lives in `processRequest` (`chatbot/manager.go:482`). Before doing any real work, the worker acquires **one** shared semaphore:
+
+```go
+// chatbot/manager.go:514
+m.processingSemaphore <- struct{}{}                 // acquire (blocks if full)
+request.SemaphoreWaitDurationSec = time.Since(semaphoreStart).Seconds()
+...
+m.executeTask(ctx, request, request.CacheKeyData)   // prepare, then hand off streaming
+<-m.processingSemaphore                              // release
+```
+
+`processingSemaphore` is a buffered channel of capacity `cfg.MaxConcurrentRequests` (`manager_core.go:127`). This is a classic Go semaphore: sending into the channel is "acquire" and it blocks once the buffer is full; receiving is "release".
+
+**What it actually bounds is the preparer stage, not the whole request.** The slot is released the moment `executeTask` returns — and `executeTask` returns as soon as it hands streaming off to a **detached goroutine** (`go m.runBoundedStream(...)`, `manager.go:642`), *not* when the stream finishes. So one slot covers *prepare + hand-off*, then is freed while the answer is still streaming on its own goroutine. Concretely, the preparer (`PrepareWithCacheKeyData`, `manager.go:609`) runs inline under the slot; streaming does not.
+
+This makes the two stages **decoupled**, each with its own gate:
+
+*   **Preparer stage** — bounded by `processingSemaphore` (cap `cfg.MaxConcurrentRequests`). At most this many requests are *preparing* at once.
+*   **Streaming stage** — bounded separately by `llmStreamSemaphore` (cap `cfg.MaxConcurrentLLMStreams`), acquired inside the detached goroutine (see §8). A slow stream ties up an LLM-stream slot but **not** a preparer slot.
+
+There is no separate leader/follower stage and no queue-jumping among normal requests — just these two independent gates.
+
+There are two other semaphore-like fields on the Manager:
+
+*   `llmStreamSemaphore chan struct{}` (cap `cfg.MaxConcurrentLLMStreams`, `manager_core.go:128`) — bounds concurrent **LLM** streaming. Every stream that calls the LLM is dispatched through `runBoundedStream` (`manager.go:780`), which acquires a slot before streaming and releases it when the stream ends. Both LLM dispatch sites go through it: the normal path (`executeTask`, `manager.go:642`) and the priority worker's regeneration fallback (`executeTaskImmediate`, `manager.go:767`). `HealthCheck()` also probes it (`manager.go:1471`) as a liveness check. It is a **separate gate from `processingSemaphore`**: `processingSemaphore` bounds the *preparer* stage (and is released once streaming is handed off to a detached goroutine — see §2 above), while `llmStreamSemaphore` bounds the concurrent LLM *streams* so a burst cannot stampede the provider into rate-limit errors. Cache fast-lane serving (`streamCachedResponse`) does **not** pass through it — replaying an answer from Redis does no LLM work and lives in its own resource slot.
+*   `priorityRateLimiter chan struct{}` (cap 100, `manager_core.go:130`) — used by the priority fast-lane below, not by normal processing.
+
+---
+
+## 3. Priority Request Worker Pool (Cache-Promotion Fast-Lane)
+
+**Spawned:** `NewManager()` — `chatbot/manager_core.go:316-319`
+
+**Run loop:** `func (m *Manager) priorityRequestWorker(ctx context.Context)` — `chatbot/manager.go:895`
+
+**How many:** `cfg.PriorityWorkerCount`
+
+**Lifespan:** Application lifetime.
+
+These workers listen on the queue's priority channel and handle requests that were **promoted** because a matching cache entry appeared while they were waiting (see the re-evaluation worker next). A promoted request is served **straight from the cache fast-lane** — the answer is already in Redis — and only regenerates via the LLM if the cache entry is somehow gone by the time the worker gets to it:
+
+```go
+// chatbot/manager.go:902
+case requestID := <-m.queueManager.GetPriorityChannel():
+    request := m.queueManager.DequeueRequestPromoted(requestID)
+    if request != nil && m.isRequestValid(request.RequestID) {
+        if m.cacheFastLane != nil &&
+            m.cacheFastLane.HandleCachedRequestViaReevaluation(ctx, *request, request.CacheKeyData.CacheKey, logger) {
+            // served from cache — no LLM
+        } else {
+            m.executeTaskImmediate(ctx, *request)   // cache miss → regenerate
+        }
+    }
+```
+
+`HandleCachedRequestViaReevaluation` streams the cached answer with no LLM call and no `processingSemaphore` — the common case for a promotion. The regeneration fallback, `executeTaskImmediate` (`chatbot/manager.go:648`), also deliberately does **not** take `processingSemaphore`; it uses the lightweight `priorityRateLimiter` (cap 100) to protect Redis from a stampede, and its LLM stream is bounded by `llmStreamSemaphore` (via `runBoundedStream`) like any other LLM stream:
+
+```go
+// chatbot/manager.go:652
+m.priorityRateLimiter <- struct{}{}
+defer func() { <-m.priorityRateLimiter }()
+```
+
+So a cache-promoted request skips the normal FIFO gate entirely — that is what "fast-lane" means here.
+
+> **Why this path matters:** `PromoteForCache` used to remove a promoted request from its index maps *before* `DequeueRequestPromoted` looked it up by ID, so the lookup returned `nil` and the request was silently dropped in production. The fix (`chatbot/queue/manager.go`) hands the request off atomically — send to the priority channel first, then remove and stash it in a `promotedItems` map that `DequeueRequestPromoted` pops from — so a promoted request is never lost or orphaned.
+
+---
+
+## 4. Cache Re-evaluation Worker (The Background Optimizer)
+
+**Spawned:** `NewManager()` — `chatbot/manager_core.go:285-286`
+
+**Run loop:** `func (crw *ReevaluationWorker) Run(...)` — `chatbot/cache/worker.go:47`
+
+**How many:** Exactly **1**.
+
+**Lifespan:** Application lifetime.
+
+```go
+// chatbot/manager_core.go:285
+m.cacheReevalWorker = cache.NewReevaluationWorker(m)
+go m.cacheReevalWorker.Run(ctx, m.cacheNotificationChan)
+```
+
+It blocks on `cacheNotificationChan chan string` (`manager_core.go:85`). When some request finishes and writes a cache key, that key is sent down this channel. The worker then calls `ProcessCacheNotification` (`chatbot/cache/worker.go:73`), whose main job is:
+
+```go
+// chatbot/cache/worker.go:79
+promotedCount := crw.manager.PromoteFromQueueForCache(cacheKey)
+```
+
+`PromoteFromQueueForCache` finds every request still sitting in the queue that maps to this cache key and pushes it onto the priority channel — where the **priority worker pool** (section 3) picks it up and serves it from cache. Net effect: a request that was queued behind slow work suddenly gets an instant cached answer the moment that answer becomes available.
+
+This worker shuts down cleanly on `ctx.Done()` or via `Stop()`, which is made idempotent with a `sync.Once` (`chatbot/cache/worker.go:66`).
+
+---
+
+## 5. Janitor (Periodic Cleanup)
+
+**Spawned:** `NewManager()` — `chatbot/manager_core.go:325` (`go m.janitor(ctx)`)
+
+**Run loop:** `func (m *Manager) janitor(ctx context.Context)` — `chatbot/manager.go:1162`
+
+**How many:** Exactly **1**.
+
+**Lifespan:** Application lifetime.
+
+A simple ticker loop driven by `cfg.JanitorInterval`:
+
+```go
+// chatbot/manager.go:1162
+ticker := time.NewTicker(m.config.JanitorInterval)
+for {
+    select {
+    case <-ticker.C:
+        m.cleanupTimedOutRequests()
+        m.cleanupOldQueuedRequests()
+    case <-ctx.Done():
+        return
+    }
+}
+```
+
+`cleanupTimedOutRequests` (`manager.go:1181`) sweeps `activeRequests` for entries that have overstayed their timeouts (cancelled-but-not-picked-up, stuck-in-queue, etc.) and reaps them. This is the housekeeping goroutine that keeps the in-memory maps from growing without bound.
+
+---
+
+## 6. Async Log Writer (Non-Blocking DB Writes)
+
+**Spawned:** `NewManager()` — `chatbot/manager_core.go:332-333`
+
+**Run loop:** `func (m *Manager) asyncLogWorker(ctx context.Context)` — `chatbot/manager_core.go:384`
+
+**How many:** Exactly **1** (tracked by a `sync.WaitGroup` for clean shutdown).
+
+**Lifespan:** Until `logQueue` is closed during `Shutdown()`.
+
+```go
+// chatbot/manager_core.go:332
+m.logWg.Add(1)
+go m.asyncLogWorker(ctx)
+```
+
+The worker drains `logQueue chan types.LogDataForDB` (`manager_core.go:95`, buffered to 100) and writes chat logs to ArangoDB off the hot path, so `submitRequest` never blocks on a database round-trip:
+
+```go
+// chatbot/manager.go:387
+for logData := range m.logQueue {
+    // skip if the row already reached a terminal cancelled/errored state,
+    // otherwise write the log with a background context
+    m.arangoStore.CreateOrUpdateChatLog(context.Background(), logData)
+}
+```
+
+Shutdown is graceful: `Shutdown()` (`manager_core.go:342`) closes `logQueue`, then waits on `logWg` (with a 10s timeout) so pending logs get flushed before exit.
+
+---
+
+## 7. The Bowl System (Event Replay & Fan-Out)
+
+**Owner:** `bowlManager *bowl.Manager` — package `chatbot/bowl` (constructed at `manager_core.go:264-267` when `cfg.UseBowl` is true).
+
+The "bowl" is a per-request buffer (`ResponseBowl`, `chatbot/bowl/bowl.go:36`) that accumulates every streamed event. It is what lets a client disconnect and later **resume** a response, and lets more than one consumer read the same response.
+
+> Note on terminology: the bowl code uses the word **broadcast** for its *own* replay / fan-out concept (duplicating events to attached pipes). That is legitimate and current — it is unrelated to any older dispatch design.
+
+Two kinds of goroutines live here:
+
+*   **Bowl janitor** — `Manager.Start()` (`chatbot/bowl/manager.go:131`) launches one background goroutine that ticks on a cleanup interval and calls `m.cleanup()` to expire old bowls (TTL-based).
+*   **Per-pipe replay goroutine** — every time a consumer attaches via `CreatePipe` (`chatbot/bowl/bowl.go:194`), the bowl spawns `go bowl.replayEvents()` (`bowl.go:217`). That goroutine copies the bowl's accumulated events into the new pipe (catching a late/reconnecting client up), then keeps forwarding live events until the response completes.
+
+The Manager creates pipes through `CreateStreamPipe` / `CreateResumePipe` (`chatbot/bowl/manager.go:244` / `:280`), so a fresh stream and a resume both flow through this same replay machinery.
+
+---
+
+## 8. Per-Request Goroutines (Short-Lived)
+
+While a single request is being processed inside `executeTask` / `executeTaskImmediate`, a few extra goroutines are spawned and then torn down:
+
+*   **LLM streaming** — `go m.runBoundedStream(func() { m.GetStreamer().Stream(clientChan, preparedData, logCtx) })` (`chatbot/manager.go:642`). The streamer runs on its own goroutine and pushes tokens/events to the client channel (and, when bowls are enabled, into the bowl). `runBoundedStream` holds an `llmStreamSemaphore` slot for the stream's lifetime, so no more than `cfg.MaxConcurrentLLMStreams` LLM streams run at once.
+*   **Parallel language detection** — `executeTask` kicks off language detection in a parallel goroutine (`chatbot/manager.go:548`) when no explicit language was supplied, so it overlaps with other preparation instead of adding a sequential 2-3s delay.
+*   **Parallel tool execution** — when a plan calls multiple tools, `ExecuteToolsParallel` (`tools/toolcore/pipeline/execution/parallel.go:14`) fans them out: one `go func(...)` per tool spec, coordinated with a `sync.WaitGroup`, results collected over a channel. This is the classic Go fan-out/fan-in pattern applied to tool calls.
+
+These are the goroutines that make a *single* request fast; the pools in sections 1-3 are what let *many* requests run at once.
+
+---
+
+## Goroutine Lifecycle & Concurrency Summary
+
+| Goroutine | Count | Lifespan | Gate | Purpose |
+|-----------|-------|----------|------|---------|
+| Cache worker | `cfg.TotalCacheWorkers` | Application | none | Instant cache hits |
+| Normal request worker | `cfg.MaxConcurrentRequests` | Application | `processingSemaphore` (single, shared) | Full FIFO processing |
+| Priority request worker | `cfg.PriorityWorkerCount` | Application | `priorityRateLimiter` (cap 100) | Serve cache-promoted requests |
+| Cache re-eval worker | 1 | Application | none | Promote queued requests on cache fill |
+| Janitor | 1 | Application | none | Reap timed-out / stale requests |
+| Async log writer | 1 | Until `logQueue` closed | none | Non-blocking DB log writes |
+| Bowl janitor | 1 (if `UseBowl`) | Application | none | Expire old bowls |
+| Bowl replay | 1 per attached pipe | Until response completes | none | Replay + live fan-out to a consumer |
+| LLM stream | 1 per active request | Until stream ends | `llmStreamSemaphore` (cap `cfg.MaxConcurrentLLMStreams`) | Stream the answer |
+| Parallel tool exec | 1 per tool in a plan | Until tool returns | none | Fan-out tool calls |
+
+**The one number that governs backpressure for the preparer stage is `cfg.MaxConcurrentRequests`.** It sizes both the normal worker pool *and* the `processingSemaphore` buffer, so no more than that many requests are *preparing* at once. Once a request finishes preparing it hands streaming off to a detached goroutine and frees its slot — so the streaming stage runs independently, bounded separately by `cfg.MaxConcurrentLLMStreams` (`llmStreamSemaphore`). Cache hits (cache workers) and cache-promoted requests (priority workers) deliberately sidestep the preparer gate, which is why they feel instant.
+
+### Key takeaways for a Python programmer
+
+*   A buffered `chan struct{}` used as a **semaphore** (`processingSemaphore`, `priorityRateLimiter`) is Go's idiomatic equivalent of `threading.Semaphore` / `asyncio.Semaphore` — "acquire" is a send, "release" is a receive.
+*   Workers are just goroutines looping on a `select` over channels; `<-ctx.Done()` is how they are told to stop — the equivalent of a cancellation token.
+*   Fan-out/fan-in (`ExecuteToolsParallel`) — launch N goroutines, wait on a `sync.WaitGroup`, collect over a channel — is the Go way to do what you might reach for `concurrent.futures` or `asyncio.gather` to do in Python.
+*   Graceful shutdown is explicit: closing a channel (`logQueue`) and `WaitGroup.Wait()` drains in-flight work before the process exits.

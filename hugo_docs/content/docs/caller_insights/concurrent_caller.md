@@ -1,7 +1,7 @@
 ---
 title: "Concurrent Caller"
-date: 2025-08-02
-lastmod: 2026-07-25
+date: 2025-07-16
+lastmod: 2026-07-10
 draft: false
 ---
 

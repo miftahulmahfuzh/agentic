@@ -1,10 +1,12 @@
 ---
 title: "Jsonless"
 date: 2025-08-02
+lastmod: 2026-07-09
 draft: false
 ---
 
-# Architectural Note: On the Sanctity of the Compile-Time Binary
+> 📌 **Must-read companion:** [Why We Built Our Own Pipeline Instead of Adopting an Off-the-Shelf Agent Framework](../custom_pipeline_vs_frameworks/) — the same own-your-core philosophy applied to orchestration: why we don't outsource the planner/pipeline to a framework.
+
 
 This document addresses the suggestion to refactor static assets—specifically prompt templates and tool descriptions—into external JSON files to be loaded at runtime. The argument, rooted in patterns common to interpreted languages like Python, is that this improves modularity and ease of modification.
 
@@ -23,14 +25,22 @@ This thinking is a dangerous holdover from a different paradigm. It treats the c
 -   **Mechanism:** On application startup, use `os.ReadFile` to load `prompts.json` and `definitions.json`, then `json.Unmarshal` to parse them into Go structs or maps.
 -   **Stability:** Fragile. The application now has numerous new ways to fail *at runtime*. A missing file, a misplaced comma in the JSON, or incorrect file permissions will crash the service on startup. You have transformed a guaranteed, compile-time asset into a runtime gamble. It's the coin toss from *No Country for Old Men*—you've introduced a chance of catastrophic failure where none should exist.
 -   **Deployment:** Needlessly complex. Instead of deploying a single, atomic binary, you must now manage, version, and correctly deploy a constellation of satellite files. This violates the primary operational advantage of Go: the simplicity of a self-contained executable.
--   **Maintainability (The Tool Definition Fallacy):** The suggestion to split a tool's `DescriptionStr` from its `NameStr`, `Schema`, and `Executor` is organizational chaos masquerading as separation of concerns. These elements form a single, cohesive logical unit. To understand or modify the `frequently_asked` tool, a developer would be forced to cross-reference `definitions.go` and `definitions.json`. This is inefficient and error-prone. It's like watching *Goodfellas* and having to read a separate document every time Henry Hill speaks. The context is destroyed.
+-   **Maintainability (The Tool Definition Fallacy):** The suggestion to split a tool's `DescriptionStr` from its `NameStr`, `Schema`, and executor is organizational chaos masquerading as separation of concerns. These elements form a single, cohesive logical unit. To understand or modify the `frequently_asked` tool (defined at `tools/toolcore/definitions.go:274` with `NameStr`, `DescriptionStr`, `Schema`, `Executor`, and `StreamExecutor` all set together), a developer would be forced to cross-reference `definitions.go` and a `definitions.json`. This is inefficient and error-prone. It's like watching *Goodfellas* and having to read a separate document every time Henry Hill speaks. The context is destroyed.
 
 ### The Implemented `go:embed` Approach (The Compile-Time Guarantee)
 
--   **Mechanism:** The `go:embed` directive is used. At build time, the Go compiler finds the specified file (e.g., `prompts/v1.txt`), validates its existence, and bakes its contents directly into the executable as a string variable. For tool descriptions, we keep the string literal directly within the `DynamicTool` struct definition, where it belongs.
--   **Stability:** Absolute. If the `v1.txt` file is missing, the `go build` command fails. The error is caught by the developer at compile time, not by your users or CI/CD pipeline at runtime. The integrity of the application's static assets is guaranteed before it's ever deployed.
+-   **Mechanism:** The `go:embed` directive is used pervasively across the codebase. At build time, the Go compiler finds each specified file, validates its existence, and bakes its contents directly into the executable as a string variable. This is not a one-off; it is the house pattern for every prompt asset:
+    -   `core/prompts.go:11-30` embeds the main system prompt versions `prompts/v1.txt` through `prompts/v7.txt`.
+    -   `core/compare_stocks_prompts.go:10-22` embeds `compare_stocks_prompts/v1.txt` plus its summarization and sources-section variants.
+    -   `tools/tooltypes/caller.go:20` embeds `prompts/classify_and_plan_v1.txt`, the classify-and-plan prompt.
+    -   `chatbot/helpers/suggestion_questions.go` embeds `suggestion_questions_prompts/v1.txt` and `v2.txt`.
+    -   `tools/toolutils/summarization/prompts.go:9-13` embeds `prompts/normal.txt` and `prompts/extreme.txt`.
+    -   `tools/toolnonbe/web_search.go:26` embeds `web_search_prompts/fact_checker.txt`.
+
+    For tool descriptions, the mechanism is different but the spirit is identical: they are Go string constants defined in `tools/toolcore/descriptions.go` (e.g., `frequentlyAskedDesc`) and referenced by name from each tool's `DescriptionStr` field in `tools/toolcore/definitions.go`. The `DynamicTool` struct itself lives at `tools/toolcore/dynamic.go:40`. Nothing is loaded from JSON — every description is a compile-time constant baked into the binary. (For the full data-driven tool architecture, see `docs/architectures/data_driven_tool.md`.)
+-   **Stability:** Absolute. If any embedded `.txt` file is missing, the `go build` command fails. Likewise, a typo in a description constant name is a compile error, not a runtime surprise. The error is caught by the developer at compile time, not by your users or CI/CD pipeline at runtime. The integrity of the application's static assets is guaranteed before it's ever deployed.
 -   **Deployment:** Trivial. You deploy one file: the binary. It contains everything it needs to run. It is the Terminator—a self-contained unit sent to do a job, with no external dependencies required.
--   **Maintainability:** Superior. For prompts, the text lives in a clean `.txt` file, easily editable by non-developers, but its integration is fail-safe. For tools, all constituent parts of the tool remain in one location, in one file. A developer looking at a `DynamicTool` definition sees its name, its purpose, its arguments, and its implementation together. This is logical, efficient, and clean.
+-   **Maintainability:** Superior. For prompts, the text lives in a clean `.txt` file, easily editable by non-developers, but its integration is fail-safe. For tools, all constituent parts of the tool remain co-located: the description constant sits in `descriptions.go` and is wired into the tool alongside its name, schema, and executor in `definitions.go`. A developer reading a `DynamicTool` definition sees its name, its purpose, its arguments, and its implementation together — all in Go, all compiled, all navigable by the tooling. This is logical, efficient, and clean.
 
 ## Conclusion: Leave the JSON, Take the Binary
 

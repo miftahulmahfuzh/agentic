@@ -1,12 +1,13 @@
 ---
 title: "Static Concurrency"
-date: 2025-08-02
+date: 2025-07-26
+lastmod: 2026-07-09
 draft: false
 ---
 
-# Architectural Note: On the Deliberate Enforcement of Static Concurrency Limits
+This document addresses the suggestion that the service's concurrency limits (`MaxConcurrentRequests`, `MaxConcurrentLLMStreams`, declared in `config/config.go:92-93` with defaults of `50` and `5` respectively) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system's capacity in response to changing load without requiring a restart.
 
-This document addresses the suggestion that the service's concurrency limits (`MaxConcurrentRequests`, `MaxConcurrentLLMStreams`) should be dynamically configurable at runtime, perhaps via an API endpoint. The argument is that this would provide operational flexibility to adjust the system's capacity in response to changing load without requiring a restart.
+For the record, no such endpoint exists today. A sweep of the router (`internal/app/router.go`) and its handlers turns up no route that mutates either limit; the only references to these fields in the codebase read them, they never write them. This document explains why that absence is a deliberate feature, not an oversight.
 
 This document asserts that such a feature would be a critical design flaw. It sacrifices stability, predictability, and safety for an illusory and dangerous form of flexibility.
 
@@ -20,8 +21,8 @@ This line of thinking fundamentally misunderstands how robust, scalable systems 
 
 ### The Current Static Limits Approach
 
--   **Mechanism:** Limits are read once from configuration on application startup and used to create fixed-capacity semaphore channels.
--   **Execution:** A worker goroutine attempts to acquire a token from the semaphore (`semaphore <- struct{}{} `). If the pool is full, the goroutine blocks until a token is available. Simple, fast, and deterministic.
+-   **Mechanism:** Limits are read once from configuration on application startup and used to create fixed-capacity semaphore channels. In `chatbot/manager_core.go:127-128`, the `Manager` is built with `processingSemaphore: make(chan struct{}, cfg.MaxConcurrentRequests)` and `llmStreamSemaphore: make(chan struct{}, cfg.MaxConcurrentLLMStreams)`. The channel capacity *is* the limit, and it is fixed for the lifetime of the process. (The same value also sizes the normal worker pool at `chatbot/manager_core.go:306`.)
+-   **Execution:** A worker goroutine acquires a token by sending on the semaphore (`m.processingSemaphore <- struct{}{}` at `chatbot/manager.go:514`) and releases it by receiving (`<-m.processingSemaphore` at `chatbot/manager.go:526`, with an early release on cancellation at line 520). If the pool is full, the send blocks until a token is available. Simple, fast, and deterministic — the Go runtime does the accounting.
 -   **Complexity:** Zero. The Go runtime handles the semaphore logic. It is bulletproof.
 -   **Stability:** Absolute. The capacity of the instance is a known, predictable constant. It will not behave erratically or overwhelm its dependencies (LLM APIs, database) due to a sudden, operator-induced change. The system's performance profile is stable and easy to reason about.
 -   **Scalability Model:** Horizontal. If more capacity is needed, you deploy more identical, predictable instances. This is the foundation of cloud-native architecture. The system scales by adding more soldiers to the army, not by trying to turn one soldier into The Hulk.

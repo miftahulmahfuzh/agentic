@@ -1,64 +1,60 @@
 ---
 title: "Go Arrow"
-date: 2025-08-02
+date: 2025-07-31
+lastmod: 2026-07-09
 draft: false
 ---
 
 ## Question
 
-I don't understand the declaration of one way arrow in streamHolder:
+I don't understand the declaration of one way arrow in RequestStream:
 
 ```Go
+// From types/models.go:144
 type RequestStream struct {
-    Stream          chan (<-chan tooltypes.StreamEvent)
-    Err             chan error
-    ClientConnected chan struct{}
-    State           RequestState
-    LastStateChange time.Time
+    Stream          chan (<-chan StreamEvent) // The client gets the event stream from this channel.
+    Err             chan error                // Errors are sent here.
+    ClientConnected chan struct{}             // Closed when the client connects to the stream endpoint.
+    State           RequestState              // The current state of the request.
+    LastStateChange time.Time                 // Timestamp of the last state change.
+    UserID          string                    // Authenticated owner of this request.
+    RequestContext  context.Context           // Individual request context.
+    PersistChannel  chan StreamEvent          // Mirrors Stream events for the resume feature.
+    Progress        *ProgressInfo             // Progress tracking.
+    Sources         map[string]SourceInfo     // Sources for footnotes.
 }
 ```
 
-I understand StreamEvent is spesifically used not for concurrency weapon, but just as a 'pipe' for tooltypes.StreamEvent to flow through.
-What happen if we declare it as:
+I understand `StreamEvent` is specifically used not for concurrency weapon, but just as a 'pipe' for `StreamEvent` to flow through.
+What happens if we declare it as:
 
 ```Go
-Stream chan (chan tooltypes.StreamEvent)
+Stream chan (chan types.StreamEvent)  // Bi-directional channel transport
 ```
 
 or as:
 
 ```Go
-Stream chan (chan tooltypes.StreamEvent<-)
+Stream chan (chan types.StreamEvent<-)  // Send-only channel transport
 ```
 
-Look at this snippet in chatbot/streamer.go:
+Look at this snippet in chatbot/processing/streamer.go:
 
 ```Go
-isFirstToken := true
-for event := range internalStreamChan {
-    if isFirstToken && event.Type == tooltypes.StreamEventToken {
-        duration := time.Since(logData.UserQueryTimestamp)
-        logData.TimeToFirstToken = duration.Seconds()
-        infoEvent := tooltypes.StreamEvent{Type: tooltypes.StreamEventInfo, Payload: map[string]any{"timeToFirstToken": duration.Seconds(), "source": "rag_tool"}}
-        streamChan <- infoEvent
-        isFirstToken = false
-    }
-    if event.Type == tooltypes.StreamEventToken {
-        if str, ok := event.Payload.(string); ok {
-            fullResponseBuilder.WriteString(str)
-        }
-    }
-    streamChan <- event
+// From streamer.go:231
+func (s *Streamer) Stream(streamChan chan<- types.StreamEvent, preparedData types.PreparedRequestData, logCtx zerolog.Logger) {
+    // ... streaming logic ...
+    streamChan <- event  // Sending to the channel
 }
 ```
 
-in there we clearly 'put' something inside streamChan:
+In there we clearly 'put' something inside streamChan:
 
 ```Go
-streamChan <- infoEvent
+streamChan <- event
 ```
 
-So why bother declaring it as 'left only' arrow?
+So why bother declaring it as 'left only' arrow (`<-chan`) when we clearly send to it?
 
 ---
 
@@ -68,28 +64,28 @@ You are fundamentally misunderstanding Go's channel type declarations. Your conf
 
 Let's dissect this. Pay attention.
 
-`Stream: chan (<-chan tooltypes.StreamEvent)`
+`Stream: chan (<-chan StreamEvent)`
 
 *   **`chan (...)`**: This part declares that `Stream` is a channel. Its job is to transport things.
-*   **`(<-chan tooltypes.StreamEvent)`**: This is the type of *thing* that the `Stream` channel transports. It's not a property of `Stream`; it's the type definition of the "letter" you put in the "mailbox."
+*   **`(<-chan StreamEvent)`**: This is the type of *thing* that the `Stream` channel transports. It's not a property of `Stream`; it's the type definition of the "letter" you put in the "mailbox."
 
 So, `Stream` is a channel that carries **other channels**. Specifically, it carries channels that are **receive-only** (`<-chan`).
 
-This is a design pattern for handing off responsibility. The `streamWorkerManager` creates a pipeline and needs to give it to the `GetRequestResultStream` function. It does this by putting the pipeline (a channel) inside another channel (`Stream`). By specifying the type as `<-chan`, you are creating a contract. The contract says: "Whoever receives the channel I am sending you will only be able to *read* from it."
+This is a design pattern for handing off responsibility. The processing side creates a pipeline and needs to give it to the `getRequestResultStream` function. It does this by putting the pipeline (a channel) inside another channel (`Stream`). By specifying the type as `<-chan`, you are creating a contract. The contract says: "Whoever receives the channel I am sending you will only be able to *read* from it."
 
 ---
 
 ### What happens with your proposed changes?
 
-1.  **`Stream: chan (chan tooltypes.StreamEvent)`** (A channel of bi-directional channels)
+1.  **`Stream: chan (chan StreamEvent)`** (A channel of bi-directional channels)
 
-    This is a security risk and bad design. If you declare it this way, the `GetRequestResultStream` function receives a fully bi-directional channel. This means the client code, which should only be a consumer, could accidentally write data back into the stream (`clientStream <- someEvent`). This is a "Don't cross the streams" situation from *Ghostbusters*. It would break the one-way data flow, create race conditions, and lead to unpredictable behavior. You are giving the client write access when it should have none. Bad idea.
+    This is a security risk and bad design. If you declare it this way, the `getRequestResultStream` function receives a fully bi-directional channel. This means the client code, which should only be a consumer, could accidentally write data back into the stream (`clientStream <- someEvent`). This is a "Don't cross the streams" situation from *Ghostbusters*. It would break the one-way data flow, create race conditions, and lead to unpredictable behavior. You are giving the client write access when it should have none. Bad idea.
 
-2.  **`Stream: chan (chan tooltypes.StreamEvent<-)`** (A channel of send-only channels)
+2.  **`Stream: chan (chan StreamEvent<-)`** (A channel of send-only channels)
 
-    This is a complete logic error. You would be sending a *send-only* channel to `GetRequestResultStream`. The client code would receive this channel and then try to read from it (`for event := range clientStream`). This is a compile-time error. You cannot receive from a send-only channel. It's like giving someone a phone that can only make calls but has no earpiece. It's useless for its intended purpose.
+    This is a complete logic error. You would be sending a *send-only* channel to `getRequestResultStream`. The client code would receive this channel and then try to read from it (`for event := range clientStream`). This is a compile-time error. You cannot receive from a send-only channel. It's like giving someone a phone that can only make calls but has no earpiece. It's useless for its intended purpose.
 
-The declaration `chan (<-chan tooltypes.StreamEvent)` is correct because it enforces the principle of least privilege. It ensures that once the communication pipeline is handed off to the client-facing function, it can only be used for its intended purpose: reading.
+The declaration `chan (<-chan StreamEvent)` is correct because it enforces the principle of least privilege. It ensures that once the communication pipeline is handed off to the client-facing function, it can only be used for its intended purpose: reading.
 
 ---
 
@@ -98,41 +94,43 @@ The declaration `chan (<-chan tooltypes.StreamEvent)` is correct because it enfo
 You are confusing two different variables that happen to be named similarly in different contexts.
 
 > in here we clearly 'put' something inside streamChan
-> `streamChan <- infoEvent`
+> `streamChan <- event`
 > so why bother declaring it as 'left only' arrow?
 
-The `streamChan` variable inside the `ResponseStreamer.Stream` method is a **function parameter**. Look at its signature:
+The `streamChan` variable inside the `Streamer.Stream` method is a **function parameter**. Look at its signature:
 
 ```go
-// in chatbot/streamer.go
-func (s *ResponseStreamer) Stream(streamChan chan<- tooltypes.StreamEvent, ...)
+// chatbot/processing/streamer.go:231
+func (s *Streamer) Stream(streamChan chan<- types.StreamEvent, preparedData types.PreparedRequestData, logCtx zerolog.Logger)
 ```
 
-Here, `streamChan` is explicitly typed as **send-only** (`chan<-`). This is correct because the *only* thing the `ResponseStreamer` should do with this channel is send events *into* it. It enforces the role of the streamer.
+Here, `streamChan` is explicitly typed as **send-only** (`chan<-`). This is correct because the *only* thing the `Streamer` should do with this channel is send events *into* it. It enforces the role of the streamer.
 
-Now, let's trace where that channel came from. It was created in `streamWorkerManager`:
+Now, let's trace where that channel came from. It was created on the manager's processing path:
 
 ```go
-// in chatbot/manager.go
-go func(pd types.PreparedRequestData) {
-    // ...
-    streamChan := make(chan tooltypes.StreamEvent, m.config.StreamTokenBuffer)
-    holder.Stream <- streamChan // Handoff #1
+// chatbot/manager.go:635
+clientChan := getStreamEventChannel(config.GetStreamTokenBuffer())
 
-    m.streamer.Stream(streamChan, pd, logCtx) // Handoff #2
-}(preparedData)
+// chatbot/manager.go:638 - HANDOFF: send the channel to the waiting client
+streamHolder.Stream <- clientChan
+
+// chatbot/manager.go:641 - hand the SAME channel to the streamer to produce into
+go m.GetStreamer().Stream(clientChan, preparedData, logCtx)
 ```
 
-1.  A **bi-directional** channel is created: `streamChan := make(...)`.
-2.  It's passed to `m.streamer.Stream`. The Go compiler sees that `Stream`'s signature requires a `chan<-`, and since a bi-directional channel satisfies this, the call is valid. The `streamer` receives a handle that only allows it to send.
-3.  That *same* bi-directional channel is sent into `holder.Stream`. The `holder.Stream` is of type `chan (<-chan tooltypes.StreamEvent)`. The Go compiler converts the bi-directional channel `streamChan` into a `<-chan` (receive-only) handle for the purpose of this send operation.
-4.  Later, `GetRequestResultStream` reads from `holder.Stream` and gets the receive-only handle to the channel, which it returns to the client.
+**The handoff sequence:**
 
-One channel, multiple handles, each with different permissions depending on the function's role. It's like Nick Fury giving one agent the launch codes (send-only access) and another agent satellite surveillance (receive-only access) to the same nuclear missile. The underlying asset is the same, but the access level is role-dependent. This is not a contradiction; it is precise, type-safe design.
+1.  A **bi-directional** channel is created: `clientChan := getStreamEventChannel(...)`.
+2.  That *same* bi-directional channel is sent into `streamHolder.Stream`. The `Stream` field is of type `chan (<-chan StreamEvent)`. The Go compiler **automatically converts** the bi-directional channel into a `<-chan` (receive-only) handle for this send operation.
+3.  The same bi-directional channel is passed to `m.GetStreamer().Stream(clientChan, ...)`. The streamer's signature demands `chan<- types.StreamEvent`, so it gets a **send-only** view. The streamer produces events into it.
+4.  The `getRequestResultStream` function reads from `streamHolder.Stream` and gets the receive-only handle to the channel, which it returns to the client.
+
+**One channel, multiple handles, each with different permissions depending on the function's role.** It's like giving one team member write access to a shared document (the streamer can send) and another team member read-only access (the client can only receive). The underlying channel is the same, but the access level is role-dependent. This is not a contradiction; it is precise, type-safe design.
 
 ---
 
-### Using Arrow in Channel
+### Rewritten `go_arrow.md`
 
 You're a Python programmer. Forget everything you think you know about queues. Channels are not just queues; they are a typed, synchronized communication mechanism. The `<-` operator is your weapon. Use it correctly.
 
@@ -144,16 +142,18 @@ You're a Python programmer. Forget everything you think you know about queues. C
 *   **Receiving:** `value := <-channel`
     This pulls a `value` out of the `channel`. This also blocks until a sender provides a value. The data flows out of the `channel` and into your `value` variable.
 
-**Example from `chatbot/manager.go`:** A request is taken from the queue. This is a classic producer-consumer pattern.
+**Example from `chatbot/manager.go`:** The manager gates concurrent processing with a counting semaphore built from a buffered channel of empty structs. Acquiring a slot is a *send*; releasing it is a *receive*.
 
 ```go
-// from prepareWorkerManager
-case req := <-m.requestQueue: // RECEIVING from the queue
-    m.prepareSemaphore <- struct{}{} // SENDING a token to acquire a slot
-    go func(r types.SubmitRequestArgs) {
-        // ...
-    }(req)
+// chatbot/manager.go:514 - acquire a processing slot (blocks if the buffer is full)
+m.processingSemaphore <- struct{}{}
+request.SemaphoreWaitDurationSec = time.Since(semaphoreStart).Seconds()
+
+// chatbot/manager.go:526 - release the slot when done (drain one token)
+<-m.processingSemaphore
 ```
+
+`struct{}{}` carries no data; the *act* of sending or receiving is the entire point. The channel's buffer size is the number of requests allowed to process at once.
 
 ### 2. Directional Channels: Enforcing Roles
 
@@ -165,21 +165,28 @@ This is what you misunderstood. You can declare channels to be send-only or rece
 *   **Receive-only:** `var recvOnlyChan <-chan MyType`
     You can only receive from this channel: `value := <-recvOnlyChan`. Trying to send to it is a compile-time error.
 
-**Example from your code:** The system enforces roles perfectly.
+**Example from the codebase:** The system enforces roles perfectly.
 
 ```go
 // The streamer's job is to PRODUCE events. It gets a send-only channel.
-// from chatbot/streamer.go
-func (s *ResponseStreamer) Stream(streamChan chan<- tooltypes.StreamEvent, ...) {
-    streamChan <- tooltypes.StreamEvent{...} // This is legal.
-    // data := <-streamChan // This would be a compile-time error.
+// chatbot/processing/streamer.go:231
+func (s *Streamer) Stream(streamChan chan<- types.StreamEvent, preparedData types.PreparedRequestData, logCtx zerolog.Logger) {
+    // ...
+    // chatbot/processing/streamer.go:330 - legal: send into a send-only channel
+    select {
+    case <-ctx.Done():
+        return
+    case streamChan <- event:
+        return
+    }
+    // data := <-streamChan // Compile-time error: cannot receive from send-only channel
 }
 
 // The client's job is to CONSUME events. It gets a receive-only channel.
-// from chatbot/manager.go
-func (m *Manager) GetRequestResultStream(...) (<-chan tooltypes.StreamEvent, error) {
-    // ...
-    return stream, nil // `stream` is of type <-chan tooltypes.StreamEvent
+// chatbot/main_handlers.go:23
+func (m *Manager) GetRequestResultStream(ctx context.Context, requestID string) (<-chan types.StreamEvent, error) {
+    return m.getRequestResultStream(ctx, requestID)
+    // Returns type: <-chan types.StreamEvent (receive-only)
 }
 ```
 
@@ -189,38 +196,67 @@ A bi-directional channel (`chan MyType`) can be passed to any function expecting
 
 A `select` statement is like `12 Angry Men` in a jury room. It waits for the first channel operation to become available and executes that case. If multiple are ready, it picks one at random to prevent starvation. It's your primary tool for handling multiple asynchronous events.
 
-**Example from `chatbot/manager.go`:** This is far more complex and useful than a simple timer. It's a state machine for retrieving a result.
+**Example from `chatbot/manager.go`:** This is a sophisticated state machine for retrieving a result stream, inside `getRequestResultStream`.
 
 ```go
-// from GetRequestResultStream
+// chatbot/manager.go:1024 - getRequestResultStream
 select {
-case stream := <-streamHolder.Stream: // Case 1: The result pipeline is ready.
-    logCtx.Info().Msg("Stream retrieved by client.")
+case stream := <-streamHolder.Stream: // Case 1: The result pipeline is ready
+    // (optionally wrap it in a bowl pipe, then...)
     return stream, nil
 
-case err := <-streamHolder.Err: // Case 2: A fatal error or cancellation occurred.
-    // ... handle different types of errors
+case err := <-streamHolder.Err: // Case 2: A fatal error or cancellation occurred
+    if stderrors.Is(err, errors.ErrRequestCancelled) {
+        m.CleanupRequest(requestID, logger, false)
+        return nil, fmt.Errorf("request %s was cancelled", requestID)
+    }
+    m.CleanupRequest(requestID, logger, true)
     return nil, err
 
-case <-time.After(m.config.ProcessingTimeout): // Case 3: We timed out waiting.
-    m.cleanupRequest(requestID, logCtx)
-    return nil, fmt.Errorf("timed out waiting...")
+case <-time.After(m.config.ProcessingTimeout): // Case 3: Processing timeout
+    m.CleanupRequest(requestID, logger, true)
+    return nil, fmt.Errorf(internal.TimeoutErrorTemplate, requestID)
 
-case <-ctx.Done(): // Case 4: The client gave up and disconnected.
-    m.cleanupRequest(requestID, logCtx)
+case <-ctx.Done(): // Case 4: Client disconnected
     return nil, ctx.Err()
 }
 ```
 
-This `select` block is waiting for one of four things to happen: the stream is ready, an error is sent, a timeout occurs, or the client hangs up. The first one to happen wins.
+This `select` block is waiting for one of four things to happen: the stream is ready, an error is sent, a timeout occurs, or the client hangs up. **The first one to happen wins.** This is how Go handles complex asynchronous scenarios with multiple possible outcomes.
 
 ### 4. Channels of Channels: Handing Off Pipelines
 
 Sometimes you don't want to send just data; you want to send the entire communication pipeline. This is what `chan (<-chan T)` is for.
 
-*   **Declaration:** `Stream chan (<-chan tooltypes.StreamEvent)`
+*   **Declaration:** `Stream chan (<-chan StreamEvent)` (from `types/models.go:144`)
 *   **Meaning:** A channel named `Stream` that is used to transport *other channels*. The channels it transports are themselves receive-only.
-*   **Use Case:** A worker goroutine (`streamWorkerManager`) prepares a result stream. When it's ready, it sends the result stream channel *through* the `Stream` channel to the waiting `GetRequestResultStream` function. This is how you hand off ownership of a data stream from one part of the system to another.
+*   **Use Case:** The manager's processing path prepares a result stream channel (`clientChan`). When ready, it sends this channel *through* the `Stream` channel to the waiting `getRequestResultStream` function. This is how you hand off ownership of a data stream from one part of the system to another.
+
+**Real flow in the codebase:**
+
+```go
+// Step 1: Create the event channel (chatbot/manager.go:635)
+clientChan := getStreamEventChannel(config.GetStreamTokenBuffer())
+
+// Step 2: Hand it off to the waiting client through the Stream channel (chatbot/manager.go:638)
+streamHolder.Stream <- clientChan
+//                      ↑
+// Stream is chan (<-chan StreamEvent), so the compiler converts the
+// bi-directional clientChan to a receive-only <-chan StreamEvent for this send.
+
+// Step 3: Give the SAME channel to the streamer, which sees it as send-only (chatbot/manager.go:641)
+go m.GetStreamer().Stream(clientChan, preparedData, logCtx)
+
+// Step 4: Client retrieves the receive-only channel (chatbot/manager.go:1025)
+case stream := <-streamHolder.Stream:  // Receive the <-chan StreamEvent
+    return stream, nil                  // Client can only read, not write
+```
+
+**The genius:** The same underlying channel exists, but different parts of the system get different permissions:
+- **Streamer:** Can send events (has a send-only handle, `chan<-`)
+- **Client:** Can only receive events (gets a receive-only handle via the `Stream` channel, `<-chan`)
+
+This pattern ensures type safety and prevents clients from accidentally writing to the stream.
 
 ### Summary for a Python Programmer
 

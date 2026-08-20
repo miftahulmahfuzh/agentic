@@ -1,6 +1,7 @@
 ---
 title: "Go Closures"
-date: 2026-07-25
+date: 2025-11-25
+lastmod: 2026-07-10
 draft: false
 ---
 

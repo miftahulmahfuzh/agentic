@@ -1,10 +1,9 @@
 ---
 title: "Python Workers"
-date: 2025-08-02
+date: 2025-07-23
+lastmod: 2025-07-31
 draft: false
 ---
-
-## Question
 
 About the old Python code.
 
@@ -21,8 +20,6 @@ prepareSemaphore: make(chan struct{}, cfg.MaxConcurrentRequests)
 ```
 
 ---
-
-## Answer
 
 Your confusion is understandable because the word "worker" is used, but what it represents in the Python `asyncio` context versus the Go context is fundamentally different. It's like the difference between a secret agent with multiple fake passports (Python) and a team of actual, distinct secret agents (Go).
 
@@ -84,4 +81,4 @@ Imagine you have to assassinate 10 targets in a building.
 *   Python's semaphore limited the **concurrency** of I/O-bound tasks on a **single thread**.
 *   Go's semaphore limits the **parallelism** of independent goroutines across **multiple threads**.
 
-The Python "workers" were an illusion, a clever juggling act. The Go workers are real. They are an army.
+Your intuition was correct. The Python "workers" were an illusion, a clever juggling act. The Go workers are real. They are an army.

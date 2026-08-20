@@ -1,7 +1,12 @@
 ---
-title: "RAG Stream Q&A Part 1"
+title: "RAG Stream Q&A"
 date: 2025-08-06
+lastmod: 2026-07-10
 draft: false
+---
+
+This document dissects the core logic of the Tencent RAG streaming consumer. The questions below target the fundamental mechanics of how the stream is processed, and the answers clarify the design choices.
+
 ---
 
 ## Question 1
@@ -10,16 +15,18 @@ The delta calculation seems convoluted.
 
 ```go
 var delta string
-if after, ok := strings.CutPrefix(payload.Content, previousContent); ok {
-    delta = after
+if strings.HasPrefix(payload.Content, previousContent) {
+    delta = strings.TrimPrefix(payload.Content, previousContent)
 } else {
-    logCtx.Warn().Str("previous", previousContent).Str("current", payload.Content).Msg("Stream content diverged, sending full payload.")
+    // This handles the case where the content resets or is a single chunk.
     delta = payload.Content
 }
+
+// Update our tracking variable for the next iteration
 previousContent = payload.Content
 
-if delta == "" {
-    continue
+if delta != "" {
+    // ... send delta down the stream channel ...
 }
 ```
 
@@ -43,15 +50,17 @@ It behaves like Bill Murray in *Groundhog Day*, forced to relive the entire sent
 
 If we just forwarded `content` to the UI, the user would see a flickering mess: "The", then "The answer", then "The answer is". We need to calculate the *difference*—the delta—to provide a smooth, word-by-word stream.
 
-### The "How": `strings.CutPrefix`
+### The "How": `strings.HasPrefix` + `strings.TrimPrefix`
 
 The logic is a precise surgical tool:
 
 1.  `previousContent` stores the full string from the last event.
-2.  `strings.CutPrefix(payload.Content, previousContent)` attempts to cut the *previous* string off the front of the *current* string.
-3.  **If it succeeds** (`ok` is `true`), the leftover piece (`after`) is our delta.
-    *   `strings.CutPrefix("The answer", "The")` -> `ok=true`, `after=" answer"`. This is our delta.
-4.  `previousContent` is then updated to the current full string, preparing it for the next event.
+2.  `strings.HasPrefix(payload.Content, previousContent)` checks whether the *current* string still starts with everything we saw *last* time.
+3.  **If it does**, `strings.TrimPrefix(payload.Content, previousContent)` strips that shared prefix off the front, and the leftover piece is our delta.
+    *   `strings.HasPrefix("The answer", "The")` -> `true`, then `strings.TrimPrefix("The answer", "The")` -> `" answer"`. This is our delta.
+4.  **If it doesn't** (content reset, or a single-shot chunk that never accumulated), we fall back to treating the entire `payload.Content` as the delta.
+5.  `previousContent` is then updated to the current full string, preparing it for the next event.
+6.  We only forward the delta when `delta != ""`; an empty delta is silently skipped.
 
 ### Scenario 1: Repeating Words (e.g., "fox...fox")
 
@@ -59,19 +68,19 @@ Let's test this against a repeating word. Does it get confused? **No.**
 
 *   **State:** `previousContent` = `"The quick brown fox jumps"`
 *   **Next Event:** `payload.Content` = `"The quick brown fox jumps fox"`
-*   **Execution:** `strings.CutPrefix("The quick brown fox jumps fox", "The quick brown fox jumps")`
-*   **Result:** `ok` is `true`, `after` is `" fox"`.
+*   **Execution:** `strings.HasPrefix("The quick brown fox jumps fox", "The quick brown fox jumps")` -> `true`, then `strings.TrimPrefix(...)` -> `" fox"`.
+*   **Result:** `delta` is `" fox"`.
 *   **Action:** The delta `" fox"` is correctly identified as new text and is sent down the channel. The logic performs perfectly.
 
 ### Scenario 2: Duplicate Events (Stream "Stutter")
 
-What if the API stutters and sends the exact same event twice? This is where the `if delta == "" { continue }` shines.
+What if the API stutters and sends the exact same event twice? This is where the `if delta != ""` guard shines.
 
 *   **State:** `previousContent` = `"The quick brown fox"`
 *   **Next Event (Duplicate):** `payload.Content` = `"The quick brown fox"`
-*   **Execution:** `strings.CutPrefix("The quick brown fox", "The quick brown fox")`
-*   **Result:** `ok` is `true`, but `after` is `""` (an empty string).
-*   **Action:** `delta` is `""`. The `if` condition is met, and the `continue` statement skips to the next iteration of the loop. **Nothing is sent down the channel.** This is correct. The system identified a worthless, duplicate event and discarded it, preventing noise in the stream. It's like seeing a glitch in the Matrix, recognizing it, and moving on without alarm.
+*   **Execution:** `strings.HasPrefix("The quick brown fox", "The quick brown fox")` -> `true`, then `strings.TrimPrefix(...)` -> `""` (an empty string).
+*   **Result:** `delta` is `""`.
+*   **Action:** The `if delta != ""` guard is *not* satisfied, so nothing inside it runs. **Nothing is sent down the channel.** This is correct. The system identified a worthless, duplicate event and discarded it, preventing noise in the stream. It's like seeing a glitch in the Matrix, recognizing it, and moving on without alarm.
 
 This logic is not fragile. It's a robust mechanism designed specifically to handle the redundancy of an accumulative streaming API while gracefully managing common network and data anomalies.
 
@@ -103,7 +112,7 @@ You are correct that `for {}` is Go's idiomatic `while True`. You are incorrect 
 
 Thinking this loop doesn't know when to stop is like thinking Anton Chigurh doesn't know when the job is done in *No Country for Old Men*. The process is relentless, but it has very clear conditions for termination.
 
-Here are the five ways this "infinite" loop terminates, from a successful mission to a catastrophic failure.
+Here are the four ways this "infinite" loop terminates, from a successful mission to a catastrophic failure.
 
 ### 1. The Logical "I'm Done": `payload.IsFinal`
 
@@ -111,41 +120,31 @@ The API itself can declare that it's finished. Inside the JSON payload, there's 
 
 ```go
 if payload.IsFinal {
-    logCtx.Info().Msg("Final RAG content received and streamed.")
+    logCtx.Info().Msg("Final RAG packet received and streamed. Terminating stream processing.")
     break // EXIT
 }
 ```
 
 This is the API giving its final monologue. Once our code sees this, it knows the sequence is complete and uses `break` to exit the loop.
 
-### 2. The Protocol "I'm Done": `data: [DONE]`
-
-Some SSE implementations send a final, literal string `[DONE]` to terminate the stream.
-
-```go
-if dataStr == "[DONE]" {
-    logCtx.Info().Msg("Received SSE end marker [DONE].")
-    break // EXIT
-}
-```
-
-This is a formal protocol signal, like a self-destruct sequence announcing its completion. Our code listens for it and `break`s.
-
-### 3. The Physical "End of the Line": `io.EOF`
+### 2. The Physical "End of the Line": `io.EOF`
 
 When the server has sent all its data and gracefully closes the connection, the `reader.ReadString('\n')` call will eventually fail with a special error: `io.EOF` (End of File).
 
 ```go
 line, err := reader.ReadString('\n')
-if err == io.EOF {
-    logCtx.Info().Msg("SSE stream ended normally (EOF).")
-    break // EXIT
+if err != nil {
+    if err == io.EOF {
+        logCtx.Info().Msg("SSE stream ended (EOF).")
+        break // EXIT
+    }
+    // ... any other error is handled below ...
 }
 ```
 
 This is the physical equivalent of the phone line going dead after the conversation is over. It's a clean, normal termination.
 
-### 4. The External "Abort Mission": `ctx.Done()`
+### 3. The External "Abort Mission": `ctx.Done()`
 
 This is the emergency brake. The `context` passed into this function can be cancelled by an upstream caller (e.g., due to a request timeout or user clicking "cancel").
 
@@ -158,7 +157,7 @@ case <-ctx.Done():
 
 On every single loop, this code checks for the abort signal. This is Commander Cody receiving "Execute Order 66." The current mission is terminated *immediately* and the function returns with an error.
 
-### 5. The Catastrophic Failure: Any Other Error
+### 4. The Catastrophic Failure: Any Other Error
 
 If anything else goes wrong—the network cable is cut, the server sends garbage data, the connection resets—`reader.ReadString` will return an error that is *not* `io.EOF`.
 

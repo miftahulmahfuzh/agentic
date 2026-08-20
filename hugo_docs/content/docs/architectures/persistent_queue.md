@@ -1,12 +1,13 @@
 ---
 title: "Persistent Queues"
-date: 2025-08-02
+date: 2025-07-22
+lastmod: 2026-07-09
 draft: false
 ---
 
-# Architectural Note: On the Deliberate Rejection of Persistent Queues
+This document addresses the perceived weakness of holding the request queue entirely in process memory. The queue lives in a dedicated in-memory manager, `queue.Manager` (`chatbot/queue/manager.go:66`), owned by the chatbot manager as `m.queueManager` (`chatbot/manager_core.go:74`, wired at `chatbot/manager_core.go:261`). If the application restarts, any requests currently held there are lost. The seemingly obvious solution is to replace this with a durable, external message queue like Redis Streams, RabbitMQ, or NATS.
 
-This document addresses the perceived weakness of using in-memory Go channels for request queuing (`requestQueue`, `preparedQueue`) within `manager.go`. If the application restarts, any requests currently in these channels are lost. The seemingly obvious solution is to replace these channels with a durable, external message queue like Redis Streams, RabbitMQ, or NATS.
+(Note: Redis *is* present in this system — it backs caching, auth-credential storage, and other state via `services.RedisClient`, e.g. `chatbot/manager_core.go:105`. This document is narrowly about the **request queue**, which is deliberately *not* Redis-backed. "No external broker" here means the queue, not the whole application.)
 
 This document asserts that for this specific application, such a change would be a critical design error. It is a solution that is far more dangerous than the problem it purports to solve.
 
@@ -18,15 +19,20 @@ We are not launching nuclear missiles. We are processing chat requests. The stat
 
 ## Analysis of the Two Approaches
 
-### The Current In-Memory Approach (Go Channels)
+### The Current In-Memory Approach (Go-Native Queue Manager)
 
--   **Mechanism:** Native Go channels.
--   **Execution:** A simple, memory-based, first-in-first-out buffer.
+-   **Mechanism:** A single in-process `queue.Manager` (`chatbot/queue/manager.go:66`). The backing store is **not** a channel — it is a plain Go slice, `queuedItems []Item`, guarded by a `sync.RWMutex` (`chatbot/queue/manager.go:68-69`). Each `Item` wraps the request plus enqueue metadata (`Request`, `EnqueueTime`, `CacheKey` — `chatbot/queue/manager.go:59-63`). Two small buffered signaling channels sit *alongside* the slice for event-driven wakeups: `normalChan chan struct{}` and `priorityChan chan string` (`chatbot/queue/manager.go:78-79`). The channels carry signals, not payloads; the slice holds the truth.
+-   **Execution:**
+    1.  `EnqueueNewRequest` (`chatbot/queue/manager.go:168`) takes the write lock, rejects the request if `len(queuedItems) >= maxSize` (`ErrQueueFull` backpressure), appends the item, and does a non-blocking `select` send on `normalChan` to wake a waiting worker. It is called once per request from `chatbot/manager.go:391`.
+    2.  `DequeueRequestNormal` (`chatbot/queue/manager.go:285`, an alias for `DequeueRequest` at `:247`) pops index `0` of the slice — strict **FIFO** — under the write lock.
+    3.  Normal workers (`normalRequestWorker`, `chatbot/manager.go:841`) block on `GetNormalChannel()`, then dequeue and process. Cache-promotion "queue jumps" go through `priorityChan`: `PromoteForCache` (`chatbot/queue/manager.go:324`) pulls matching items out of the slice, and `priorityRequestWorker` (`chatbot/manager.go:866`) drains them via `DequeueRequestPromoted` (`chatbot/queue/manager.go:290`).
+    4.  O(1) bookkeeping: `requestIndexMap` and `cacheKeyIndexMap` (`chatbot/queue/manager.go:74-75`) let cancellation (`RemoveRequest`) and cache promotion find items without scanning.
+-   **Concurrency gate:** Admission to the queue is decoupled from execution concurrency. The *normal* path throttles active work with a single counting semaphore, `processingSemaphore chan struct{}` sized to `MaxConcurrentRequests` (`chatbot/manager_core.go:66,127`); a worker acquires it at `chatbot/manager.go:514` and releases at `:526`. The *priority* fast-lane deliberately **bypasses** that semaphore for immediate execution (`executeTaskImmediate`, "no semaphore" — `chatbot/manager.go:884`), so cache jumps never wait behind the normal backlog.
 -   **Resource Cost:**
-    -   **CPU:** Negligible. It is one of the most highly optimized and performant concurrency primitives available in the language.
-    -   **Memory:** The cost of storing pointers to the request objects in the queue. Minimal.
-    -   **Dependencies:** Zero. It is part of the Go runtime.
--   **Complexity:** Trivial. The code is `queue <- item` and `item <- queue`. It is atomic, goroutine-safe, and requires no external management.
+    -   **CPU:** Negligible. A slice append/pop under a mutex plus a non-blocking channel signal — all in-process, no serialization, no syscalls.
+    -   **Memory:** The cost of holding the request structs in the slice, bounded by `QueueSize` (`config.go`, default 100). Minimal.
+    -   **Dependencies:** Zero. It is entirely `sync` + channels from the Go runtime.
+-   **Complexity:** Low. It is one package, lock-guarded, goroutine-safe, and requires no external management. The mechanics are `append`, pop-index-0, and a buffered signal — not a distributed protocol.
 -   **Failure Domain:** A failure is confined to the single application instance. If a pod dies, other pods are unaffected. The blast radius is minimal.
 
 ### The Proposed Persistent Queue Approach (External Message Broker)
@@ -57,7 +63,7 @@ The core tenet of modern, scalable service design is to build stateless, disposa
 
 Introducing a persistent queue fundamentally violates this principle. It introduces shared, mutable state via an external dependency, making our workers stateful and fragile.
 
-| Feature                 | In-Memory Channels (Current)      | Persistent Queue (Proposed)                                   | Verdict                                                                       |
+| Feature                 | In-Memory Queue Manager (Current) | Persistent Queue (Proposed)                                   | Verdict                                                                       |
 | ----------------------- | --------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | **Complexity**          | Trivial                           | Massive. A distributed system in itself.                      | The current approach is orders of magnitude simpler and more maintainable.    |
 | **Dependencies**        | Zero                              | One entire external service (Redis, etc.).                    | In-memory has no external points of failure.                                  |

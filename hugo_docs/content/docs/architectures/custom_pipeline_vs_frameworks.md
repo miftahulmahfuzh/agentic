@@ -1,6 +1,7 @@
 ---
 title: "Custom Pipeline vs Frameworks"
-date: 2026-07-25
+date: 2026-07-09
+lastmod: 2026-08-20
 draft: false
 ---
 
@@ -52,9 +53,12 @@ trustworthy enough to execute directly. We run a deterministic repair-and-valida
   — normalize the LLM's inconsistent `code` vs `codes` argument shapes.
 - `validation/first.go:ValidatePipelineModeFirstStep` — enforce the IRON RULE that step_1
   of a pipeline must be a stock-code generator, and `convertToAggregationMode` when it isn't.
-- `dependency/detect.go:HasStockCodeGenerator` / `HasOnlyIndependentTools` and
-  `dependency/convert.go:ConvertIndependentPipelineToSimpleMode` — demote a bogus pipeline
-  to simple mode when the LLM invented dependencies that don't exist (parallel is always faster).
+- `dependency/detect.go:HasStockCodeGenerator` + `dependency/remove.go:RemoveTool` — the iron
+  rule in `postprocess.go`: strip `compare_stocks` from a plan that has no stock-code generator
+  to feed it, converting the emptied step to an aggregation step. (A sibling rule that demoted
+  "independent" pipelines to simple mode for parallelism was deleted on 2026-08-20, `P1-PL-A014`:
+  it was unreachable, and `execution.BuildDependencyGraph` already runs in-degree-0 steps in the
+  same level, so the flattening bought nothing.)
 - `dependency/compare_stocks.go:EnforceCompareStocksWithMapStep` — guarantee `compare_stocks`
   is only ever wired to a real map step.
 - `correction/parallel.go:EnforceEnableParallelMap` and
