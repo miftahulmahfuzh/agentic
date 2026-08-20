@@ -264,7 +264,13 @@ section > p {
   gap: 0;
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 0.9375rem;
+  /* All five items have to hold one line at the 984px content width (--maxw
+     minus two gutters). At 0.9375rem with 18px dividers they measure ~1039px
+     and "3 images per turn" gets orphaned onto a second row. 0.875rem with
+     14px dividers measures ~945px. Widening --maxw instead was the other
+     option, but it would need ~1140px to fit — reflowing every other section
+     of the page to rescue one row, and still leaving only ~5px of slack. */
+  font-size: 0.875rem;
   color: var(--ink);
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -273,7 +279,7 @@ section > p {
 }
 
 .metrics span {
-  padding: 2px 18px;
+  padding: 2px 14px;
   border-right: 1px solid var(--line);
   white-space: nowrap;
 }
@@ -876,6 +882,18 @@ pre code {
 
 /* --- Responsive ----------------------------------------------------------- */
 
+/* The metrics row fits on one line down to a 1041px viewport (984px of
+   content at --maxw, 944px at 1040px). Below that it cannot, at any size that
+   stays readable — so stop trying and stack it, rather than let flex orphan
+   "3 images per turn" onto a row of its own against a dangling divider. */
+@media (max-width: 1040px) {
+  .metrics span {
+    border-right: 0;
+    padding: 2px 0;
+    flex: 1 0 50%;
+  }
+}
+
 @media (max-width: 900px) {
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -897,11 +915,6 @@ pre code {
   .rail__arrow {
     flex: 0 0 24px;
     transform: rotate(90deg);
-  }
-  .metrics span {
-    border-right: 0;
-    padding: 2px 0;
-    flex: 1 0 50%;
   }
 }
 
