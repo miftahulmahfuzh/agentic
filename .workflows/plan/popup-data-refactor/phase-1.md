@@ -1,0 +1,1544 @@
+# Phase 1: Extraction & verification tooling
+
+**Plan set:** `POPUP_DATA_REFACTOR_PLAN.md`
+**Analysis:** `20261027-105313-B7K2_code_analyzer.md`
+**Satisfies:** R1 — the half of "trigger and body cannot drift" that is *provable*: a committed
+script that re-derives both sides from the rendered page and diffs them against frozen truth.
+**Depends on:** none
+**Difficulty:** NORMAL
+**Package:** `hugo_docs/scripts`
+
+---
+
+## Goal
+
+After this phase the refactor has a safety net it did not have: `popups_baseline.json` holds all 51
+`case` bodies (both `dark-launch` duplicates, distinguishable) and all 51 trigger buttons exactly as
+the pre-refactor page produces them, `popups_extract.py` owns the single `norm()` every later phase
+compares through, and `popups_verify.py` rebuilds the site and reports per-id PASS/FAIL/MISSING/EXTRA
+against that baseline. Nothing the site renders changes: three new files appear under
+`hugo_docs/scripts/` and `custom-home.html` is not touched.
+
+The net is built *before* the trapeze deliberately. Run against the current page the verifier reports
+every id MISSING and exits non-zero — which is the proof the render-side extractor executes and that
+a green run after phase 3 means something.
+
+---
+
+## Interface Contract
+
+The reconciler reads this section to detect cross-phase conflicts. Be exact and exhaustive.
+
+**Deletes:** none.
+**Renames:** none.
+**Signature changes:** none.
+
+**Creates (scripts):**
+
+| Symbol | File | Who consumes it |
+|---|---|---|
+| `popups_extract.norm(s) -> str` | `popups_extract.py` | **Phase 2** (`popups_emit.py`), `popups_verify.py` |
+| `popups_extract.extract_cards(lines) -> list[dict]` | `popups_extract.py` | `popups_verify.py` (same parser, both sides) |
+| `popups_extract.extract_cases(lines) -> list[dict]` | `popups_extract.py` | this phase only |
+| `popups_extract.js_unescape(raw, where) -> str` | `popups_extract.py` | this phase only |
+| `popups_extract.build_baseline(text) -> dict`, `dumps(baseline) -> str` | `popups_extract.py` | this phase only |
+| `popups_extract.ExtractError` | `popups_extract.py` | `popups_verify.py` |
+| `popups_extract.TRIGGER_RE`, `CARRIER_RE`, `CARD_RE`, `H4_RE`, `GRID_RE`, `SECTION_RE` | `popups_extract.py` | `popups_verify.py`; **Phase 3 must satisfy them** |
+| `popups_extract.CARRIER_OPEN`, `TRIGGER_LINE`, `H4_LINE`, `CARD_OPEN_LINE` | `popups_extract.py` | `popups_verify.py` diffs; **Phase 3's markup contract** |
+| `popups_extract.SPLIT_ID`, `SPLIT_NEW_ID`, `SPLIT_CARD`, `SPLIT_CARD_HEADING`, `SPLIT_OCCURRENCE` | `popups_extract.py` | `popups_verify.py`; **Phase 2's `popups_emit.py` imports `SPLIT_ID`, `SPLIT_NEW_ID`, `SPLIT_CARD`, `SPLIT_OCCURRENCE`** (reconciled — see §2(ii)) |
+| `popups_verify.main(argv) -> int` | `popups_verify.py` | CI / humans |
+
+**Creates (data):** `hugo_docs/scripts/popups_baseline.json` — schema in *Step 3* below.
+
+**Requires (from earlier phases):** nothing. This phase is the root of the set.
+
+**Leaves alone (owned by others):**
+- `hugo_docs/layouts/page/custom-home.html` — Phase 3. Read only, never written.
+- `hugo_docs/data/**` and `hugo_docs/scripts/popups_emit.py` — Phase 2. Not created, not referenced
+  at import time. (`popups_extract.py`'s docstring *names* `popups_emit.py` in prose; it does not
+  import it, so phase 1 stands alone with phase 2 absent.)
+- `content/docs/**`, `public/**`, `themes/`, `resources/`, `~/agentic_golang`.
+- **No Hugo partial is created.** No `hugo.toml` change. No CI change. No new dependency file.
+
+### 1. What Phase 2 asked for, and where it landed
+
+Phase 2's plan states its requirements verbatim; every one is met, and its *Step 2* "tolerant
+adapter" (`_pick`) is a **no-op** against these spellings because each one is the adapter's **first**
+candidate:
+
+| Phase 2's `_pick(...)` call | First candidate | This baseline emits | No-op? |
+|---|---|---|---|
+| `_pick(raw, "occurrences", "bodies", …)` | `occurrences` | `occurrences` (list, source order) | yes |
+| `_pick(o, "id", "popup_id", "case")` | `id` | `id` | yes |
+| `_pick(o, "body", "html", "content")` | `body` | `body` (already `norm`-ed) | yes |
+| `_pick(o, "line", "case_line", …)` | `line` | `line` = the `case` line number | yes |
+| `_pick(raw, "cards", "feature_cards", …)` | `cards` | `cards` (list, source order) | yes |
+| `_pick(c, "triggers", "popups", …)` | `triggers` | `triggers` (list, **trigger order**) | yes |
+| `_pick(c, "section")` / `_pick(c, "icon")` | — | `section`, `icon` | yes |
+| `_pick(c, "heading", "title", "h4")` | `heading` | `heading`, entities as authored | yes |
+| `_pick(t, "id", …)` / `_pick(t, "label", "text")` | `id`, `label` | `id`, `label` | yes |
+
+Extra keys are present and harmless to `_pick`: occurrences also carry `close_line` and `indent`;
+cards and triggers also carry `line`. **The reconciler has nothing to align here.**
+
+Phase 2's assumptions, answered one by one:
+
+- **A1 — `norm` importable, no import-time side effects.** Held. `popups_extract.py` at module level
+  only computes paths, compiles regexes and defines constants: no `argparse` call, no file read, no
+  `print`. `from popups_extract import norm` is safe.
+- **A2 — all 51 occurrences, both `dark-launch` bodies, distinguishable by source line.** Held, and
+  *asserted*: `build_baseline` refuses to write unless the page yields exactly 51 occurrences, 50
+  unique ids and exactly one duplicated id, which must be `dark-launch`. The two carry
+  `"line": 1754` and `"line": 2885`; `popups_emit.body_for(..., nth)` indexes them after sorting by
+  `line`, which is already their order in the file.
+- **A3 — 10 cards in source order, triggers in trigger order.** Held. `extract_cards` walks the page
+  top to bottom and never looks at the switch (finding F6).
+- **A4 — bodies already `norm`-ed and JS-unescaped.** Held. Re-applying `norm` is free: it is
+  idempotent and the self-test pins that.
+- **A5 — `_pick` to be aligned by the reconciler.** Nothing to align; see the table.
+
+### 2. Two answers Phase 2 explicitly asked this plan to give
+
+**(i) Does `popups_extract.py`'s CLI name an emit seam? NO.** There is no `--emit-yaml` flag, no
+`emit_yaml()` stub, and no import of `popups_emit`. The flags are `--page`, `--rev`, `--out`,
+`--check`, `--self-test`, `--report` and nothing else. **Phase 2 therefore SKIPS its Step 5
+entirely** and invokes `popups_emit.py` directly as in its Step 3. Reconciler: delete phase 2's
+Step 5, do not try to place the six-line shim.
+
+**(ii) Decision D1's names are exported here, and this is now the ONLY copy.**
+`popups_extract.py` declares `SPLIT_ID = "dark-launch"`, `SPLIT_NEW_ID = "feature-flags"`,
+`SPLIT_CARD = "system-observability"`, `SPLIT_CARD_HEADING = "System Observability"` and
+`SPLIT_OCCURRENCE = 1`. `popups_verify.py` imports them.
+
+The draft of phase 2 re-declared `SPLIT_ID`/`SPLIT_CARD`/`SPLIT_NEW_ID` locally with byte-identical
+values and hard-coded `nth = 1` for `SPLIT_OCCURRENCE`. **The reconciler collapsed that to one
+definition:** `popups_emit.py` now does
+`from popups_extract import SPLIT_CARD, SPLIT_ID, SPLIT_NEW_ID, SPLIT_OCCURRENCE, norm` and declares
+none of its own. So these five names are a genuine published interface, not a coincidence — if a
+future change moves or renames one, phase 2's emitter breaks loudly at import rather than quietly
+emitting a different body under `feature-flags`.
+
+### 3. The markup contract Phase 3 must honour — state it once, exactly
+
+Phase 3 is being planned in parallel. These four shapes are the entire coupling between the data
+tree and the checker. `popups_verify.py` matches on them; if the rendered page deviates by anything
+other than **leading whitespace**, the verifier reports MISSING and phase 3 is not done.
+
+**Body carrier** — one per popup, anywhere in the rendered document (conventionally beside the
+modal markup, outside any `feature-grid`):
+
+```html
+<script type="text/html" class="popup-body" data-popup-id="cache-fastlane">…body…</script>
+```
+
+- The three attributes in **that order**, with **that spacing**, double-quoted.
+- The body is emitted with `safeHTML` and nothing else. Entities stay as authored (`&amp;` is five
+  characters in the file and five characters in the render); script elements are raw text, so
+  `textContent` returns those bytes undecoded, which is why `content.innerHTML = el.textContent`
+  reproduces the old switch byte-for-byte.
+- The opening tag and the body start on the same line (the regex is `re.S`, so a newline between
+  them would merely become part of the body and `norm` would strip it — but keep it tight).
+- No body may contain `</script>`; zero do today and phase 3 asserts it at build time.
+
+**Trigger button** — one per popup, one per line, inside its card's `<ul>`:
+
+```html
+<li><button class="popup-trigger" type="button" onclick="showPopup('cache-fastlane')">Cache Fast-Lane</button></li>
+```
+
+**Card heading** — first line inside each `<div class="feature-card">`:
+
+```html
+<h4><svg class="ic"><use href="#ic-bolt"/></svg> Performance &amp; Architecture</h4>
+```
+
+Exactly one space between `</svg>` and the heading text; the heading rendered with `safeHTML` so
+`&amp;` survives.
+
+**Card and grid wrappers** — `<div class="feature-grid">` and `<div class="feature-card">` each
+alone on their line, each card's trigger list closed by `</ul>` on its own line, each of the three
+grids inside `<section id="agents">` / `<section id="screener">` / `<section id="features">`, those
+three `<section>` open tags each alone on their line.
+
+Leading indentation is free — the verifier's patterns all begin `^\s*`, which is precisely how R3's
+"one uniform indentation" is allowed to differ from the hand-written original without failing
+property (b).
+
+**Blank lines are free too, and THIS PHASE OWNS THAT GUARANTEE.** Phase 3 asked (in its "One thing
+phase 1 must confirm") whether the verifier would trip on the inter-card blank line: the current
+page puts one between feature-cards in the `agents` and `screener` grids but **not** in the
+`features` grid, so phase 3's one uniform convention adds three blank lines to the `features` grid.
+It does not trip, and the reason is structural, not a tolerance:
+
+- `extract_cards` is a **line classifier, not a differ**. A blank line matches none of
+  `SECTION_RE` / `GRID_RE` / `CARD_RE` / `H4_RE` / `TRIGGER_RE` / `UL_END_RE`, so the loop falls
+  through to the next line and the card record is unchanged. Blank lines are not recorded anywhere.
+- `compare_cards` never sees page bytes. It compares `(section, heading, icon)` tuples and then
+  **reconstructs** each `<li>` from `TRIGGER_LINE % (id, label)` on both sides. The strings it diffs
+  are synthesised from the parsed model, so whitespace *between* records cannot reach the diff.
+- `norm()` is applied only to **bodies**, never to the trigger region. There is nothing to add a
+  blank-line rule to on the trigger side, and none is added.
+
+**So phase 3 emits the blank line between cards, uniformly in all three grids, and this phase's
+verifier is blind to it by construction.** Neither side needs a tolerance flag. This is recorded in
+the index as decision **D6**.
+
+---
+
+## Files
+
+| File | Action | What changes |
+|---|---|---|
+| `hugo_docs/scripts/popups_extract.py` | create | 573 lines: `norm()`, the JS unescaper, the switch parser, the feature-card parser, the baseline writer, and the self-test that pins the 36/15 dedent split |
+| `hugo_docs/scripts/popups_verify.py` | create | 296 lines: builds with `~/bin/hugo` (never `--gc`), pulls bodies out of the carriers and triggers out of the rendered cards, diffs both against the baseline, exits non-zero on any mismatch |
+| `hugo_docs/scripts/popups_baseline.json` | create | ~148 KB, 708 lines: 51 occurrences + 10 cards + 51 triggers + a sha256 of the page it came from |
+
+Three new files, no existing file touched. `hugo_docs/scripts/` already holds `gen_og_image.py` and
+`sync_anchor_docs.py`; these two match their conventions — `#!/usr/bin/env python3`, a module
+docstring that ends in a `Usage:` block and an exit-status sentence, `from __future__ import
+annotations`, `argparse`, `pathlib`, `main()` returning an int, `sys.exit(main())`. **Standard
+library only.** No `requirements.txt` is added; phase 2 settled the PyYAML question in its Step 4 and
+this phase does not reopen it — nothing here parses YAML at all.
+
+---
+
+## Implementation Steps
+
+### Step 1: Write `hugo_docs/scripts/popups_extract.py`
+
+**File:** `hugo_docs/scripts/popups_extract.py` (new; sibling of `gen_og_image.py:1` and
+`sync_anchor_docs.py:1`)
+**Change:** the parse side plus the shared `norm()`. Complete file below — it is the file that was
+run to produce every number in this plan, not a sketch.
+
+**Five things in it are load-bearing and easy to get wrong:**
+
+1. **`norm()` is a COMMON-PREFIX dedent, not a per-line strip.** Phase 2's finding F2, re-measured
+   here: 36 of the 51 bodies flatten to column 0 and 15 do not, because those 15 contain a block
+   already at column 0 in the source (13 `<div class="mermaid">` sources and 2 `<pre><code>` blocks),
+   which pins the common prefix at empty. **That is correct**; dedenting further would move prose
+   relative to whitespace-significant content and break I1. The split is pinned by `--self-test` so
+   phase 3 and the reconciler cannot mistake it for a bug.
+2. **The closing backtick is NOT at the case indent.** For the 38 era-0 cases the `` `; `` sits at
+   column 0 like the `case`; for the 13 era-8 cases the `case` is at 8, `popupContent = \`` at 10,
+   the `` `; `` at **12** and `break;` at 10. The parser therefore scans forward to the next closing
+   line and never matches an expected indent. (The analysis's "uniform five-line shape" is true of
+   the *sequence*, not of the columns.)
+3. **The literal's first and last lines are whitespace.** The template literal opens immediately
+   after the backtick, so its first line is empty, and it closes on the indentation that precedes
+   `` `; ``, so its last line is whitespace-only. Both are reconstructed faithfully and then deleted
+   by `norm`'s steps 2 and 4 — reconstructing them matters because getting the *tail* wrong is how a
+   body silently gains or loses a trailing newline.
+4. **JS escapes are unwound, and unknown ones raise.** `custom-home.html:2842` holds `"\\n"` inside
+   the literal, which the browser renders as **one** backslash plus `n`. It is the only escape in
+   1,453 lines. An extractor that copies source bytes gets that body wrong and nothing downstream
+   notices, because the baseline would be wrong too. The escape table is explicit; anything outside
+   it (`\u`, `\x`, a line continuation) raises rather than guessing.
+5. **Zero backticks and zero `${`, asserted per body.** True today. If a future body introduces
+   either, the extraction **fails loudly** instead of freezing a baseline that does not describe what
+   the browser shows.
+
+**Code:**
+
+```python
+#!/usr/bin/env python3
+"""Freeze the pre-refactor home-page popups into popups_baseline.json.
+
+The landing page stores 51 popup bodies as JavaScript template literals inside
+one `switch (type)` in layouts/page/custom-home.html, and 51 trigger buttons in
+the feature-card markup above it. This script reads both sides and writes the
+frozen truth that every later phase of the popup-data refactor is checked
+against:
+
+    hugo_docs/scripts/popups_baseline.json
+
+It owns `norm()` -- the one normalisation the whole refactor agrees on. Nothing
+else may define a second one: two normalisers is how a byte-for-byte refactor
+silently stops being byte-for-byte. `popups_verify.py` imports it, and so does
+`popups_emit.py`.
+
+What is recovered, and why each piece is non-obvious:
+
+  * Bodies come out as the string the BROWSER would see, not as source bytes.
+    A template literal is unescaped text: `"\\\\n"` in the source is one
+    backslash plus n at runtime. Copying source bytes gets that body wrong and
+    nothing downstream would notice, because the baseline would be wrong too.
+  * Both `case "dark-launch":` occurrences are kept, distinguished by their
+    source line. The second is unreachable in a switch and has never rendered;
+    the refactor resurrects it, so the baseline must still carry it.
+  * Card and trigger ORDER comes from the trigger lists, never from the switch.
+    The two disagree -- Resource Management's buttons and its cases run in
+    different sequences -- and the buttons are what renders.
+
+Usage:
+    popups_extract.py                      # write the baseline from the worktree page
+    popups_extract.py --rev d963643        # ... from the page at a git revision
+    popups_extract.py --check              # re-extract and diff against the committed file
+    popups_extract.py --self-test          # pin norm() and the dedent split
+    popups_extract.py --report             # human summary, writes nothing
+
+Exit status is 0 on success, 1 on a failed check or self-test, 2 on a usage or
+parse error (a body that gained a backtick, a `${`, or an escape this script
+will not guess at).
+"""
+
+from __future__ import annotations
+
+import argparse
+import difflib
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+# hugo_docs/ is the parent of scripts/, the same anchor sync_anchor_docs.py uses.
+HUGO_ROOT = Path(__file__).resolve().parent.parent
+PAGE_REL = "hugo_docs/layouts/page/custom-home.html"
+PAGE = HUGO_ROOT / "layouts" / "page" / "custom-home.html"
+BASELINE = HUGO_ROOT / "scripts" / "popups_baseline.json"
+
+SCHEMA = 1
+
+# Expected counts. These are assertions, not configuration: if the page gains a
+# popup, the number here moves in the same commit that re-freezes the baseline.
+N_OCCURRENCES = 51
+N_UNIQUE_IDS = 50
+N_CARDS = 10
+N_TRIGGERS = 51
+SECTIONS = ("agents", "screener", "features")
+
+# --- Decision D1, declared once so the verifier and the emitter cannot drift --
+# `dark-launch` is declared twice in the switch and pressed by two buttons in
+# two different cards. The refactor splits it: the live :1754 body keeps the id
+# in Multimodal Processing, and the dead :2885 body is resurrected under a new
+# id in System Observability, whose button already reads "Dark-Launch Feature
+# Flags". These names are the contract between popups_verify.py and
+# popups_emit.py; neither invents its own.
+SPLIT_ID = "dark-launch"
+SPLIT_NEW_ID = "feature-flags"
+SPLIT_CARD = "system-observability"          # the popup_cards/ basename phase 2 mints
+SPLIT_CARD_HEADING = "System Observability"  # the <h4> text, which is what the baseline has
+SPLIT_OCCURRENCE = 1                         # 0-based: the DEAD case, by source order
+
+# --- the switch -------------------------------------------------------------
+CASE_RE = re.compile(r'^(?P<indent>[ ]*)case "(?P<id>[A-Za-z0-9_-]+)":[ ]*$')
+OPEN_RE = re.compile(r"^[ ]*popupContent = `[ ]*$")
+CLOSE_RE = re.compile(r"^[ ]*`;[ ]*$")
+BREAK_RE = re.compile(r"^[ ]*break;[ ]*$")
+
+# --- the feature cards ------------------------------------------------------
+SECTION_RE = re.compile(r'^\s*<section id="(?P<id>[A-Za-z0-9_-]+)"\s*>\s*$')
+SECTION_END_RE = re.compile(r"^\s*</section>\s*$")
+GRID_RE = re.compile(r'^\s*<div class="feature-grid">\s*$')
+CARD_RE = re.compile(r'^\s*<div class="feature-card">\s*$')
+H4_RE = re.compile(
+    r'^\s*<h4><svg class="ic"><use href="#(?P<icon>[A-Za-z0-9_-]+)"/></svg>\s*'
+    r"(?P<heading>.*?)</h4>\s*$"
+)
+UL_END_RE = re.compile(r"^\s*</ul>\s*$")
+
+# THE TRIGGER CONTRACT. Phase 3 must emit exactly this shape, modulo leading
+# whitespace, or property (b) cannot be checked. popups_verify.py reuses this
+# very regex against the rendered page -- one pattern, both sides.
+TRIGGER_RE = re.compile(
+    r'^\s*<li><button class="popup-trigger" type="button" '
+    r"onclick=\"showPopup\('(?P<id>[A-Za-z0-9_-]+)'\)\">"
+    r"(?P<label>.*?)</button></li>\s*$"
+)
+
+# The exact lines phase 3 must render, modulo leading whitespace. Published as
+# format strings so the verifier's diffs and phase 3's template agree on one
+# spelling instead of two.
+CARD_OPEN_LINE = '<div class="feature-card">'
+H4_LINE = '<h4><svg class="ic"><use href="#%s"/></svg> %s</h4>'
+TRIGGER_LINE = (
+    '<li><button class="popup-trigger" type="button" '
+    "onclick=\"showPopup('%s')\">%s</button></li>"
+)
+
+# THE CARRIER CONTRACT. Phase 3 must emit exactly this shape for every body.
+# `type="text/html"` is a non-JS script type, so Go's context-aware escaper
+# leaves `safeHTML` output alone; script elements are raw-text, so textContent
+# returns those bytes with entities UNDECODED. popups_verify.py matches on it.
+CARRIER_OPEN = (
+    '<script type="text/html" class="popup-body" data-popup-id="%s">'
+)
+CARRIER_RE = re.compile(
+    r'<script type="text/html" class="popup-body" '
+    r'data-popup-id="(?P<id>[A-Za-z0-9_-]+)">(?P<body>.*?)</script>',
+    re.S,
+)
+
+
+class ExtractError(RuntimeError):
+    """A structural surprise in the page. Always fatal, never worked around."""
+
+
+# --------------------------------------------------------------------------- norm
+def norm(s: str) -> str:
+    """The one normalisation this refactor compares through (plan invariant I1).
+
+        1. CRLF (and bare CR) -> LF
+        2. every whitespace-only line becomes empty
+        3. the longest common leading-whitespace prefix of all NON-BLANK lines
+           is removed
+        4. leading and trailing blank lines are stripped
+        5. exactly one trailing newline
+
+    It preserves every content byte and all RELATIVE indentation. Step 3 is a
+    COMMON-PREFIX dedent, not a per-line strip, and that distinction is the
+    whole point: 15 of the 51 bodies contain a block that already sits at column
+    0 in the source (13 <div class="mermaid"> graph sources and 2 <pre><code>
+    blocks), so their common prefix is empty and the surrounding prose keeps its
+    authoring indent. Flattening those further would move prose relative to
+    whitespace-significant content and break I1. See --self-test.
+
+    Idempotent: norm(norm(s)) == norm(s).
+    """
+    s = s.replace("\r\n", "\n").replace("\r", "\n")
+    lines = ["" if not line.strip() else line for line in s.split("\n")]
+
+    prefix = None
+    for line in lines:
+        if not line:
+            continue
+        lead = line[: len(line) - len(line.lstrip(" \t"))]
+        if prefix is None:
+            prefix = lead
+        else:
+            cut = 0
+            while cut < len(prefix) and cut < len(lead) and prefix[cut] == lead[cut]:
+                cut += 1
+            prefix = prefix[:cut]
+        if not prefix:
+            break
+    if prefix:
+        n = len(prefix)
+        lines = [line[n:] if line else "" for line in lines]
+
+    while lines and not lines[0]:
+        lines.pop(0)
+    while lines and not lines[-1]:
+        lines.pop()
+    return "\n".join(lines) + "\n"
+
+
+# --------------------------------------------------------------------------- JS
+# Every escape sequence a template literal can legally carry, with the value it
+# evaluates to. Anything NOT here raises: a silent guess is how one body ends up
+# wrong in a baseline nothing can double-check.
+JS_ESCAPES = {
+    "\\": "\\", "`": "`", "$": "$", "'": "'", '"': '"',
+    "n": "\n", "t": "\t", "r": "\r", "b": "\b", "f": "\f", "v": "\v", "0": "\0",
+}
+
+
+def js_unescape(raw: str, where: str) -> str:
+    """Turn template-literal SOURCE text into the string the browser sees.
+
+    The popup region holds exactly one escape today -- `"\\\\n"` at :2842, which
+    renders as one backslash plus n -- and an extractor that copies source bytes
+    verbatim gets that body wrong.
+    """
+    out = []
+    i = 0
+    while i < len(raw):
+        ch = raw[i]
+        if ch != "\\":
+            out.append(ch)
+            i += 1
+            continue
+        if i + 1 >= len(raw):
+            raise ExtractError("%s: template literal ends on a lone backslash" % where)
+        nxt = raw[i + 1]
+        if nxt not in JS_ESCAPES:
+            raise ExtractError(
+                "%s: escape \\%r is not in the table this script will unwind. "
+                "Add it deliberately -- guessing here corrupts a body silently."
+                % (where, nxt)
+            )
+        out.append(JS_ESCAPES[nxt])
+        i += 2
+    return "".join(out)
+
+
+# --------------------------------------------------------------------------- parse
+def read_page(page: Path, rev: str | None) -> str:
+    """The page text, from the worktree or from a git revision.
+
+    `--rev` exists because the baseline is FROZEN PRE-REFACTOR truth. Once phase
+    3 rewrites the page, re-extracting from the worktree is meaningless; naming
+    the base revision keeps `--check` runnable forever.
+    """
+    if rev:
+        try:
+            top = subprocess.run(
+                ["git", "-C", str(page.resolve().parent), "rev-parse", "--show-toplevel"],
+                check=True, capture_output=True, text=True,
+            ).stdout.strip()
+            raw = subprocess.run(
+                ["git", "-C", top, "show", "%s:%s" % (rev, PAGE_REL)],
+                check=True, capture_output=True,
+            ).stdout
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise ExtractError("cannot read %s at revision %s: %s" % (PAGE_REL, rev, exc))
+        return raw.decode("utf-8")
+    try:
+        return page.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ExtractError("cannot read %s: %s" % (page, exc))
+
+
+def extract_cases(lines: list[str]) -> list[dict]:
+    """All 51 `case` occurrences, in source order, bodies normalised.
+
+    The shape is uniform but NOT as symmetrical as it looks: the closing "`;"
+    sits at the case indent for the 38 era-0 cases and four columns deeper for
+    the 13 era-8 ones. So the body runs to the next closing line, found by
+    scanning, never by matching an expected indent.
+    """
+    out = []
+    i = 0
+    while i < len(lines):
+        m = CASE_RE.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        case_line = i + 1
+        where = 'case "%s" at :%d' % (m.group("id"), case_line)
+        if not OPEN_RE.match(lines[i + 1] if i + 1 < len(lines) else ""):
+            raise ExtractError("%s: expected `popupContent = \\`` on the next line" % where)
+        j = i + 2
+        while j < len(lines) and not CLOSE_RE.match(lines[j]):
+            j += 1
+        if j >= len(lines):
+            raise ExtractError("%s: unterminated template literal" % where)
+        if not BREAK_RE.match(lines[j + 1] if j + 1 < len(lines) else ""):
+            raise ExtractError("%s: expected `break;` after the closing backtick" % where)
+
+        # The literal opens immediately after the backtick, so its first line is
+        # empty, and it closes on the whitespace that precedes "`;", so its last
+        # line is whitespace-only. norm() deletes both.
+        closing_indent = lines[j][: len(lines[j]) - len(lines[j].lstrip(" "))]
+        raw = "\n" + "\n".join(lines[i + 2 : j]) + "\n" + closing_indent
+
+        if "`" in raw:
+            raise ExtractError(
+                "%s: a backtick inside the body. In the live page this breaks the "
+                "whole switch; here it means the literal was split and this parse "
+                "is wrong. Fix the page, then re-freeze." % where
+            )
+        if "${" in raw:
+            raise ExtractError(
+                "%s: a `${` inside the body -- the browser interpolates it, so the "
+                "rendered text is not the source text and this baseline would lie."
+                % where
+            )
+        body = norm(js_unescape(raw, where))
+        if not body.strip():
+            raise ExtractError("%s: empty body" % where)
+        out.append(
+            {
+                "id": m.group("id"),
+                "line": case_line,          # phase 2 reads this key first
+                "close_line": j + 1,
+                "indent": len(m.group("indent")),
+                "body": body,
+            }
+        )
+        i = j + 2
+    return out
+
+
+def extract_cards(lines: list[str]) -> list[dict]:
+    """The 10 feature cards in source order, each with its triggers in RENDER order.
+
+    Scoped to `<div class="feature-grid">` blocks on purpose: the page has 60-odd
+    other <h4> elements (tools, API, installation) and a looser sweep would
+    collect them.
+    """
+    cards: list[dict] = []
+    section = None
+    in_grid = False
+    cur: dict | None = None
+
+    for n, line in enumerate(lines, 1):
+        m = SECTION_RE.match(line)
+        if m:
+            section = m.group("id")
+            in_grid = False
+            continue
+        if SECTION_END_RE.match(line):
+            in_grid = False
+            cur = None
+            continue
+        if GRID_RE.match(line):
+            if section is None:
+                raise ExtractError(":%d: feature-grid outside any <section id=...>" % n)
+            in_grid = True
+            continue
+        if not in_grid:
+            continue
+        if CARD_RE.match(line):
+            cur = {"section": section, "line": n, "triggers": []}
+            cards.append(cur)
+            continue
+        if cur is None:
+            continue
+        m = H4_RE.match(line)
+        if m:
+            if "heading" in cur:
+                raise ExtractError(":%d: second <h4> in one feature-card" % n)
+            cur["icon"] = m.group("icon")
+            cur["heading"] = m.group("heading")   # entities exactly as authored
+            continue
+        m = TRIGGER_RE.match(line)
+        if m:
+            cur["triggers"].append({"id": m.group("id"), "label": m.group("label"), "line": n})
+            continue
+        if UL_END_RE.match(line):
+            cur = None
+
+    for c in cards:
+        if "heading" not in c:
+            raise ExtractError(":%d: feature-card with no <h4><svg>...</svg> heading" % c["line"])
+        if not c["triggers"]:
+            raise ExtractError(":%d: feature-card %r has no popup triggers" % (c["line"], c["heading"]))
+        if c["section"] not in SECTIONS:
+            raise ExtractError(":%d: card in unexpected section %r" % (c["line"], c["section"]))
+    return cards
+
+
+def build_baseline(text: str) -> dict:
+    """The frozen record. Deliberately contains NO absolute path and no
+    revision string: the same page bytes must produce the same file whether it
+    was read from the worktree or from `git show`, or `--check` would fail for
+    a reason that is not drift. `source_sha256` is what pins the revision."""
+    if "\r" in text:
+        raise ExtractError("the page contains CR; this file is LF-only")
+    lines = text.split("\n")
+    occurrences = extract_cases(lines)
+    cards = extract_cards(lines)
+
+    ids = [o["id"] for o in occurrences]
+    trig_ids = [t["id"] for c in cards for t in c["triggers"]]
+    problems = []
+    if len(occurrences) != N_OCCURRENCES:
+        problems.append("expected %d case occurrences, found %d" % (N_OCCURRENCES, len(occurrences)))
+    if len(set(ids)) != N_UNIQUE_IDS:
+        problems.append("expected %d unique case ids, found %d" % (N_UNIQUE_IDS, len(set(ids))))
+    if len(cards) != N_CARDS:
+        problems.append("expected %d feature cards, found %d" % (N_CARDS, len(cards)))
+    if len(trig_ids) != N_TRIGGERS:
+        problems.append("expected %d triggers, found %d" % (N_TRIGGERS, len(trig_ids)))
+    if set(ids) != set(trig_ids):
+        problems.append(
+            "case ids and trigger ids are not the same set; "
+            "cases only: %s; triggers only: %s"
+            % (sorted(set(ids) - set(trig_ids)), sorted(set(trig_ids) - set(ids)))
+        )
+    dupes = sorted({i for i in ids if ids.count(i) > 1})
+    if dupes != [SPLIT_ID]:
+        problems.append("expected exactly one duplicated case id (%r), found %s" % (SPLIT_ID, dupes))
+    if sorted({i for i in trig_ids if trig_ids.count(i) > 1}) != [SPLIT_ID]:
+        problems.append("expected exactly one duplicated trigger id (%r)" % SPLIT_ID)
+    if problems:
+        raise ExtractError("; ".join(problems))
+
+    return {
+        "schema": SCHEMA,
+        "source": PAGE_REL,
+        "source_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "source_lines": text.count("\n"),
+        "counts": {
+            "cards": len(cards),
+            "occurrences": len(occurrences),
+            "triggers": len(trig_ids),
+            "unique_ids": len(set(ids)),
+        },
+        "cards": cards,
+        "occurrences": occurrences,
+    }
+
+
+def dumps(baseline: dict) -> str:
+    """Deterministic: sorted keys, fixed indent, UTF-8 kept as UTF-8, one newline."""
+    return json.dumps(baseline, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+# --------------------------------------------------------------------------- self-test
+NORM_CASES = [
+    ("CRLF folds to LF", "  <p>a</p>\r\n  <p>b</p>\r\n", "<p>a</p>\n<p>b</p>\n"),
+    ("whitespace-only lines are emptied", "  <p>a</p>\n   \n  <p>b</p>\n", "<p>a</p>\n\n<p>b</p>\n"),
+    ("common prefix removed, relative indent kept",
+     "    <ul>\n        <li>x</li>\n    </ul>\n", "<ul>\n    <li>x</li>\n</ul>\n"),
+    ("a column-0 line pins the prefix at zero",
+     "    <p>a</p>\n<pre>keep\n  me</pre>\n    <p>b</p>\n",
+     "    <p>a</p>\n<pre>keep\n  me</pre>\n    <p>b</p>\n"),
+    ("leading and trailing blank lines stripped",
+     "\n\n  <p>a</p>\n\n  \n", "<p>a</p>\n"),
+    ("exactly one trailing newline", "  <p>a</p>\n\n\n", "<p>a</p>\n"),
+    ("no trailing newline gains one", "  <p>a</p>", "<p>a</p>\n"),
+    ("inline spacing untouched", "  <p>a  b</p>\n", "<p>a  b</p>\n"),
+    ("a lone backslash survives", "  <code>a + \"\\n\"</code>\n", '<code>a + "\\n"</code>\n'),
+    ("empty input is one newline", "   \n\n", "\n"),
+]
+
+# The 15 bodies norm() leaves indented, and by how much. This is the F2 pin: it
+# is CORRECT behaviour, not a bug, and phase 3 must not "fix" it.
+RESIDUAL_INDENTS = {
+    "server-owned-routing": 4, "image-pipeline": 4, "screener-lock": 4,
+    "cache-fastlane": 4, "parallel-map-execution": 4, "stateful-conversation": 4,
+    "data-driven-tools": 4, "citations": 4, "file-asset-integrity": 4,
+    "bowl-resume": 16, "circuit-breakers": 16, "e2e-cancellation": 16,
+    "structured-logging": 16, "observability-stack": 16, "status-tracking": 16,
+}
+
+
+def self_test(baseline: dict | None) -> int:
+    fails = 0
+    for name, src, want in NORM_CASES:
+        got = norm(src)
+        if got != want:
+            print("FAIL norm: %s\n  want %r\n  got  %r" % (name, want, got), file=sys.stderr)
+            fails += 1
+        elif norm(got) != got:
+            print("FAIL norm not idempotent: %s" % name, file=sys.stderr)
+            fails += 1
+    print("norm unit cases: %d, failures: %d" % (len(NORM_CASES), fails))
+
+    if baseline is None:
+        return 1 if fails else 0
+
+    residual = {}
+    for occ in baseline["occurrences"]:
+        first = occ["body"].split("\n")[0]
+        lead = len(first) - len(first.lstrip(" "))
+        if lead:
+            residual[occ["id"]] = lead
+    flat = len(baseline["occurrences"]) - len(residual)
+    if residual != RESIDUAL_INDENTS:
+        print("FAIL dedent split moved.\n  want %s\n  got  %s"
+              % (sorted(RESIDUAL_INDENTS.items()), sorted(residual.items())), file=sys.stderr)
+        fails += 1
+    print("dedent split: %d bodies flattened to column 0, %d keep a residual indent "
+          "(%d at 4, %d at 16) -- EXPECTED, see norm()'s docstring"
+          % (flat, len(residual),
+             sum(1 for v in residual.values() if v == 4),
+             sum(1 for v in residual.values() if v == 16)))
+
+    escaped = [o for o in baseline["occurrences"] if "\\" in o["body"]]
+    if [o["id"] for o in escaped] != ["alerting"]:
+        print("FAIL expected exactly one body carrying a backslash ('alerting'), got %s"
+              % [o["id"] for o in escaped], file=sys.stderr)
+        fails += 1
+    else:
+        hit = [l for l in escaped[0]["body"].split("\n") if "\\" in l][0]
+        print("JS unescape: `alerting` carries one backslash (source :2842 held two) -> %s"
+              % repr(hit.strip()[:88]))
+    return 1 if fails else 0
+
+
+# --------------------------------------------------------------------------- report
+def report(baseline: dict) -> None:
+    occ = baseline["occurrences"]
+    print("source      %s (%d lines, sha256 %s)"
+          % (baseline["source"], baseline["source_lines"], baseline["source_sha256"][:12]))
+    print("occurrences %d case bodies (%d unique ids)"
+          % (len(occ), baseline["counts"]["unique_ids"]))
+    print("triggers    %d across %d cards" % (baseline["counts"]["triggers"], len(baseline["cards"])))
+    for c in baseline["cards"]:
+        print("    %-9s :%-4d %-28s %-16s %d triggers"
+              % (c["section"], c["line"], c["heading"], c["icon"], len(c["triggers"])))
+    dup = [o for o in occ if o["id"] == SPLIT_ID]
+    for k, o in enumerate(dup):
+        kind = "LIVE" if k == 0 else "DEAD"
+        print("    %s case %r #%d at :%d -> %s"
+              % (kind, SPLIT_ID, k, o["line"], o["body"].split("\n")[0].strip()))
+
+
+# --------------------------------------------------------------------------- main
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    ap.add_argument("--page", type=Path, default=PAGE, help="page to parse (default: the worktree copy)")
+    ap.add_argument("--rev", help="read the page from this git revision instead of the worktree")
+    ap.add_argument("--out", type=Path, default=BASELINE, help="baseline to write (default: %s)" % BASELINE.name)
+    ap.add_argument("--check", action="store_true",
+                    help="re-extract and diff against --out instead of writing it")
+    ap.add_argument("--self-test", action="store_true", help="pin norm() and the dedent split")
+    ap.add_argument("--report", action="store_true", help="print a summary; write nothing")
+    args = ap.parse_args(argv)
+
+    try:
+        label = "%s@%s" % (PAGE_REL, args.rev) if args.rev else str(args.page)
+        text = read_page(args.page, args.rev)
+        baseline = build_baseline(text)
+    except ExtractError as exc:
+        print("extract error: %s" % exc, file=sys.stderr)
+        return 2
+
+    if args.self_test:
+        return self_test(baseline)
+    if args.report:
+        report(baseline)
+        return 0
+    if args.check:
+        if not args.out.exists():
+            print("no baseline at %s to check against" % args.out, file=sys.stderr)
+            return 1
+        on_disk = args.out.read_text(encoding="utf-8")
+        fresh = dumps(baseline)
+        if on_disk == fresh:
+            print("baseline is byte-identical to a fresh extraction of %s" % label)
+            return 0
+        print("BASELINE DRIFT: %s does not match a fresh extraction of %s"
+              % (args.out, label), file=sys.stderr)
+        sys.stderr.writelines(
+            difflib.unified_diff(on_disk.splitlines(True), fresh.splitlines(True),
+                                 "committed", "fresh", n=2)
+        )
+        return 1
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(dumps(baseline), encoding="utf-8", newline="\n")
+    print("wrote %s: %d occurrences, %d cards, %d triggers, from %s"
+          % (args.out, len(baseline["occurrences"]), len(baseline["cards"]),
+             baseline["counts"]["triggers"], label))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+**Impact:** adds one file. Nothing imports it yet except `popups_verify.py` in Step 2 and, in phase
+2, `popups_emit.py`. The site build is untouched — `hugo_docs/scripts/` is not part of Hugo's input.
+
+---
+
+### Step 2: Write `hugo_docs/scripts/popups_verify.py`
+
+**File:** `hugo_docs/scripts/popups_verify.py` (new)
+**Change:** the committed property-(a)/(b) check. It imports `norm`, `extract_cards`, the regexes,
+the markup templates and the D1 constants from `popups_extract` — **it defines none of its own.**
+
+**The design decisions worth knowing:**
+
+- **It builds into a throwaway directory**, `tempfile.mkdtemp()`, with
+  `~/bin/hugo --quiet --destination <tmp>` run from `hugo_docs/`. Never into `hugo_docs/public/`
+  (gitignored, CI-built — a verify run has no business rewriting it) and **never with `--gc`**,
+  which would delete the committed `hugo_docs/resources/_gen/`.
+- **It refuses an old binary.** It parses `hugo version` and hard-fails below v0.164.0 with a message
+  naming `~/bin/hugo`, because `/usr/bin/hugo` is v0.123.7 and dies on the Stack theme. This is a
+  refusal, not a warning: a verifier that "passes" because the build never happened is worse than no
+  verifier.
+- **`--index PATH` skips the build** and reads an existing `index.html`, for a tight edit/check loop
+  or a CI job that already built once.
+- **Bodies are read verbatim.** `CARRIER_RE` captures the raw text between the carrier's `>` and
+  `</script>` with no HTML entity decoding — `&amp;` must stay `&amp;`, because that is what a
+  raw-text script element hands `textContent`, and `textContent` is what phase 3 assigns to
+  `innerHTML`.
+- **Triggers are compared structurally, which *is* the per-line byte comparison.** `TRIGGER_RE` and
+  `H4_RE` are fully anchored and total, so a changed `class`, `type`, attribute order, label or
+  position makes the line stop matching and the trigger goes MISSING. The one thing deliberately
+  ignored is leading whitespace — exactly the latitude R3 needs. On a mismatch the report prints a
+  unified diff of the reconstructed `<li>` lines, so the failure reads as the HTML a human wrote.
+- **The D1 exception is named, never silent.** The expected model is built from the baseline *plus*
+  decision D1 and nothing else: every id keeps its **first** `case` occurrence (a JS switch takes the
+  first match, so that is what has always rendered), and `feature-flags` is added carrying
+  occurrence **#1** of `dark-launch` — the dead `:2885` body. Every run prints a banner naming the
+  exception, and `feature-flags`'s own result line is tagged `[D1: new id, checked against the DEAD
+  case]`. Pre-refactor, property (b) fails on exactly one line, the System Observability button whose
+  `onclick` phase 3 moves from `dark-launch` to `feature-flags`; that single expected FAIL is visible
+  in the Step 4 output below.
+
+**Code:**
+
+```python
+#!/usr/bin/env python3
+"""Check the rendered home page against the frozen popup baseline.
+
+This is the committed form of the refactor's verification properties. It builds
+the site, pulls the popup bodies and the feature-card trigger lists back out of
+the RENDERED html, and diffs them against popups_baseline.json -- the snapshot
+popups_extract.py froze from the pre-refactor JavaScript switch.
+
+    property (a)  for every popup id, the HTML that ends up inside
+                  #popup-content is byte-identical to what the old switch
+                  produced, after the shared norm().
+    property (b)  the rendered trigger lists are unchanged: same cards, same
+                  sections, same icons, same buttons, same labels, same order.
+
+Both sides go through popups_extract.norm(). There is exactly one normaliser in
+this refactor and it lives there; this script imports it and defines nothing of
+its own.
+
+The one sanctioned difference is decision D1: `dark-launch` was declared twice
+in the switch and pressed by two buttons in two cards, so the dead second body
+is resurrected as a NEW id, `feature-flags`, under the System Observability
+button that already carries its name. That exception is applied by name and
+printed by name -- it is never silent, and it is the only id allowed to have no
+pre-refactor rendered counterpart.
+
+Run it BEFORE the refactor too. It then reports every id as MISSING and exits
+non-zero, which is the proof that the render-side extractor actually executes
+and that a later green run means something.
+
+Usage:
+    popups_verify.py                       # build with ~/bin/hugo, then check
+    popups_verify.py --index public/index.html   # check an existing build
+    popups_verify.py --hugo /path/to/hugo  # a different binary (must be >=0.164)
+
+Exit status is 0 when both properties hold, 1 when any id or trigger mismatches,
+and 2 on a build or usage error. `--gc` is never passed: it would delete the
+committed hugo_docs/resources/_gen/.
+"""
+
+from __future__ import annotations
+
+import argparse
+import difflib
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent          # hugo_docs/scripts
+HUGO_ROOT = HERE.parent                         # hugo_docs
+sys.path.insert(0, str(HERE))
+
+from popups_extract import (                    # noqa: E402  -- one owner for all of this
+    CARRIER_RE,
+    SPLIT_CARD_HEADING,
+    SPLIT_ID,
+    SPLIT_NEW_ID,
+    SPLIT_OCCURRENCE,
+    TRIGGER_LINE,
+    ExtractError,
+    extract_cards,
+    norm,
+)
+
+import json                                     # noqa: E402
+
+BASELINE = HERE / "popups_baseline.json"
+DEFAULT_HUGO = Path(os.path.expanduser("~/bin/hugo"))
+MIN_HUGO = (0, 164, 0)
+VERSION_RE = re.compile(r"hugo v(\d+)\.(\d+)\.(\d+)")
+
+
+class VerifyError(RuntimeError):
+    pass
+
+
+# --------------------------------------------------------------------------- build
+def hugo_version(binary: Path) -> tuple[int, int, int]:
+    try:
+        out = subprocess.run([str(binary), "version"], check=True,
+                             capture_output=True, text=True).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise VerifyError("cannot run %s: %s" % (binary, exc))
+    m = VERSION_RE.search(out)
+    if not m:
+        raise VerifyError("cannot parse a version out of %r" % out.strip())
+    return tuple(int(g) for g in m.groups())
+
+
+def build(binary: Path, keep: bool) -> Path:
+    """Build into a throwaway directory and return its index.html.
+
+    Never into hugo_docs/public/: that is gitignored and CI-built, and a verify
+    run has no business rewriting it. Never with --gc either -- it deletes the
+    committed resources/_gen/ this theme needs.
+    """
+    version = hugo_version(binary)
+    if version < MIN_HUGO:
+        raise VerifyError(
+            "%s is hugo v%d.%d.%d; this site needs >= v%d.%d.%d (the Stack theme "
+            "fails on older ones). Use ~/bin/hugo, not /usr/bin/hugo."
+            % ((binary,) + version + MIN_HUGO)
+        )
+    dest = Path(tempfile.mkdtemp(prefix="popups_verify_"))
+    cmd = [str(binary), "--quiet", "--destination", str(dest)]
+    proc = subprocess.run(cmd, cwd=str(HUGO_ROOT), capture_output=True, text=True)
+    noise = (proc.stdout + proc.stderr).strip()
+    if proc.returncode != 0:
+        raise VerifyError("hugo failed (%d):\n%s" % (proc.returncode, noise))
+    if noise:
+        print("hugo said:\n%s" % noise, file=sys.stderr)
+    index = dest / "index.html"
+    if not index.exists():
+        raise VerifyError("hugo wrote no index.html into %s" % dest)
+    print("build       %s v%d.%d.%d -> %s (no --gc)"
+          % (binary, version[0], version[1], version[2], dest if keep else "<temp>"))
+    return index
+
+
+# --------------------------------------------------------------------------- model
+def expected(baseline: dict) -> tuple[dict, list[dict]]:
+    """What the POST-refactor page must contain: bodies by id, and cards.
+
+    Applies decision D1 and nothing else. Every other id keeps the body of its
+    FIRST case occurrence, because a JavaScript switch takes the first match --
+    that is what the page has always rendered.
+    """
+    occurrences = baseline["occurrences"]
+    bodies: dict[str, str] = {}
+    for occ in occurrences:
+        bodies.setdefault(occ["id"], norm(occ["body"]))
+
+    split = [o for o in occurrences if o["id"] == SPLIT_ID]
+    if len(split) <= SPLIT_OCCURRENCE:
+        raise VerifyError(
+            "the baseline has %d occurrence(s) of case %r; D1 needs #%d (the dead "
+            "one). Re-freeze with popups_extract.py."
+            % (len(split), SPLIT_ID, SPLIT_OCCURRENCE)
+        )
+    bodies[SPLIT_NEW_ID] = norm(split[SPLIT_OCCURRENCE]["body"])
+
+    cards = []
+    for card in baseline["cards"]:
+        triggers = []
+        for trig in card["triggers"]:
+            tid = trig["id"]
+            if tid == SPLIT_ID and card["heading"] == SPLIT_CARD_HEADING:
+                tid = SPLIT_NEW_ID
+            triggers.append({"id": tid, "label": trig["label"]})
+        cards.append({"section": card["section"], "heading": card["heading"],
+                      "icon": card["icon"], "triggers": triggers})
+    return bodies, cards
+
+
+def rendered(index: Path) -> tuple[dict, list[dict]]:
+    """Bodies and cards as the built page actually contains them.
+
+    Bodies are read VERBATIM out of the carrier element. No HTML entity
+    decoding: a <script> is raw text, so `&amp;` reaches textContent as the five
+    characters `&amp;`, and decoding here would compare against a string the
+    browser never sees.
+    """
+    text = index.read_text(encoding="utf-8")
+    bodies: dict[str, str] = {}
+    for m in CARRIER_RE.finditer(text):
+        pid = m.group("id")
+        if pid in bodies:
+            raise VerifyError("two carriers with data-popup-id=%r in the render" % pid)
+        bodies[pid] = norm(m.group("body"))
+    cards = extract_cards(text.split("\n"))
+    return bodies, cards
+
+
+# --------------------------------------------------------------------------- compare
+def li(trigger: dict) -> str:
+    return TRIGGER_LINE % (trigger["id"], trigger["label"])
+
+
+def compare_bodies(want: dict, got: dict) -> int:
+    """Property (a). Returns the failure count; prints one line per id."""
+    fails = 0
+    stats = {"PASS": 0, "FAIL": 0, "MISSING": 0, "EXTRA": 0}
+    for pid in sorted(want):
+        tag = "" if pid != SPLIT_NEW_ID else "   [D1: new id, checked against the DEAD case]"
+        if pid not in got:
+            print("  MISSING %s%s" % (pid, tag))
+            stats["MISSING"] += 1
+            fails += 1
+        elif got[pid] == want[pid]:
+            print("  PASS    %s%s" % (pid, tag))
+            stats["PASS"] += 1
+        else:
+            print("  FAIL    %s%s" % (pid, tag))
+            stats["FAIL"] += 1
+            fails += 1
+            sys.stdout.writelines(
+                "    " + line for line in difflib.unified_diff(
+                    want[pid].splitlines(True), got[pid].splitlines(True),
+                    "baseline/%s" % pid, "rendered/%s" % pid, n=2)
+            )
+    for pid in sorted(set(got) - set(want)):
+        print("  EXTRA   %s  (rendered, but no baseline body answers to this id)" % pid)
+        stats["EXTRA"] += 1
+        fails += 1
+    print("  -> PASS %d  FAIL %d  MISSING %d  EXTRA %d"
+          % (stats["PASS"], stats["FAIL"], stats["MISSING"], stats["EXTRA"]))
+    return fails
+
+
+def compare_cards(want: list, got: list) -> int:
+    """Property (b). Compared structurally, which IS the per-line comparison:
+    the trigger and <h4> patterns are fully anchored, so a changed class, type,
+    attribute order or label makes the line stop matching and the trigger goes
+    MISSING. Leading indentation is the only thing deliberately ignored."""
+    fails = 0
+    want_key = [(c["section"], c["heading"], c["icon"]) for c in want]
+    got_key = [(c["section"], c["heading"], c["icon"]) for c in got]
+    if want_key != got_key:
+        print("  FAIL card list (section, heading, icon) differs")
+        sys.stdout.writelines(
+            "    " + line for line in difflib.unified_diff(
+                ["%s | %s | %s\n" % k for k in want_key],
+                ["%s | %s | %s\n" % k for k in got_key],
+                "baseline/cards", "rendered/cards", n=2)
+        )
+        return 1
+
+    for wcard, gcard in zip(want, got):
+        wl = [li(t) + "\n" for t in wcard["triggers"]]
+        gl = [li(t) + "\n" for t in gcard["triggers"]]
+        if wl == gl:
+            print("  PASS    %-9s %-28s %d triggers"
+                  % (wcard["section"], wcard["heading"], len(wl)))
+        else:
+            print("  FAIL    %-9s %-28s" % (wcard["section"], wcard["heading"]))
+            fails += 1
+            sys.stdout.writelines(
+                "    " + line for line in difflib.unified_diff(
+                    wl, gl, "baseline/%s" % wcard["heading"],
+                    "rendered/%s" % gcard["heading"], n=2)
+            )
+    return fails
+
+
+# --------------------------------------------------------------------------- main
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(
+        description=__doc__.split("\n")[0],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    ap.add_argument("--index", type=Path,
+                    help="an already-built index.html; skips the hugo build")
+    ap.add_argument("--hugo", type=Path, default=DEFAULT_HUGO,
+                    help="hugo binary (default: ~/bin/hugo)")
+    ap.add_argument("--baseline", type=Path, default=BASELINE)
+    ap.add_argument("--keep", action="store_true", help="print the temp build directory")
+    args = ap.parse_args(argv)
+
+    try:
+        baseline = json.loads(args.baseline.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        print("cannot read baseline %s: %s" % (args.baseline, exc), file=sys.stderr)
+        return 2
+
+    try:
+        index = args.index if args.index else build(args.hugo, args.keep)
+        if args.index:
+            print("build       skipped, reading %s" % args.index)
+        want_bodies, want_cards = expected(baseline)
+        got_bodies, got_cards = rendered(index)
+    except (VerifyError, ExtractError, OSError) as exc:
+        print("verify error: %s" % exc, file=sys.stderr)
+        return 2
+
+    print("baseline    %s (%d occurrences, %d cards, %d triggers)"
+          % (args.baseline.name, baseline["counts"]["occurrences"],
+             baseline["counts"]["cards"], baseline["counts"]["triggers"]))
+    print("sanctioned exception (D1): %r is a NEW id with no pre-refactor rendered "
+          "counterpart; its body is the DEAD `case \"%s\"` and the %r button's onclick "
+          "moves from %r to %r. Nothing else may differ."
+          % (SPLIT_NEW_ID, SPLIT_ID, SPLIT_CARD_HEADING, SPLIT_ID, SPLIT_NEW_ID))
+
+    print("\nproperty (a) -- popup bodies, %d expected" % len(want_bodies))
+    fails = compare_bodies(want_bodies, got_bodies)
+    print("\nproperty (b) -- feature-card triggers, %d cards expected" % len(want_cards))
+    fails += compare_cards(want_cards, got_cards)
+
+    print("\n%s  (%d failure%s)"
+          % ("OK" if not fails else "NOT OK", fails, "" if fails == 1 else "s"))
+    return 1 if fails else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+**Impact:** adds one file. Importing `popups_extract` costs nothing at import time (Step 1's
+contract point A1).
+
+---
+
+### Step 3: Freeze `hugo_docs/scripts/popups_baseline.json`
+
+**File:** `hugo_docs/scripts/popups_baseline.json` (new, generated, committed)
+**Change:** run the extractor against the page at the plan set's base revision and commit the result.
+
+```bash
+cd /home/miftah/.worktrees/agentic/popup-data-refactor
+python3 hugo_docs/scripts/popups_extract.py --rev d963643
+```
+
+**Pin it to `--rev`, not to the worktree.** The baseline is *frozen pre-refactor truth*: once phase 3
+rewrites `custom-home.html` there is no switch left to extract, and naming the base revision is what
+keeps `--check` runnable forever. Before phase 3 both forms produce the same bytes — the file
+deliberately records no absolute path and no revision string, only the repo-relative `source`, its
+`sha256` and its line count, so a worktree run and a `git show` run of the same bytes are
+indistinguishable. (Verified in Step 4.)
+
+**The schema**, abridged to one card and one occurrence (`json.dumps(..., indent=2, sort_keys=True,
+ensure_ascii=False)` plus one trailing newline, which is what makes it regenerate byte-identically):
+
+```json
+{
+  "cards": [
+    {
+      "heading": "Multimodal Processing",
+      "icon": "ic-database",
+      "line": 381,
+      "section": "agents",
+      "triggers": [
+        { "id": "image-pipeline", "label": "Image Upload Pipeline",     "line": 384 },
+        { "id": "file-assets",    "label": "Kind-Agnostic File Assets", "line": 385 }
+      ]
+    }
+  ],
+  "counts": { "cards": 10, "occurrences": 51, "triggers": 51, "unique_ids": 50 },
+  "occurrences": [
+    {
+      "body": "<h2>Classify-and-Plan</h2>\n<p>One LLM call does three jobs: …</p>\n",
+      "close_line": 1579,
+      "id": "classify-and-plan",
+      "indent": 0,
+      "line": 1564
+    }
+  ],
+  "schema": 1,
+  "source": "hugo_docs/layouts/page/custom-home.html",
+  "source_lines": 3011,
+  "source_sha256": "12abba2c87c3493e00bee370fccc5d34f3971d57975686f964c19063e2df2c49"
+}
+```
+
+Field by field:
+
+| Key | Meaning | Who reads it |
+|---|---|---|
+| `schema` | bumped if this shape ever changes | future readers |
+| `source`, `source_lines`, `source_sha256` | which page bytes this froze; the sha is what pins the revision | humans, `--check` |
+| `counts` | 51 / 50 / 10 / 51, the numbers `build_baseline` asserts before writing | phase 2's `load_baseline` sanity checks |
+| `cards[]` | the 10 feature cards **in source order** | phase 2 (card metadata + `order`), phase 3 (via phase 2) |
+| `cards[].section` | `agents` \| `screener` \| `features` | phase 2 |
+| `cards[].heading` | the `<h4>` inner text **after** the `<svg>`, entities as authored (`Performance &amp; Architecture`) | phase 2 (`CARD_IDS` key), `popups_verify` (D1 card match) |
+| `cards[].icon` | the `ic-*` fragment id from `<use href="#…">` | phase 2 |
+| `cards[].line` | where the `<div class="feature-card">` sits | humans |
+| `cards[].triggers[]` | **in trigger order** — the order that renders, never the switch's (F6) | phase 2 derives `order` from this index |
+| `cards[].triggers[].id` / `.label` / `.line` | the `showPopup('…')` argument, the exact button text, the source line | phase 2, `popups_verify` |
+| `occurrences[]` | all **51** `case` occurrences, in source order | phase 2 (`body_for`), `popups_verify` |
+| `occurrences[].id` | the `case` string; `dark-launch` appears twice | phase 2 |
+| `occurrences[].line` | the `case` line — `1754` (live) and `2885` (dead) are what distinguish the duplicates | phase 2's `nth` selection |
+| `occurrences[].close_line` | the closing `` `; `` line | humans |
+| `occurrences[].indent` | 0 or 8 — which authoring era this body came from | R3 forensics |
+| `occurrences[].body` | the `norm`-ed, JS-unescaped body: what the browser puts in `#popup-content` | phase 2 (`body:` block scalar), `popups_verify` |
+
+**Impact:** 148 KB of tracked generated-but-committed data, the same pattern this repo already
+accepts for `hugo_docs/resources/_gen/`. It is not Hugo input (it lives in `scripts/`, not `data/`),
+so the build does not see it.
+
+**Counting, stated once so nobody re-derives it wrong:** the baseline records **51 case occurrences
+and 51 trigger occurrences** — the *pre-refactor* truth, with both `dark-launch` duplicates intact
+and no `feature-flags` anywhere in it. Decision D1's split is **phase 2's** to apply; it produces 51
+popup files (50 unique ids + `feature-flags`) and 10 card files = 61. This phase's 51 and phase 2's
+51 are different 51s and the distinction matters: one has two `dark-launch` bodies, the other has one
+`dark-launch` and one `feature-flags`. `popups_verify.py` is the one place in phase 1 that models the
+*post*-D1 world, and it does so by rule (`expected()`), not by storing it.
+
+---
+
+### Step 4: Demonstrate the exit criteria
+
+**File:** none. This step runs commands and reads their output.
+
+Every block below is real output from running these exact scripts against this worktree at
+`d963643`.
+
+**(a) The extractor recovers 51 bodies and 51 triggers from the current page.**
+
+```
+$ python3 hugo_docs/scripts/popups_extract.py --report
+source      hugo_docs/layouts/page/custom-home.html (3011 lines, sha256 12abba2c87c3)
+occurrences 51 case bodies (50 unique ids)
+triggers    51 across 10 cards
+    agents    :369  Multi-Agent System           ic-architecture  6 triggers
+    agents    :381  Multimodal Processing        ic-database      5 triggers
+    screener  :527  The Lock                     ic-shield        3 triggers
+    screener  :536  Planning a Turn              ic-sliders       3 triggers
+    screener  :545  The Measured API             ic-activity      3 triggers
+    screener  :554  Shape of the Tool            ic-architecture  4 triggers
+    features  :573  Performance &amp; Architecture ic-bolt          7 triggers
+    features  :585  Resource Management          ic-shield        7 triggers
+    features  :597  Data Handling &amp; Integrity ic-database      7 triggers
+    features  :609  System Observability         ic-activity      6 triggers
+    LIVE case 'dark-launch' #0 at :1754 -> <h2>Dark-Launch Flag Discipline</h2>
+    DEAD case 'dark-launch' #1 at :2885 -> <h2>Dark-Launch Feature Flags</h2>
+```
+
+The card/icon/section/order table is identical to the analysis's card→popup map, and the two
+`dark-launch` occurrences land on the exact lines R2 names, with the right `<h2>` on each.
+
+**(b) The baseline is committed and regenerates byte-identically, from either source.**
+
+```
+$ python3 hugo_docs/scripts/popups_extract.py --rev d963643
+wrote hugo_docs/scripts/popups_baseline.json: 51 occurrences, 10 cards, 51 triggers, from hugo_docs/layouts/page/custom-home.html@d963643
+
+$ python3 hugo_docs/scripts/popups_extract.py --check
+baseline is byte-identical to a fresh extraction of .../hugo_docs/layouts/page/custom-home.html
+$ echo $?
+0
+
+$ python3 hugo_docs/scripts/popups_extract.py --rev d963643 --check
+baseline is byte-identical to a fresh extraction of hugo_docs/layouts/page/custom-home.html@d963643
+$ echo $?
+0
+
+$ wc -l hugo_docs/scripts/popups_baseline.json ; du -h hugo_docs/scripts/popups_baseline.json
+708 hugo_docs/scripts/popups_baseline.json
+148K	hugo_docs/scripts/popups_baseline.json
+```
+
+**(c) `norm()`'s self-test passes and pins the 36/15 split, and the one JS escape is unwound.**
+
+```
+$ python3 hugo_docs/scripts/popups_extract.py --self-test
+norm unit cases: 10, failures: 0
+dedent split: 36 bodies flattened to column 0, 15 keep a residual indent (9 at 4, 6 at 16) -- EXPECTED, see norm()'s docstring
+JS unescape: `alerting` carries one backslash (source :2842 held two) -> '<p>The webhook client signs each request: HMAC-SHA256 over <code>timestamp + "\\n" + secr'
+$ echo $?
+0
+```
+
+The repr shows `"\\n"`, which is Python for **one** backslash followed by `n` — the source held two
+backslashes and the browser shows one. The 15 residual bodies and their indents are pinned name by
+name in `RESIDUAL_INDENTS`, and they are exactly phase 2's F2 list: `server-owned-routing`,
+`image-pipeline`, `screener-lock`, `cache-fastlane`, `parallel-map-execution`,
+`stateful-conversation`, `data-driven-tools`, `citations`, `file-asset-integrity` at 4 (era-0
+bodies), and `bowl-resume`, `circuit-breakers`, `e2e-cancellation`, `structured-logging`,
+`observability-stack`, `status-tracking` at 16 (era-8 bodies). **This is expected output, not a
+bug.**
+
+**(d) `~/bin/hugo` builds clean.**
+
+```
+$ cd hugo_docs && ~/bin/hugo --quiet --destination /tmp/.../public
+$ echo $?
+0
+$ grep -c 'popup-trigger' /tmp/.../public/index.html
+51
+```
+
+No `ERROR`, no `WARN`, no output at all. `--gc` was not passed and
+`hugo_docs/resources/_gen/` is untouched.
+
+**(e) The verifier runs END-TO-END against the CURRENT pre-refactor build and is not vacuously
+green.** This is the exit criterion the whole phase exists for.
+
+```
+$ python3 hugo_docs/scripts/popups_verify.py
+build       /home/miftah/bin/hugo v0.164.0 -> <temp> (no --gc)
+baseline    popups_baseline.json (51 occurrences, 10 cards, 51 triggers)
+sanctioned exception (D1): 'feature-flags' is a NEW id with no pre-refactor rendered counterpart; its body is the DEAD `case "dark-launch"` and the 'System Observability' button's onclick moves from 'dark-launch' to 'feature-flags'. Nothing else may differ.
+
+property (a) -- popup bodies, 51 expected
+  MISSING agent-roster
+  MISSING alerting
+  …48 more…
+  MISSING feature-flags   [D1: new id, checked against the DEAD case]
+  MISSING ustm
+  -> PASS 0  FAIL 0  MISSING 51  EXTRA 0
+
+property (b) -- feature-card triggers, 10 cards expected
+  PASS    agents    Multi-Agent System           6 triggers
+  PASS    agents    Multimodal Processing        5 triggers
+  PASS    screener  The Lock                     3 triggers
+  PASS    screener  Planning a Turn              3 triggers
+  PASS    screener  The Measured API             3 triggers
+  PASS    screener  Shape of the Tool            4 triggers
+  PASS    features  Performance &amp; Architecture 7 triggers
+  PASS    features  Resource Management          7 triggers
+  PASS    features  Data Handling &amp; Integrity 7 triggers
+  FAIL    features  System Observability
+    --- baseline/System Observability
+    +++ rendered/System Observability
+    @@ -4,3 +4,3 @@
+     <li><button class="popup-trigger" type="button" onclick="showPopup('alerting')">Alerting with Deduplication</button></li>
+     <li><button class="popup-trigger" type="button" onclick="showPopup('prompt-versioning')">Prompt Versioning &amp; Golden Tests</button></li>
+    -<li><button class="popup-trigger" type="button" onclick="showPopup('feature-flags')">Dark-Launch Feature Flags</button></li>
+    +<li><button class="popup-trigger" type="button" onclick="showPopup('dark-launch')">Dark-Launch Feature Flags</button></li>
+
+NOT OK  (52 failures)
+$ echo $?
+1
+```
+
+Read that carefully, because the plan index's wording is one short:
+
+- **51 MISSING, not 50.** 50 are the ordinary ids with no carrier in the pre-refactor render; the
+  51st is `feature-flags`, the sanctioned-new id, reported *by name and with its tag*. The index's
+  phase-1 exit criterion says "all 50 ids as MISSING" — that is the 50 ordinary ones; this run
+  reports those 50 plus the one D1 id. Reconciler: a prose fix to `POPUP_DATA_REFACTOR_PLAN.md:219`,
+  same family as phase 2's 50/60-vs-51/61 note.
+- **Property (b) already passes for 9 of 10 cards**, which is the real proof the render-side trigger
+  extractor executes: it found 51 buttons in the built `index.html`, matched them to the right cards,
+  sections, icons and order, and the *only* diff is the single `onclick` id D1 sanctions and phase 3
+  will make. A verifier that could not read the rendered page would not have produced those nine
+  PASS lines.
+
+**(f) The verifier goes green when the page is correct — proved, not assumed.** A verifier that is
+red before and red after proves nothing either. The rendered `index.html` was doctored into what
+phase 3 must produce — the 51 carriers spliced in before `</body>`, and the System Observability
+button's `onclick` moved to `feature-flags` — and re-checked:
+
+```
+$ python3 hugo_docs/scripts/popups_verify.py --index /tmp/.../post.html
+build       skipped, reading /tmp/.../post.html
+…
+property (a) -- popup bodies, 51 expected
+  PASS    agent-roster
+  …50 more…
+  -> PASS 51  FAIL 0  MISSING 0  EXTRA 0
+
+property (b) -- feature-card triggers, 10 cards expected
+  PASS    agents    Multi-Agent System           6 triggers
+  …8 more…
+  PASS    features  System Observability         6 triggers
+
+OK  (0 failures)
+$ echo $?
+0
+```
+
+**(g) And it catches real corruption, with a readable diff.** The same file with two single-character
+edits — one in a body (`Cache Fast-Lane` → `Cache Fast Lane`) and one in a label (`State-Aware
+Janitors` → `State Aware Janitors`):
+
+```
+$ python3 hugo_docs/scripts/popups_verify.py --index /tmp/.../post_bad.html
+  FAIL    cache-fastlane
+    --- baseline/cache-fastlane
+    +++ rendered/cache-fastlane
+    @@ -1,3 +1,3 @@
+    -    <h2>Cache Fast-Lane</h2>
+    +    <h2>Cache Fast Lane</h2>
+         <p>Every text-only submit is offered to the cache fast-lane before it is allowed near…
+…
+  FAIL    features  Resource Management
+    --- baseline/Resource Management
+    +++ rendered/Resource Management
+    @@ -1,5 +1,5 @@
+     <li><button class="popup-trigger" type="button" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</button></li>
+    -<li><button class="popup-trigger" type="button" onclick="showPopup('janitors')">State-Aware Janitors</button></li>
+    +<li><button class="popup-trigger" type="button" onclick="showPopup('janitors')">State Aware Janitors</button></li>
+
+NOT OK  (2 failures)
+$ echo $?
+1
+```
+
+Note the leading four spaces on the `cache-fastlane` `<h2>` lines in that diff — that is one of the
+15 residual-indent bodies (F2), preserved on both sides of the comparison, exactly as it must be.
+
+**Impact:** none on the repo. This step produces evidence.
+
+---
+
+## Verification
+
+**Build:**
+
+```bash
+cd /home/miftah/.worktrees/agentic/popup-data-refactor/hugo_docs
+~/bin/hugo --quiet --destination /tmp/popups-build   # NEVER --gc; NEVER /usr/bin/hugo
+```
+
+**Tests:**
+
+```bash
+cd /home/miftah/.worktrees/agentic/popup-data-refactor
+python3 hugo_docs/scripts/popups_extract.py --self-test      # exits 0
+python3 hugo_docs/scripts/popups_extract.py --rev d963643 --check   # exits 0
+python3 hugo_docs/scripts/popups_extract.py --report         # 51 / 10 / 51
+python3 hugo_docs/scripts/popups_verify.py ; echo $?         # exits 1, all ids MISSING
+python3 -c "import sys; sys.path.insert(0,'hugo_docs/scripts'); from popups_extract import norm; print(repr(norm('  <p>a</p>\n      <li>x</li>\n')))"
+# -> '<p>a</p>\n    <li>x</li>\n'      the import phase 2 depends on
+```
+
+**Manual check:** open `hugo_docs/scripts/popups_baseline.json` and look at three entries —
+`occurrences` for `alerting` (one backslash, not two), for `stateful-conversation` (a `<pre><code>`
+body whose first line still starts with four spaces), and `cards[9]` (System Observability, six
+triggers, the last one `dark-launch` labelled `Dark-Launch Feature Flags`).
+
+**Exit criteria:**
+
+1. `popups_extract.py --report` prints 51 case bodies, 50 unique ids, 10 cards, 51 triggers, and
+   names the live `:1754` / dead `:2885` `dark-launch` pair. ✔ (Step 4a)
+2. `popups_baseline.json` is committed and `--check` is byte-identical from both the worktree and
+   `--rev d963643`. ✔ (Step 4b)
+3. `--self-test` exits 0, reporting 10/10 `norm` cases and the **36 flattened / 15 residual
+   (9 at 4, 6 at 16)** split, plus the single unwound backslash. ✔ (Step 4c)
+4. `~/bin/hugo` builds clean, no `--gc`, `resources/_gen/` intact. ✔ (Step 4d)
+5. `popups_verify.py` runs end to end against the **current pre-refactor** build and exits **1**,
+   reporting the 50 ordinary ids plus the one sanctioned-new id as MISSING, and property (b) failing
+   on exactly the one D1 `onclick` line. ✔ (Step 4e) — *this is the criterion that proves the check
+   is not vacuously green.*
+6. The verifier reaches `OK (0 failures)` and exit 0 against a page shaped the way phase 3 must shape
+   it, and reports precise diffs against a corrupted one. ✔ (Step 4f, 4g)
+7. `git status` shows exactly three new files, all under `hugo_docs/scripts/`.
+
+---
+
+## Handoffs
+
+- **Phase 2 — Step 5 is struck**, in phase-2.md itself, by the reconciler. This CLI names no emit
+  seam (Interface Contract §2(i)), so the condition is false permanently. `popups_emit.py` is
+  invoked directly, and **no phase but this one writes `popups_extract.py`.**
+- **Phase 2 — your `_pick` adapter is a no-op** (Interface Contract §1), verified key by key. It
+  stays in place as a loud failure mode for a future re-shaped baseline; it changes nothing today.
+- **Phase 2 — the D1 constants are imported, not re-declared** (Interface Contract §2(ii)). Phase
+  2's plan now reads `from popups_extract import SPLIT_CARD, SPLIT_ID, SPLIT_NEW_ID,
+  SPLIT_OCCURRENCE, norm`, and its `nth = 1` became `nth = SPLIT_OCCURRENCE`. One definition.
+- **Phase 3 — the markup contract is Interface Contract §3**, and `popups_verify.py` exiting 0 is
+  your gate. Two consequences worth restating: (i) leading indentation is free, so emit whatever
+  uniform indentation you like — that is how R3 completes without breaking property (b); (ii) the one
+  change you are allowed to make to a rendered byte is the System Observability button's `onclick`
+  argument.
+- **Phase 3 — do NOT "fix" the 15 residual-indent bodies.** They are correct (F2). Any attempt to
+  flatten them further fails property (a) for all 15.
+- **Phase 3 — blank lines between cards are invisible to this verifier.** Interface Contract §3,
+  last block. Emit them uniformly; nothing here needs to change. (Index decision D6.)
+- **Index prose — DONE.** The index's phase-1 exit criterion now says the verifier reports all
+  **51** ids MISSING: the 50 ordinary ids plus the sanctioned-new `feature-flags`.
+- **Analysis prose — DONE.** The analysis now records that the era-8 cases close at `indent+4` and
+  break at `indent+2` while era-0 uses a flat terminator. The parser never depended on the claim; it
+  scans for the next closing line.
+- **CI, deliberately not done.** `.github/workflows/deploy.yml` is not changed and `popups_verify.py`
+  is not wired into it. Making the property a CI gate is a sensible follow-up, but it belongs after
+  phase 3 is green — adding a step that fails on every push for the duration of the refactor is
+  worse than adding it once at the end.
+- **Not done, deliberately:** no `requirements.txt` (nothing here leaves the standard library); no
+  pytest harness (this repo has no test framework and `--self-test` matches `sync_anchor_docs.py`'s
+  self-contained style); no reflow or edit of any prose (invariant I5); no `hugo_docs/data/`
+  directory (phase 2 creates it — finding F1 says it does not exist in a fresh worktree); no Hugo
+  partial (invariant I6).
+
+---
+
+## Rollback
+
+This phase is purely additive: three new files under `hugo_docs/scripts/`, nothing imports them, and
+Hugo does not read that directory. The site before and after is byte-identical.
+
+```bash
+cd /home/miftah/.worktrees/agentic/popup-data-refactor
+git revert <phase-1-sha>          # or, by hand:
+git rm hugo_docs/scripts/popups_extract.py \
+       hugo_docs/scripts/popups_verify.py \
+       hugo_docs/scripts/popups_baseline.json
+```
+
+Reverting after phase 2 has landed would break `popups_emit.py`'s `from popups_extract import norm`,
+so a revert of phase 1 alone is only safe while it is the tip. After phase 2, revert both.
