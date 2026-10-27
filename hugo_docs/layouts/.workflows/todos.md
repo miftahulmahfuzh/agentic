@@ -4,17 +4,17 @@
 
 **Package Code**: HL
 
-**Last Updated**: 2026-10-27 08:39:00
+**Last Updated**: 2026-10-27 12:00:00
 
-**Total Active Tasks**: 0
+**Total Active Tasks**: 1
 
 ## Quick Stats
 - P0 Critical: 0
 - P1 High: 0
-- P2 Medium: 0
+- P2 Medium: 1
 - P3 Low: 0
 - P4 Backlog: 0
-- Blocked: 0
+- Blocked: 1
 - Completed: 1
 
 ---
@@ -28,7 +28,15 @@
 *No high priority tasks.*
 
 ### [P2] Medium
-*No medium priority tasks.*
+- [ ] **P2-HL-A002** Phase 3: Rewire the template, delete the switch
+  - **Difficulty**: HARD
+  - **Type**: Refactor
+  - **Context**: Owns `hugo_docs/layouts/page/custom-home.html` only. Exit criteria: `popups_verify.py` exits 0 — property (a) reports `PASS 51` (the 50 ids that render today, plus `feature-flags` checked against the dead `:2885` body) and property (b) reports all 10 cards PASS; `~/bin/hugo` builds clean with no `--gc` and `hugo_docs/resources/` is untouched; `grep -c 'case "' custom-home.html` is 0 and the file is ~1,400 lines shorter (3,011 → ~1,604); each of G1, G2, G3, G4 and the content assertions **fails the build** when violated — demonstrated and recorded, and the build returns to exit 0 on restore; manual browser check confirms property (c): popups open, close three ways, restore focus, and the 13 Mermaid bodies render their diagrams.
+  - **Status**: blocked
+  - **Plan Set**: `/home/miftah/agentic/.workflows/orchestration/popup-data-refactor/PLAN.md` (phase 3 of 3)
+  - **Satisfies**: R1, R3 — R1: Replace the `showPopup` switch with Hugo data files, generating **both** trigger buttons and modal bodies from one source; a trigger without a body (or a body without a trigger) must become a build-time failure or a structural impossibility. Design and justify the data shape.; R3: Normalise the two indentation eras in the popup region (flat vs 8-space).
+  - **Depends on**: P2-HD-A001
+  - **Plan**: `.workflows/plan/P2-HL-A002.md`
 
 ### [P3] Low
 *No low priority tasks.*
