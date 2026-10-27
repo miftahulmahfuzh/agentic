@@ -36,7 +36,7 @@
   - **Plan Set**: `/home/miftah/agentic/.workflows/orchestration/popup-data-refactor/PLAN.md` (phase 3 of 3)
   - **Satisfies**: R1, R3 — R1: Replace the `showPopup` switch with Hugo data files, generating **both** trigger buttons and modal bodies from one source; a trigger without a body (or a body without a trigger) must become a build-time failure or a structural impossibility. Design and justify the data shape.; R3: Normalise the two indentation eras in the popup region (flat vs 8-space).
   - **Depends on**: P2-HD-A001
-  - **Plan**: `.workflows/plan/P2-HL-A002.md`
+  - **Plan**: `.workflows/plan/popup-data-refactor/phase-3.md` (repo root). Not copied under `hugo_docs/layouts/`: Hugo parses every file there as a template, and this plan's Go-template samples fail the build.
 
 ### [P3] Low
 *No low priority tasks.*
