@@ -1,0 +1,71 @@
+{
+  "branch": "feature/popup-data-refactor",
+  "coordinator": "orch-popup-data-refactor",
+  "coordinator_session_id": "939b156c-de42-46fd-bf93-f22a03bf69a2",
+  "created": "2026-10-27T05:49:47+00:00",
+  "phases": [
+    {
+      "card": null,
+      "commit": null,
+      "depends_on": [],
+      "difficulty": "NORMAL",
+      "n": 1,
+      "note": null,
+      "package": "hugo_docs/scripts",
+      "plan": ".workflows/plan/popup-data-refactor/phase-1.md",
+      "reported_at": null,
+      "satisfies": [
+        "R1"
+      ],
+      "status": "pending",
+      "task_id": null,
+      "title": "Extraction & verification tooling"
+    },
+    {
+      "card": null,
+      "commit": null,
+      "depends_on": [
+        1
+      ],
+      "difficulty": "NORMAL",
+      "n": 2,
+      "note": null,
+      "package": "hugo_docs/data",
+      "plan": ".workflows/plan/popup-data-refactor/phase-2.md",
+      "reported_at": null,
+      "satisfies": [
+        "R1",
+        "R2",
+        "R3"
+      ],
+      "status": "pending",
+      "task_id": null,
+      "title": "Generate the popup data tree"
+    },
+    {
+      "card": null,
+      "commit": null,
+      "depends_on": [
+        2
+      ],
+      "difficulty": "HARD",
+      "n": 3,
+      "note": null,
+      "package": "hugo_docs/layouts",
+      "plan": ".workflows/plan/popup-data-refactor/phase-3.md",
+      "reported_at": null,
+      "satisfies": [
+        "R1",
+        "R3"
+      ],
+      "status": "pending",
+      "task_id": null,
+      "title": "Rewire the template, delete the switch"
+    }
+  ],
+  "plan": "/home/miftah/agentic/.workflows/orchestration/popup-data-refactor/PLAN.md",
+  "repo": "/home/miftah/agentic",
+  "slug": "popup-data-refactor",
+  "updated": "2026-10-27T05:49:47+00:00",
+  "worktree": "/home/miftah/.worktrees/agentic/popup-data-refactor"
+}
