@@ -975,3 +975,21 @@ pre code {
     transform: none;
   }
 }
+
+/* --- Tool-catalog cross-link ---------------------------------------------- */
+
+/* The only linked .term on the page: the catalog's stock_picker row points at
+   #screener. Inherit the mono face, size and weight from .deflist .term and
+   mark the link with the same dotted underline the popup triggers use, so the
+   page keeps one "this goes somewhere" idiom instead of gaining a second.
+   Scoped to .deflist .term a so no other deflist row is affected and the
+   #api-scoped overrides above are untouched. */
+.deflist .term a {
+  color: var(--accent);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.deflist .term a:hover {
+  color: var(--accent-ink);
+}
