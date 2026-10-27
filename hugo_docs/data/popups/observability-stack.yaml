@@ -1,0 +1,39 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  system-observability
+order: 20
+label: "Observability Stack"
+body: |2
+                  <h2>Observability Stack</h2>
+                  <p>The stack is logs-only: zerolog writes JSON to stdout, Vector tails the Docker socket, Loki indexes, Grafana queries. There is no Prometheus, no <code>/metrics</code> endpoint and no pprof surface — every panel is a LogQL query over the log stream, so what looks like a metric is derived from logs at read time.</p>
+
+                  <div class="mermaid">
+  graph TD
+      App["Go application<br/>zerolog JSON to stdout"] --> Sock["Docker log driver"]
+      subgraph Pipe ["Log pipeline in docker-compose"]
+          Vector["Vector 0.34.0-alpine<br/>docker_logs source<br/>VRL parse and relabel"]
+          Loki["Loki 3.3.2<br/>host port 3100"]
+          Grafana["Grafana 11.4.0<br/>host port 3000"]
+          Vector --> Loki --> Grafana
+      end
+      Sock --> Vector
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+      class Vector,Loki hot
+      class App,Sock,Grafana ext
+                  </div>
+
+                  <p>Vector's <code>docker_logs</code> source is scoped to an explicit container allow-list — <code>chatbot-app-1</code>, <code>chatbot-app-cd</code> and the two backup daemons. A VRL <code>remap</code> transform preserves <code>container_name</code> as <code>service_name</code>, tries <code>parse_json</code> on the message and falls back to plain text for the shell-based backup daemon, then deletes the noisy Docker fields. Loki receives one indexed label, <code>service</code>; everything else stays in the log body. Vector publishes no port — it only reads <code>/var/run/docker.sock</code>.</p>
+
+                  <p><strong>Where it is defined:</strong> all three services appear in <code>docker-compose.yml</code>, <code>docker-compose.local.yml</code>, <code>docker-compose.staging.yml</code> and <code>docker-compose.cd.yml</code>. They are absent from <code>docker-compose.db.yml</code>, which starts Redis and ArangoDB only. The CD stack remaps its host ports to 3101 and 3001 to avoid colliding with a dev stack on the same host, and bakes <code>vector-config/vector.toml</code> and <code>grafana-cd-provisioning/</code> into images via <code>dockerfile_inline</code> because GitLab runners cannot use static bind mounts. Staging still pins Grafana 10.2.2.</p>
+
+                  <p><strong>Provisioned assets in the repo:</strong> <code>vector-config/</code> holds the CD-scoped Vector config (identical to the root <code>vector.toml</code> apart from a narrower container list). <code>grafana/provisioning/</code> holds the Loki datasource and the "Chatbot Latency Breakdown" dashboard — TTFT composition, stacked duration by stage, average duration per stage, TTFT percentiles and distribution, average tool duration, error counts and errors by type, and a drill-down into slow and error logs. All 36 panel queries target Loki.</p>
+                  <hr>
+                  <p><strong>Benefits:</strong></p>
+                  <ul>
+                      <li>Dashboards ship with the code, so a fresh environment comes up already instrumented.</li>
+                      <li>One indexed label keeps Loki cardinality low while the full JSON body stays queryable.</li>
+                      <li>Log shipping is out of process — the application never blocks on the observability path.</li>
+                  </ul>
+                  <p><strong>Caveat:</strong> the provisioning file also declares an ArangoDB datasource typed <code>postgres</code>. No dashboard panel uses it.</p>

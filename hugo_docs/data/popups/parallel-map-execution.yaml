@@ -1,0 +1,47 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  performance-architecture
+order: 40
+label: "Parallel Map Execution"
+body: |2
+      <h2>Parallel Map Execution</h2>
+      <p>A map step runs one tool once per item of an upstream array — typically the stock codes a generator step produced, capped at 30 by default. Run serially that is 30 sequential backend calls. <code>ExecuteToolsMap</code> instead fans out over a bounded worker pool: a buffered channel of size <code>ParallelLimit</code> acts as the semaphore, one goroutine per item takes a slot, and a <code>sync.WaitGroup</code> joins them. Each result carries its index and is written into a pre-sized slice, so the joined output stays ordered regardless of completion order, and a failed iteration becomes a failure marker rather than failing the whole step.</p>
+      <p>The limit is per step. <code>ExecuteToolsMap</code> reads <code>step.ParallelLimit</code> and falls back to <code>config.AppSettings.DefaultParallelLimit</code> when the planner left it unset — <code>DEFAULT_PARALLEL_LIMIT</code>, default 5, raised to 20 in the development <code>.env</code>. Each individual tool call is retried through the shared retry helper at <code>DEFAULT_RETRY_LIMIT</code> (default 3) with exponential backoff from 1 s, capped at 30 s.</p>
+      <div class="mermaid">
+  graph TD
+      subgraph SERIAL ["Serial - one call at a time"]
+          S0["30 stock codes"]
+          S1["call 1"]
+          S2["call 2"]
+          S3["call 30"]
+          SEND["total is the sum of all 30 calls"]
+          S0 --> S1 --> S2 --> S3 --> SEND
+      end
+
+      subgraph BOUNDED ["Map mode - bounded worker pool"]
+          B0["map source array<br/>capped by MAX_TOTAL_STOCKS_FOR_MAP_EXECUTION"]
+          SEM["buffered channel sized ParallelLimit<br/>default from DEFAULT_PARALLEL_LIMIT"]
+          W1["goroutine per item<br/>retry up to DEFAULT_RETRY_LIMIT"]
+          W2["goroutine per item"]
+          W3["goroutine per item"]
+          WG["sync.WaitGroup joins<br/>results reordered by index"]
+          B0 --> SEM
+          SEM --> W1 --> WG
+          SEM --> W2 --> WG
+          SEM --> W3 --> WG
+      end
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+      class B0,SEM,W1,W2,W3,WG hot
+      </div>
+      <p>Two guards sit around the fan-out. <code>MAX_TOTAL_STOCKS_FOR_MAP_EXECUTION</code> (default 30) truncates the item list in all three source-resolution paths in <code>map_fallback.go</code> — the pre-extracted stock codes, the peek fallback, and the LLM extraction fallback — so a generator that returns 400 codes cannot turn one turn into 400 backend calls. And when the map source cannot be resolved at all, the step degrades gracefully instead of failing: <code>ErrMapSourceNotNeeded</code> tells the executor to fall back to plain parallel execution, which is correct whenever the tools already carry complete arguments.</p>
+      <p>Anchors: <code>tools/toolcore/pipeline/execution/map.go:138-145</code> for the pool setup, <code>tools/toolcore/pipeline/execution/map_fallback.go</code> for source resolution and the cap.</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>Wall-clock time for a map step is roughly the slowest call, not the sum of all calls.</li>
+          <li>Bounded rather than unbounded fan-out: backends are never hit by 30 simultaneous requests unless the limit says so.</li>
+          <li>Per-step overrides let an expensive tool run narrower than the global default.</li>
+          <li>The cap and the parallel fallback make a bad plan degrade in latency, not in correctness.</li>
+      </ul>

@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multi-agent-system
+order: 50
+label: "Evidence-Based Memory Editing"
+body: |2
+  <h2>Evidence-Based Memory Editing</h2>
+  <p>The memory editor is prompted against its own worst instinct. Existing items are framed as a "reference dictionary, NOT a checklist to copy", and the model is forbidden from emitting any derived statistic field — frequencies and expiry are backend-computed.</p>
+  <p><strong>Lifecycle status is evidence only.</strong> The prompt states it must never by itself create a goal, blocker, topic, followed stock, or context note. It exists solely to justify flipping an existing blocker to <code>RESOLVED</code> — objective proof, not a source of new memory.</p>
+  <p><strong>The model structurally cannot write <code>EXPIRED</code>.</strong> A normaliser collapses anything that is not <code>OPEN</code> or <code>RESOLVED</code> down to <code>OPEN</code>. Expiry is backend-only: the system independently flips stale-but-unresolved blockers. That gives three keys to closing a blocker — explicit user confirmation, objective lifecycle proof, or time — and the model holds only one of them.</p>
+  <p>Merge semantics are additive with no deletes. Canonical keys are case-insensitive trimmed strings, matches record a mention, misses append. Items leave only via 30-day expiry or capacity eviction. Context notes are the single full-replace category, and only when the model explicitly sets <code>context_notes_update</code>, so a structured-only turn cannot wipe them.</p>
+  <p>Cost is gated too: the answer-driven editor runs a cheap pre-filter — a standalone four-uppercase-letter IDX ticker shape, or one of twelve bilingual recommendation keywords — before it will spend an LLM call, and defers its database read until the model confirms a recommendation.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Memory cannot be inflated by a system signal the user never mentioned.</li>
+      <li>State transitions the model should not own are made unrepresentable, not merely discouraged.</li>
+      <li>Additive merging makes accidental data loss a capacity decision, not a model decision.</li>
+      <li>Non-recommendation answers skip the LLM call entirely.</li>
+  </ul>

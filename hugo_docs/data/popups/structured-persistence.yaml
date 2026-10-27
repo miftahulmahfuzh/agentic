@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  data-handling-integrity
+order: 70
+label: "Structured Turn Records"
+body: |2
+  <h2>Structured Turn Records</h2>
+  <p>One turn is one document, created or updated in place on <code>request_id</code> as the request progresses — queued, planned, streamed, finalised. It is not a response log; it is the full execution record, and it is what the status, history, sources and feedback endpoints all read.</p>
+  <p><strong>Identity and content.</strong> Conversation, request and user ids; the user query and the preserved <code>original_message</code>; the assembled final input and the final output; the detected language; the model identity in <code>llm</code>; <code>is_event</code> with its event metadata; any user reaction and feedback with their timestamps. Dual-agent turns store per-agent prompts and outputs in separate fields alongside <code>selected_agents</code> and the resolved persona, leaving the legacy fields untouched when the feature is off. <code>image_file_ids</code> carries the attachments of that turn, in the order the client sent them, read from the same request context the model was grounded on — so the persisted ids cannot disagree with the pixels that were actually sent.</p>
+  <p><strong>Tool metadata.</strong> <code>selected_tools</code> maps a tool name to a <em>list</em> of executions, because the same tool is legitimately called more than once in a turn. Each entry holds the input arguments, the full output text and its token count, the execution duration, a timestamp, the assigned <code>source_number</code>, and, on failure, the error plus the raw provider error body — captured below the client, because the LLM library discards provider detail when the error shape does not match what it expects. Backend tools record the external API address, request payload and response body; multi-API tools record one entry per call. Tools that make their own LLM calls record their input, output, total and grounding token counts.</p>
+  <p><strong>Timing and tokens.</strong> Completion status is a specific value, not a boolean — <code>completed</code>, <code>completed_from_cache</code>, <code>completed_via_pipeline_direct_stream</code>, <code>cancelled</code>, <code>errored_planning</code>, and a dozen more, each naming the path taken. Alongside it: time to first token and the model-only portion of it, plan generation and final answer generation durations, the tools phase wall clock, and a pre-pipeline breakdown down to session setup, cache key generation, queue wait, semaphore wait, language detection and memory access. Token counts are stored per segment — prompt template, tool input, tool output, chat history, completion — rather than as one total. The footnote <code>sources</code> map and the original LLM-generated plan are stored with them.</p>
+  <p>Cached replays carry the same shape. A cache entry stores the response together with the tool metadata, completion status, time to first token, detected language and sources of the original run, so a fast-lane answer presents the same execution detail as a freshly generated one instead of arriving as a bare string.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Latency regressions are attributable to a stage, because every stage is a stored field.</li>
+      <li>A failed turn keeps the provider's own error text, which is usually the only thing that explains it.</li>
+      <li>Per-segment token counts make cost analysis a query rather than a reconstruction.</li>
+      <li>Named completion statuses distinguish the several different ways a turn can legitimately succeed.</li>
+  </ul>

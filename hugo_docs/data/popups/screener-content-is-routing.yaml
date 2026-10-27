@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  the-lock
+order: 30
+label: "Content Is the Routing"
+body: |2
+  <h2>Content Is the Routing; the Label Only Lies</h2>
+  <p>One design principle runs through the whole tool: <strong>content is the routing; the label only lies.</strong> When a field's content and the planner's own label disagree, the code trusts the content and logs the mismatch.</p>
+  <p>It shows up first at the tool boundary. The caller must pass the user's message <strong>close to verbatim</strong> in <code>demand_description</code>, because fuzzy Indonesian terms — <code>murah</code>, <code>bagus</code>, <code>bandar</code>, <code>likuid</code> — have to survive intact for the tool's own planner to resolve them against the lexicon. A caller that helpfully normalises the sentence destroys the signal before the only component that could use it.</p>
+  <p>The LLM-facing tool description carries two routing rules in bold, both written against observed misrouting. A <em>combination</em> of criteria is always this tool, never <code>stock_ranks</code> — that is the trap, because a single-criterion request genuinely does look like a ranking table. And criteria may arrive as Pine-Script-style code, a formula, or a checklist, not only as a sentence.</p>
+  <p>Inside the turn the same principle governs <code>turn_mode</code>. It is the only multi-turn signal the code trusts from the planner, and all it does is select which baseline this turn builds on. What actually changed is derived by diffing the full condition list against that baseline — never reported by the model.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>A mislabelled turn still produces the right screen, because the label is not load-bearing.</li>
+      <li>Fuzzy natural-language terms reach the one component that can resolve them.</li>
+      <li>The misrouting trap is documented where the router reads it, not in a wiki.</li>
+      <li>Label and content mismatches are logged, so prompt drift is measurable.</li>
+  </ul>

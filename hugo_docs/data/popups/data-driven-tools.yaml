@@ -1,0 +1,44 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  performance-architecture
+order: 70
+label: "Data-Driven Tool Registry"
+body: |2
+      <h2>Data-Driven Tool Registry</h2>
+      <p>Tools are data, not code paths. All 30 are declared as <code>DynamicTool</code> values in one file, <code>tools/toolcore/definitions.go</code>, grouped into ten small builder functions (<code>buildSectorTools</code>, <code>buildFinancialDataTools</code>, <code>buildUserDataTools</code> and so on) that <code>BuildAllTools</code> concatenates. A repo-wide grep for <code>NameStr:</code> outside that file returns nothing: there is no second registry.</p>
+      <p>The struct is four fields plus an optional fifth: a name, a description shown to the LLM, a JSON schema for the arguments, an <code>Executor</code> closure, and — for the one tool that supports it — a <code>StreamExecutor</code>. The engine only ever reads those fields. It has no knowledge of what any individual tool does.</p>
+      <div class="mermaid">
+  graph TD
+      subgraph HARD ["Hard-coded engine"]
+          SW["engine switches on tool name"]
+          C1["case tool_a"]
+          C2["case tool_b"]
+          C3["a new tool means editing the engine"]
+          SW --> C1
+          SW --> C2
+          SW --> C3
+      end
+
+      subgraph DATA ["Data-driven registry"]
+          REG["BuildAllTools<br/>30 DynamicTool values"]
+          FLT["filterDisabledTools<br/>reads DISABLED_TOOLS"]
+          ENG["generic engine reads<br/>Name Description Schema Executor"]
+          ADD["a new tool means appending one struct"]
+          REG --> FLT --> ENG
+          REG -.-> ADD
+      end
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+      class REG,FLT,ENG,ADD hot
+      </div>
+      <p>Configuration operates on the same list rather than on branches in the engine. <code>filterDisabledTools</code> drops anything named in <code>DISABLED_TOOLS</code> at build time, so a disabled tool's schema never reaches the LLM at all — the model cannot plan a call it was never shown. Other environment lists work the same way: <code>TIMEBOUND_TOOLS</code> and <code>USERBOUND_TOOLS</code> mark plans as non-cacheable, <code>STOCK_CODE_GENERATOR_TOOLS</code> declares which tools may legally occupy step 1 of a pipeline, and <code>EXCLUDE_TOOLS_FROM_CITATION</code> suppresses source references for private or synthesised output.</p>
+      <p>One name in the plan grammar is deliberately <em>not</em> a registered tool: <code>compare_stocks</code>. The planner can emit it as a terminal step, and the pipeline routes it to the injected comparison synthesiser instead of looking it up in the registry.</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>Open for extension, closed for modification — adding the 31st tool is one struct, no engine change.</li>
+          <li>A single source of truth for what the system can do, greppable in one file.</li>
+          <li>Capability changes ship as configuration: disabling a tool is an environment variable, not a deploy of new logic.</li>
+          <li>The cache, citation and planning rules all key off tool <em>names</em>, so they stay correct as the catalogue grows.</li>
+      </ul>

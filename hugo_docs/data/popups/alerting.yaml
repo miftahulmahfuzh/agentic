@@ -1,0 +1,29 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  system-observability
+order: 40
+label: "Alerting with Deduplication"
+body: |2
+  <h2>Alerting with Deduplication</h2>
+  <p><code>common/alert/</code> pushes operational failures to a DingTalk group webhook. It is three files: <code>dingtalk.go</code> (transport), <code>dedup.go</code> (spam control), <code>manager.go</code> (global wiring and message formatting). The whole subsystem is inert unless <code>DINGTALK_ALERT_ENABLED=true</code> and <code>DINGTALK_WEBHOOK_TOKEN</code> is non-empty — <code>Initialize</code> returns early inside a <code>sync.Once</code>, leaving the global client nil. The default is off.</p>
+
+  <p>The webhook client signs each request: HMAC-SHA256 over <code>timestamp + "\n" + secret</code> keyed with the secret, base64-encoded and URL-escaped, with a 10 s HTTP timeout.</p>
+
+  <p><strong>The dedup algorithm.</strong> An <code>ErrorSignature</code> carries message, error type, model, function, request id and code location — but the bucket key is a SHA-256 of the <strong>error type alone</strong>. This is deliberately coarse: every <code>RATE_LIMIT_EXCEEDED</code> collapses into one bucket no matter which tool, model or request produced it. Each bucket then applies, in order:</p>
+  <ul>
+      <li><strong>Fresh window</strong> — if the current window has expired, the alert always passes and the window restarts.</li>
+      <li><strong>Cooldown</strong> — <code>ALERT_COOLDOWN_SECONDS</code>, default 30. Suppressed if the last alert of this type was more recent.</li>
+      <li><strong>Per-window cap</strong> — <code>ALERT_MAX_PER_WINDOW</code>, default 1. Suppressed once the bucket has spent its budget.</li>
+      <li><strong>Window length</strong> — <code>ALERT_WINDOW_MINUTES</code>, default 60.</li>
+  </ul>
+
+  <p>Suppression is not silent. Every suppressed alert records its <code>request_id</code> in a set, so one request that retries and trips the same error ten times counts once. The first alert of the next window carries that distinct-request count in its body: "N other request(s) hit a X error and were suppressed in the previous window". A background ticker prunes buckets untouched for two window lengths every 10 minutes.</p>
+
+  <p>The message itself carries timestamp, request id, function, model, error type, the error string, and a <code>CodeLocation</code> such as <code>tools/toolcore/planner/planner.go:252 (ClassifyAndPlan)</code>, plus optional user query, tool query, user id and prompt preview from the context map.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>An incident produces one actionable alert per error type per hour instead of a pager storm.</li>
+      <li>The representative alert still reports true blast radius, so coarse bucketing does not hide scale.</li>
+      <li>Defaults are off — a fresh checkout cannot page anyone by accident.</li>
+  </ul>

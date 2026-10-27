@@ -1,0 +1,51 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  data-handling-integrity
+order: 30
+label: "Citation &amp; Source Tracking"
+body: |2
+      <h2>Citation &amp; Source Tracking</h2>
+      <p>Every citable tool execution is registered during pipeline execution and given a sequential key — <code>source_1</code>, <code>source_2</code>, and so on — together with its input arguments and any extracted output metadata. The tool's output is then handed to the model as a JSON map entry keyed by that same number, so the number the model cites and the record the API later serves are the same object.</p>
+      <div class="mermaid">
+  graph TD
+      T["Tool step completes"]
+      ST["Static registry<br/>EXCLUDE_TOOLS_FROM_CITATION"]
+      DY["Dynamic registry<br/>per-tool predicate over the real output"]
+      EX{"ShouldExcludeFromCitation"}
+      NC["Emitted as tool_NAME DO NOT CITATE<br/>context only, no number"]
+      REG["registerToolExecution<br/>assigns source_N"]
+      RN["Filter unresolved sources<br/>then renumber to close gaps"]
+      PR["Prompt block<br/>source_N with tool and content"]
+      LLM["Model appends the source number<br/>in backticks at end of sentence"]
+      DB["sources map persisted<br/>on the chat-log row"]
+      EP["GET /chat/sources<br/>GET /chat/sources_map/:request_id"]
+
+      T --> EX
+      ST --> EX
+      DY --> EX
+      EX -->|"excluded"| NC
+      EX -->|"citable"| REG
+      REG --> RN
+      RN --> PR
+      NC --> PR
+      PR --> LLM
+      RN --> DB
+      DB --> EP
+
+      class EX,REG,RN hot
+      class EP ext
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+      </div>
+      <p>Exclusion has two layers, both behind <code>sourceops.ShouldExcludeFromCitation</code>. The <strong>static</strong> layer is <code>EXCLUDE_TOOLS_FROM_CITATION</code>: tools whose output is the user's own data or an internal aggregate — portfolio, memory, watchlist, the FAQ lookup, <code>compare_stocks</code> — are never citable, checked first and unconditionally. The <strong>dynamic</strong> layer is <code>DynamicExcluderRegistry</code>, a map of eleven per-tool predicates that read the actual output and exclude a tool that ran successfully but returned nothing worth citing: all instruments unavailable in <code>realtime_market</code>, no rows from <code>historical_marketdata</code>, an empty <code>news_summary</code>, a missing research document. Excluded tools still reach the model, formatted with a DO NOT CITATE marker so their content informs the answer without earning a footnote.</p>
+      <p>Citation instructions are themselves conditional: the prompt's citation block renders only when <code>INCLUDE_CITATION</code> is on <em>and</em> the turn actually produced at least one citable source. Sources whose input arguments still contain unresolved pipeline template variables are dropped and the survivors renumbered, so the sequence handed to the model never has holes.</p>
+      <p>Two read endpoints serve the persisted map, both behind authentication and per-request ownership. <code>GET /chat/sources</code> takes <code>req_id</code> and a <code>lang</code> of <code>en</code>, <code>id</code> or <code>zh</code> and returns an array sorted by numeric suffix — lexicographic ordering would put <code>source_10</code> before <code>source_2</code>. <code>GET /chat/sources_map/:request_id</code> returns the original keyed map and takes its language from the row's own detected language. Both merge input and output arguments into one <code>metadata</code> object and apply per-tool tidying. A turn with no surviving sources returns an empty array or object, not an error.</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>Footnote numbers are assigned by the executor, so a citation always resolves to a real tool call with real arguments.</li>
+          <li>Dynamic exclusion stops the model citing a source that returned no data — the most common cause of a hollow footnote.</li>
+          <li>Two endpoint shapes: ordered for rendering, keyed for lookup, neither one a client-side sort away from being wrong.</li>
+          <li>Adding a tool to either exclusion layer is one registry entry or one env value.</li>
+      </ul>

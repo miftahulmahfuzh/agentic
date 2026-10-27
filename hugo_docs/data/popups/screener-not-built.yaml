@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  shape-of-the-tool
+order: 40
+label: "What Was Not Built"
+body: |2
+  <h2>What Was Not Built</h2>
+  <p>Three capabilities were designed in full and deliberately not built. Saying so out loud is part of the design.</p>
+  <p><strong>The RAG-picking branch.</strong> It has no package. When the planner emits a <code>rag_request</code>, the branch is left <strong>nil</strong> rather than faked — the turn does not pretend to have run a retrieval it never ran.</p>
+  <p><strong>The second similarity engine.</strong> The similar-stock side branch ships one engine; a second, retrieval-based comparables engine was designed and deliberately not built. The engine that did ship has five distinct exits and carries its lineage across <code>next_batch</code> turns, so paging a similarity result behaves like paging a screen.</p>
+  <p><strong>The <code>answer</code> package.</strong> Built and tested, with no production caller, for the reason given under "A Payload, Not an Answer": the pipeline LLM writes the answer.</p>
+  <p>The same precision governs what <em>is</em> built. The risk-flag resolver handles the <strong>17 IDX Notasi Khusus codes</strong> and is explicitly <em>not</em> an UMA resolver — an AST test fails the build on any identifier that claims otherwise. The feed is one whole-market fetch on a refresh schedule, held in memory with the last good value served on failure, so the answer path's <code>ResolveFlags</code> is a map read under a read lock with <strong>no reachable network call</strong>.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>An unbuilt branch returns nil, so nothing downstream mistakes it for an empty result.</li>
+      <li>The gap between the plan set and the shipped tree is written down, not inferred.</li>
+      <li>A test, not a convention, stops the risk-flag resolver from drifting into UMA.</li>
+      <li>Risk annotation adds no latency and no new failure mode to the answer path.</li>
+  </ul>

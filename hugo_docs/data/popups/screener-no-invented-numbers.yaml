@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  the-lock
+order: 20
+label: "Ladders, Never Invented Numbers"
+body: |2
+  <h2>Ladders, Never Invented Numbers</h2>
+  <p>Numbers in this tool come from exactly two places: the user types one, or the registry supplies a ladder step. Nothing else may produce one. <code>RelaxedParams</code> being non-nil <em>is</em> the relaxability gate for a condition, and every value in it must be a step on that filter's ladder — so relaxation walks a ladder it was handed rather than guessing a looser bound.</p>
+  <p>The rule used to have an exception, and the exception was <strong>deleted, not deferred</strong>. An earlier design let the system propose a looser threshold and ask the user to confirm it; the whole mechanism was removed on the reasoning that a proposal saves the user nothing — both paths cost two turns — while forcing the system to invent the very number the rule forbids. Gone entirely: <code>suggestions</code>, <code>expected_hits</code>, <code>pending_written</code>, <code>PendingConfirmation</code> and its session slot, <code>confirms_pending</code>, <code>explicit_relax_suggested</code>, <code>explicit_relax_confirmed</code>, and the suggest-then-confirm state machine that tied them together.</p>
+  <p>Deleting it made the lock <em>stricter</em>. The system now never touches a locked condition at all — not even by proposing a value for one.</p>
+  <p>What replaced it carries two facts and no proposal: the near-miss report names which condition is blocking (<code>n_dropped</code>) and the value actually <strong>reachable</strong> on that metric. Both are read off a sensitivity matrix <code>execute</code> has already paid for, so the report costs nothing extra.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>No threshold on screen is ever a model's guess — it is the user's or the registry's.</li>
+      <li>One fewer state machine, one fewer session slot, and one fewer way to drift.</li>
+      <li>The near-miss report is derived from data already in hand, not from a second query.</li>
+      <li>The rule is checkable: a number with no ladder step behind it is a bug, not a judgement call.</li>
+  </ul>

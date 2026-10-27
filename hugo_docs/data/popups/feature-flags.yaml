@@ -1,0 +1,27 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  system-observability
+order: 60
+label: "Dark-Launch Feature Flags"
+body: |2
+  <h2>Dark-Launch Feature Flags</h2>
+  <p>Substantial features ship disabled. <code>ENABLE_IMAGE_PROCESSING</code> (multimodal upload and vision), <code>ENABLE_CS_MANAGER</code> (the dual-agent Luna/Kevin/Mia framework) and <code>ENABLE_USER_SHORT_TERM_MEMORY</code> all default to <code>false</code>. <code>USE_BOWL</code> defaults to <code>true</code> and gates resume. <code>DYNAMIC_AUTH</code> and <code>PRODUCTION_MODE</code> default to <code>false</code>, which together decide whether per-user identity exists at all and whether the <code>mockPass</code> development backdoor is accepted.</p>
+
+  <p><strong>The discipline is: gate at the edge, then prove the off-path is unchanged.</strong> Flags are checked at the boundary where new data would first enter — request binding, cache-key composition, prompt rendering, history formatting — rather than sprinkled through the core. With <code>ENABLE_IMAGE_PROCESSING</code> off, <code>extractImageAttachments</code> returns silently ignored parts, so a multipart submit from a new client degrades to the old text behaviour instead of erroring.</p>
+
+  <p>Tests then assert the disabled path byte-for-byte, not merely "still works": <code>TestCacheKey_FlagOffShapeUnchanged</code>, <code>TestFetchAndFormatHistory_FlagOffByteForByte</code>, <code>TestExtractImageAttachments_FlagOff</code>, <code>TestBuildSearchContents_FlagOffIgnoresContext</code>, <code>TestResolveInterruption_FlagOff_Noop</code>, <code>TestSubmitGate_V2_ImageOnlyRejectedWhenFlagOff</code>, plus the pinned prompt goldens. <code>DYNAMIC_AUTH</code> gets the same treatment through <code>TestAuthStorage_DynamicAuthDisabled</code> and <code>TestHandleSubmitRequest_AuthStorageDisabled</code>.</p>
+
+  <p><strong>The operational caveat.</strong> Routes are registered unconditionally so a flag can be flipped without a redeploy, which means a dark endpoint answers rather than 404s at the router — with its own code:</p>
+  <ul>
+      <li><code>GET /chat/resume/:request_id</code> — 404 <code>RESUME_DISABLED</code> when <code>USE_BOWL=false</code>.</li>
+      <li><code>GET /user/settings/:user_id</code> and <code>POST /user/settings</code> — 403 <code>ENDPOINT_DISABLED</code> when <code>ENABLE_CS_MANAGER=false</code>.</li>
+      <li><code>GET /files/image/:image_file_id</code> — a plain 404 <code>NOT_FOUND</code> when <code>ENABLE_IMAGE_PROCESSING=false</code>, indistinguishable from a missing file, so a prober learns nothing from the dark route.</li>
+  </ul>
+  <p>Clients must therefore treat these codes as "feature unavailable", not as "resource gone" or "you are forbidden".</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Incomplete work merges to the mainline instead of ageing on a branch.</li>
+      <li>Enabling or reverting a feature is an environment variable, not a rollback.</li>
+      <li>The off-path has test evidence, so "the flag is off" is a verified claim rather than an assumption.</li>
+  </ul>

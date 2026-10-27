@@ -1,0 +1,47 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  performance-architecture
+order: 10
+label: "Cache Fast-Lane"
+body: |2
+      <h2>Cache Fast-Lane</h2>
+      <p>Every text-only submit is offered to the cache fast-lane before it is allowed near the FIFO queue. <code>dispatchForProcessing</code> pushes the request onto <code>cacheRequestChan</code> with a 10 ms bound; if that channel is full the request falls through to the queue. Three dedicated goroutines (<code>TOTAL_CACHE_WORKERS</code>, default 3) drain the channel. They never acquire <code>processingSemaphore</code>, so a cache hit costs nothing from the normal worker budget.</p>
+      <p>The key is built exactly once per submit, in <code>helpers.GenerateCacheKeyWithHistory</code> — the single place in the system where cache keys are generated. It concatenates the previous questions and the current question, normalises the result to lowercase letters and digits only (Unicode-aware, so Chinese survives), and prefixes it. A <code>:lang</code> suffix is appended when a language is set, and <code>:img_&lt;fp&gt;</code> when the turn carries image attachments, where the fingerprint is the first 16 hex characters of a SHA-256 over each blob, length-prefixed.</p>
+      <p><strong><code>conversation_id</code> is deliberately excluded from the key.</strong> Two people asking the same question in two different conversations land on the same entry. That exclusion is the whole point: it is what turns a per-conversation cache into a cross-conversation, cross-user duplicate-work collapser.</p>
+      <div class="mermaid">
+  graph TD
+      SUB["POST /chat/submit"]
+      KEY["GenerateCacheKeyWithHistory<br/>normalised prev questions + question<br/>plus lang plus optional image fingerprint"]
+      DISP["dispatchForProcessing"]
+      CH["cacheRequestChan<br/>10 ms enqueue bound"]
+      CW["3 cache workers<br/>TOTAL_CACHE_WORKERS<br/>no processingSemaphore"]
+      GET["Redis lookup"]
+      HIT["wait for client attach<br/>then emit 3 events"]
+      MISS["routeToNormalProcessing<br/>takes processingSemaphore"]
+      IMG["image turn<br/>fast-lane skipped"]
+      QM["FIFO queue"]
+      REDIS[("Redis<br/>ai_chatbot_conv entry<br/>TTL 24h")]
+
+      SUB --> KEY --> DISP
+      DISP -->|"text turn"| CH
+      DISP -->|"has images"| IMG --> QM
+      CH --> CW --> GET
+      GET -->|"read"| REDIS
+      GET -->|"hit"| HIT
+      GET -->|"miss"| MISS
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+      class CH,CW,GET,HIT hot
+      class REDIS ext
+      </div>
+      <p>A hit does not stream immediately. <code>waitForClientConnection</code> blocks on the request holder's <code>ClientConnected</code> channel first, because a cache hit can land before the browser has opened the SSE connection and streaming into a closed pipe would lose the answer. Once the client is attached the fast-lane emits three events: a time-to-first-token record tagged <code>cache_fastlane</code>, the whole answer as one token event, and a completion event with status <code>completed_from_cache</code>.</p>
+      <p>Image-bearing turns are never cached, guarded independently at three layers: routing skips the fast-lane tier, the read path returns before any Redis call, and the preparer sets <code>ShouldCache = false</code> so nothing is ever written.</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>This is now the system's <strong>only</strong> duplicate-request collapsing mechanism. There is no separate deduplication layer above it.</li>
+          <li>Cache workers are isolated from the normal worker pool, so cached answers stay fast while the pipeline is saturated.</li>
+          <li>Excluding <code>conversation_id</code> means popular questions are answered once for the whole user base.</li>
+          <li>The language and image suffixes keep semantically different turns from colliding on one entry.</li>
+      </ul>

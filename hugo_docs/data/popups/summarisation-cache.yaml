@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  data-handling-integrity
+order: 20
+label: "Summarisation Cache"
+body: |2
+  <h2>Summarisation Cache</h2>
+  <p>Separate from the response cache, and much narrower. When a comparison pipeline's collected tool output exceeds the token budget, each oversized output is summarised by an LLM call. Those summaries are cached in Redis under <code>summary:&lt;sha256&gt;</code>, with a 24 hour TTL.</p>
+  <p>The digest is taken over the tool <em>inputs</em> — tool name, marshalled arguments, and whether extreme-reduction mode is active — not over the output text. Identical tool calls therefore share a summary even when the upstream response varies in whitespace or ordering. The stored value keeps the summary, the original and summarised token counts, the reduction percentage, and the time it was cached, so a cache hit still reports honest metrics into the pipeline's LLM-call ledger rather than a zero-cost gap.</p>
+  <p><code>USE_SUMMARIZATION_CACHE</code> gates it by <strong>passing a nil Redis client</strong>, not by branching. <code>prepare.go</code> sets the client to nil when the flag is off, and <code>GetLLMSummary</code> takes the cached path only when its client is non-nil. There is one code path, exercised identically in both modes. The other caller of the summariser, the aggregation fallback in <code>tools/toolcore/executor</code>, simply never supplies a client — so it is uncached by construction, with no flag to get wrong. Timebound and userbound tools are excluded from the cache here too, via the same lists the response cache uses.</p>
+  <p>It is not request deduplication. A hit skips exactly one summarisation call inside a turn that is already running; it never returns an answer, never short-circuits a request, and does not coordinate concurrent turns. Two identical requests arriving before either has written the entry will both summarise.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Repeated comparisons over the same instruments skip the most expensive non-answer LLM calls.</li>
+      <li>Keying on inputs makes hits reproducible instead of dependent on byte-identical tool output.</li>
+      <li>Nil-client gating means the disabled path is the same path, so the flag cannot introduce a behavioural fork.</li>
+      <li>Cached results still carry token and reduction figures, so cost accounting stays complete.</li>
+  </ul>

@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  shape-of-the-tool
+order: 10
+label: "The Import DAG"
+body: |2
+  <h2>The Import DAG</h2>
+  <p>Three import cycles appeared independently while the feature was being built — <code>baseline</code> against <code>relax</code>, <code>toolpicker</code> against <code>lexicon</code>, <code>toolpicker</code> against <code>ragpick</code>. One rule resolved all three at once, and it is now the shape of the tree.</p>
+  <p>Every subpackage imports <code>toolpicker</code>, the root. The root holds <strong>types, constants and pure helpers only</strong> — no behaviour. No subpackage imports another except in the direction stated. And <strong>nothing imports <code>engine</code></strong>: <code>engine</code> is the single orchestrator, the only subpackage permitted to import every other, and the only thing the tool registry imports.</p>
+  <p>The rule buys properties that are hard to retrofit. <code>baseline</code> — the lock, the diff, normalization — has <strong>no</strong> database, LLM, clock or goroutine in any exported function, so the most security-sensitive logic in the feature is also the most trivially testable. <code>observe</code> is the only picker package that touches <code>db</code>. <code>serve</code> is the only place allowed to construct a payload. <code>execute</code> is the only package that speaks to the screener API.</p>
+  <p>The root's own cost is stated plainly: because the audit row embeds root types directly, <code>types.go</code> is a <strong>persisted wire contract</strong>, and a JSON tag change there is a storage-format change.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Three cycles were closed by one rule instead of three workarounds.</li>
+      <li>Pure packages need no fixtures, so the lock is covered by ordinary unit tests.</li>
+      <li>Each capability has exactly one owner, so "where does this happen?" has one answer.</li>
+      <li>The orchestrator reads top to bottom, because nothing calls back into it.</li>
+  </ul>

@@ -1,0 +1,46 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  the-lock
+order: 10
+label: "The Three-Layer Lock"
+body: |2
+      <h2>The Three-Layer Lock</h2>
+      <p>A condition the user stated out loud is locked, and the lock is a <strong>flag test, never a language test</strong>. There is no <code>Locked</code> boolean on the domain type: <code>origin = user_explicit</code> <em>is</em> the lock. Nothing re-reads the sentence to decide.</p>
+      <div class="mermaid">
+  graph TD
+      C["Condition<br/>origin = user_explicit"]
+      R{"toolpicker.RelaxationCandidates"}
+      EX["Excluded from the auto-relax set<br/>layer 1"]
+      P["Planner changed it anyway"]
+      A{"baseline.Authorize<br/>Span, or RelaxRequest.Target == CID"}
+      OK["Change kept<br/>explicit_relax_by_name"]
+      REV["Change reverted<br/>planner_violation, layer 2"]
+      AUD["observe R1 drift audit<br/>scores both halves, layer 3"]
+
+      C --> R
+      R --> EX
+      C --> P
+      P --> A
+      A -->|"authorized"| OK
+      A -->|"not authorized"| REV
+      OK --> AUD
+      REV --> AUD
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+
+      class R,A hot
+      class OK,REV,EX ext
+      </div>
+      <p><strong>Layer 1 — exclusion.</strong> <code>toolpicker.RelaxationCandidates</code> leaves every <code>user_explicit</code> condition out of the auto-relax candidate set, so the relaxation engine cannot reach it at all.</p>
+      <p><strong>Layer 2 — authorization.</strong> <code>baseline.Authorize</code> compares the planner's condition list against the baseline, reverts any unauthorized change to a locked condition, and records a <code>planner_violation</code>. There are exactly two authorization signals, and deliberately no third: the condition's own <code>Span</code>, and a <code>RelaxRequest</code> whose <code>Target</code> matches the <code>CID</code>.</p>
+      <p><strong>Layer 3 — the audit.</strong> The daily drift audit in <code>observe</code> needs <em>both</em> halves of the evidence: the negative (<code>planner_violation</code>) and the positive (<code>explicit_relax_by_name</code>). Score only the negative and every legitimate user-requested loosen becomes a false P1. The engine writes both from one function, so neither can be wired up without the other.</p>
+      <p>Sacrifice order composes with the lock rather than duplicating it. Each <code>Origin</code> also carries a relaxation rank — <code>constraint_default</code> 0 &lt; <code>preset_default</code> 1 &lt; <code>inferred</code> 2 &lt; <code>user_explicit</code> 3 — and the lowest is given up first. A <strong>new</strong> <code>Origin</code> value falls to the default arm and is therefore held longest: an unclassified origin must never inherit "give this up first" by accident, and <code>TestEveryOriginHasADistinctRelaxationRank</code> fails until someone classifies it deliberately.</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>The lock cannot be defeated by phrasing, because phrasing is never consulted.</li>
+          <li>A planner regression surfaces as a reverted change plus an audit row, not as a silently loosened filter.</li>
+          <li>The drift audit measures both directions, so it does not punish the behaviour it wants.</li>
+          <li>Adding an <code>Origin</code> fails a test until its sacrifice order is stated.</li>
+      </ul>

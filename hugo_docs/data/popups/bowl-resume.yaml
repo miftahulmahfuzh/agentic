@@ -1,0 +1,63 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  resource-management
+order: 10
+label: "Magic Bowl: Resumable Streams"
+body: |2
+                  <h2>Magic Bowl: Resumable Streams</h2>
+                  <p>An HTTP connection can drop mid-answer: tab close, page refresh, mobile network. The LLM stream behind it is a one-shot Go channel, so without help the tokens are gone. The bowl (<code>chatbot/bowl</code>) makes a turn's event history durable in memory for the lifetime of that turn, so the same client can reattach and receive everything it missed.</p>
+                  <p><strong>This is disconnect and reconnect resilience for one client. It is not fan-out.</strong> A bowl is explicitly single-consumer: <code>CreatePipe</code> permits exactly one active pipe and closes the previous one before handing out a new one, so a bowl structurally cannot serve two clients at the same time. Replay survives a reconnect; simultaneous delivery to multiple viewers does not exist here and cannot be configured on.</p>
+                  <div class="mermaid">
+  graph TD
+      subgraph WRITE ["Write side — one ResponseBowl per request_id"]
+          STRM["streamer channel"]
+          BW["bowl-writer goroutine<br/>filters the LLM completion event"]
+          BOWL["ResponseBowl<br/>events accumulate permanently<br/>the bowl is never drained"]
+      end
+
+      subgraph PIPES ["CreatePipe — exactly one active pipe"]
+          CP["new pipe closes the previous one"]
+          PS["stream pipe<br/>historical tokens skipped"]
+          PR["resume pipe<br/>handleCatchUpTokens"]
+      end
+
+      subgraph OUT ["Consumers — always the same request"]
+          SSE["GET /chat/stream/:request_id"]
+          RES["GET /chat/resume/:request_id"]
+          INC["GET /session/incomplete/:conversation_id"]
+          STAT["GET /chat/status/:request_id<br/>progress mirror"]
+      end
+
+      subgraph LIFE ["Lifecycle"]
+          JAN["bowl janitor every 5m<br/>TTL 24h · 30s grace after completion"]
+          CAN["POST /chat/cancel/:request_id<br/>bowl deleted outright"]
+      end
+
+      STRM --> BW --> BOWL
+      BOWL --> CP
+      CP --> PS
+      CP --> PR
+      PS --> SSE
+      PR -->|"one concatenated catch-up token"| RES
+      BOWL --> INC
+      BOWL --> STAT
+      JAN --> BOWL
+      CAN --> BOWL
+
+      class BOWL,CP,PR hot
+      class SSE,RES,INC,STAT ext
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+                  </div>
+                  <p><strong>The catch-up token.</strong> A naive replay re-emits every historical token event one at a time — the "dripping pipe" that makes a reconnect feel slower than the original answer. For a <code>resume</code> pipe on an incomplete bowl, <code>handleCatchUpTokens</code> concatenates all historical tokens into a <strong>single</strong> token event and sends that; <code>shouldSkipEvent</code> then suppresses the individual tokens. Hundreds of events collapse into one.</p>
+                  <p><strong>Integration detail worth knowing.</strong> With <code>USE_BOWL=true</code> the client never reads the streamer channel. The manager interposes a bowl-writer goroutine that copies every event into the bowl, and hands the SSE handler a <em>bowl pipe</em> instead. The live path and the resume path are therefore the same path. With <code>USE_BOWL=false</code> the raw stream is returned directly, <code>/chat/resume/:request_id</code> answers 404 with error code <code>RESUME_DISABLED</code>, and <code>/session/incomplete/:conversation_id</code> returns an empty list.</p>
+                  <p><strong>Ending a bowl.</strong> Completion records a status, emits a final <code>info</code> event, closes the pipe and triggers cleanup immediately. Cancellation is different: partial tokens are read out and persisted first, then the bowl is deleted from the map outright — after a cancel there is deliberately nothing left to resume. Everything else expires through the janitor: 24 h TTL, with a 30 s grace window after completion so a resume fired right at the end still lands.</p>
+                  <hr>
+                  <p><strong>Benefits:</strong></p>
+                  <ul>
+                      <li>A refresh or a dropped mobile connection does not lose the answer.</li>
+                      <li>Reconnect is one event, not a re-run of the whole token stream.</li>
+                      <li><code>/chat/status</code> keeps reporting progress after the socket is gone, because the bowl mirrors it.</li>
+                      <li>Cancelled turns still persist whatever was already written to the user.</li>
+                      <li>Pipe exclusivity removes a whole class of double-consumption bugs by construction.</li>
+                  </ul>

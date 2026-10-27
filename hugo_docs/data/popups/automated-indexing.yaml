@@ -1,0 +1,42 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  data-handling-integrity
+order: 50
+label: "Automated Schema &amp; Indexing"
+body: |2
+  <h2>Automated Schema &amp; Indexing</h2>
+  <p>There is no migration step to forget. On startup <code>initializeSchema</code> runs <code>ensureAllCollections</code> and then <code>ensureAllIndexes</code>; every call is an idempotent <code>Ensure...</code>, so a fresh database, a restored backup and a running production instance all converge on the same schema. Collections are created unconditionally — including <code>file_assets</code> while image processing is still dark — because gating schema on a runtime flag is exactly how a flag flip returns 500s against a collection that does not exist yet. An empty collection is inert.</p>
+  <p>Several indexes are correctness constraints as much as query accelerators. Uniqueness on the chat log's <code>request_id</code>, on <code>file_assets.file_id</code> and on a research report's <code>stock_code</code> turns a duplicate into a loud write error rather than a silent overwrite.</p>
+  <p><strong>Chat logs</strong></p>
+  <ul>
+      <li><code>idx_log_request_id</code> — unique hash on <code>request_id</code>; the lookup behind status, sources and feedback.</li>
+      <li><code>idx_log_user_conv_time</code> — persistent on <code>user_id, conversation_id, user_query_timestamp</code>; conversation history in order.</li>
+      <li><code>idx_log_user_session_sort</code> — persistent on <code>user_id, session_sort_ts, user_query_timestamp</code>; backs the session-list query.</li>
+  </ul>
+  <p><strong>Sessions, research, portfolio, memory</strong></p>
+  <ul>
+      <li><code>idx_sessions_user_id</code> — hash on <code>user_id</code>.</li>
+      <li><code>idx_research_stock_code</code> — unique hash; one equity research report per instrument.</li>
+      <li><code>idx_portfolio_perm_user_id</code> — unique hash on the portfolio access permission collection.</li>
+      <li><code>idx_user_memory_user_id</code> — unique hash; one memory document per user.</li>
+  </ul>
+  <p><strong>File assets</strong></p>
+  <ul>
+      <li><code>idx_file_assets_file_id</code> — unique hash; the backstop behind random id minting.</li>
+      <li><code>idx_file_assets_request_id</code> — persistent; resolve every asset attached to one turn.</li>
+      <li><code>idx_file_assets_user_created</code> — persistent on <code>user_id, created_at</code>; ownership sweeps and future retention jobs.</li>
+  </ul>
+  <p><strong>Caches and suggestion questions</strong></p>
+  <ul>
+      <li><code>idx_concept_cache_query</code> — unique hash on the cached query string; <code>idx_concept_data_cache_id</code> — persistent on the sector id.</li>
+      <li><code>idx_all_questions_en</code> — unique hash on the English text, which is how question deduplication is enforced.</li>
+      <li><code>idx_click_record_question_id</code> and <code>idx_watchlist_portfolio_stocks_user_id</code> — unique hash; <code>idx_welcome_page_user_timestamp</code>, <code>idx_new_answer_request_timestamp</code> and <code>idx_overwrite_data_timestamp</code> — persistent, all time-ordered reads.</li>
+  </ul>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Deployment is start the binary; there is no separate migration to run or to skip.</li>
+      <li>Named indexes make an unexpected collection scan attributable to a specific missing entry.</li>
+      <li>Unique indexes encode invariants in the database, not only in Go.</li>
+      <li>Schema is flag-independent, so enabling a feature never requires a schema change first.</li>
+  </ul>

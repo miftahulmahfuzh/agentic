@@ -1,0 +1,6 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+section: screener
+heading: "The Lock"
+icon:    ic-shield
+order:   10

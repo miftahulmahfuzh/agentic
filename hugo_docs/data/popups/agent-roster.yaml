@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multi-agent-system
+order: 10
+label: "Agent Roster &amp; Personas"
+body: |2
+  <h2>Agent Roster &amp; Personas</h2>
+  <p>There are exactly two agents, and separately three personas. The agent is <em>who answers</em>; the persona is <em>which voice</em> the second agent wears.</p>
+  <p><code>tuntun_ai</code> is the professional investment analyst. It owns the tool pipeline, runs a fixed six-section analysis framework, and is token-streamed to the client.</p>
+  <p><code>customer_service_manager</code> is the relationship layer. It runs one-shot on a separate SSE endpoint, receives the already-executed tool result, and is instructed never to contradict the analyst or introduce analysis of its own.</p>
+  <p>The wire value is <code>customer_service_manager</code>. <code>cs_manager</code> is only code and route shorthand — <code>cs_manager_person</code>, <code>/chat/cs_manager/answer</code>, <code>ENABLE_CS_MANAGER</code> — and never travels in <code>selected_agents</code>.</p>
+  <p>Personas are <code>Luna</code> (the default whenever settings are nil, empty, or unrecognised), <code>Kevin</code>, and <code>Mia</code>. Each has two embedded prompt files under <code>core/persona/prompts/</code> — an answer variant and a suggestion variant — selected by call site, not by a heuristic. The persona is frozen per turn as <code>cs_manager_person</code>, so changing your setting never re-labels old messages.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>One analyst, one relationship layer — no second opinion to reconcile.</li>
+      <li>Persona is a prompt file, not code; adding a fourth is a text file and an enum value.</li>
+      <li>Per-turn persona persistence keeps conversation history historically accurate.</li>
+      <li>Independent failure domains: a customer service manager failure cannot fail an already-streamed analyst turn.</li>
+  </ul>

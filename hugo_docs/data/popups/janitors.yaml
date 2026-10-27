@@ -1,0 +1,27 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  resource-management
+order: 30
+label: "State-Aware Janitors"
+body: |2
+  <h2>State-Aware Janitors</h2>
+  <p>Two independent background sweepers keep in-memory state from accumulating. They cover different maps with different rules.</p>
+  <h3>1. Request janitor</h3>
+  <p>A ticker on <code>JANITOR_INTERVAL</code> (default 2m) walks <code>activeRequests</code> and applies a timeout chosen by the request's current state, because "stuck" means something different in each:</p>
+  <ul>
+      <li><strong><code>StateCancelled</code></strong> — <code>CLIENT_PICKUP_TIMEOUT</code>, default <strong>1s</strong>. The cancellation packet has been emitted; if the client has not collected it almost immediately, the slot is reclaimed.</li>
+      <li><strong><code>StateQueued</code></strong> — <code>QUEUE_TIMEOUT</code>, default <strong>1h</strong>. Waiting in a busy FIFO is normal behaviour, not a fault.</li>
+      <li><strong><code>StateTaskExecution</code> and <code>StateFastLaneProcessing</code></strong> — <code>PROCESSING_TIMEOUT</code>, default <strong>10m</strong>. Long enough for a real multi-step pipeline, short enough to kill a genuinely wedged one.</li>
+  </ul>
+  <p>The scan reads every holder field under the read lock and captures the pointer, so the cleanup phase needs no second lookup that could race. A timed-out request gets an error pushed onto its error channel, then <code>CleanupRequest</code>.</p>
+  <h3>2. Bowl janitor</h3>
+  <p>A separate 5-minute ticker inside <code>chatbot/bowl</code> drops expired bowls and their request metadata. Expiry is also state-aware: a completed or cancelled bowl expires 30 s after completion — the grace window that lets a resume fired right at the end still succeed — while a still-active bowl is given twice the 24 h TTL. Completion additionally runs the sweep synchronously, so the frontend's auto-resume loop does not find a bowl that has already finished.</p>
+  <p><strong>Shutdown.</strong> <code>Manager.Shutdown</code> closes the async log queue first and waits up to 10 s for the log writer to drain before stopping the cache workers, the cache re-evaluation worker and the bowl manager. Pending chat-log writes are flushed rather than dropped on exit.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>No unbounded growth in <code>activeRequests</code> or the bowl map.</li>
+      <li>A patient queued request is never mistaken for a stuck one.</li>
+      <li>The resume grace window is respected instead of being cleaned out from under a reconnecting client.</li>
+      <li>Graceful shutdown does not lose queued log rows.</li>
+  </ul>

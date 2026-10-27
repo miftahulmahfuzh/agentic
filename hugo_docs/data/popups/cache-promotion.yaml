@@ -1,0 +1,25 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  performance-architecture
+order: 20
+label: "Cache Promotion &amp; Re-evaluation"
+body: |2
+  <h2>Cache Promotion &amp; Re-evaluation</h2>
+  <p>The up-front cache check only helps a request that arrives <em>after</em> an answer exists. Promotion covers the other case: a twin that missed the cache and is already sitting in the FIFO queue when the first request finishes computing.</p>
+  <p>The loop has five steps, all on the write side of the streamer:</p>
+  <ul>
+      <li><strong>Write.</strong> <code>RedisResponseCache.Store</code> marshals the response, selected tools, completion status, detected language and sources, sets the key with a 24 h TTL, and then <em>verifies the write</em> before anything else happens.</li>
+      <li><strong>Notify.</strong> <code>Streamer.Stream</code> calls <code>NotifyCachePopulated(cacheKey)</code>, a non-blocking send onto a buffered channel. A full channel is logged and dropped — the notification is an optimisation, never a correctness requirement.</li>
+      <li><strong>Re-evaluate.</strong> A single <code>ReevaluationWorker</code> goroutine consumes cache keys and calls <code>PromoteFromQueueForCache</code>.</li>
+      <li><strong>Promote.</strong> <code>queue.Manager.PromoteForCache</code> looks up every queued request sharing that key in O(1) through <code>cacheKeyIndexMap</code>. For each one it sends the request id to <code>priorityChan</code> <em>first</em>, and only on a successful send removes the item from the FIFO and stashes it in <code>promotedItems</code>. If the priority channel is full the request simply stays in the queue. No orphans, and no window in which a normal worker can race in and regenerate it.</li>
+      <li><strong>Serve.</strong> <code>priorityRequestWorker</code> picks the id up and tries <code>HandleCachedRequestViaReevaluation</code> <strong>before</strong> anything else. Because the write was verified before the notification fired, the answer is already durably in Redis. Only a genuine miss — the entry evicted or expired between write and pickup — falls back to regeneration.</li>
+  </ul>
+  <p>Promoted turns complete with status <code>completed_from_cache_reevaluation</code> rather than <code>completed_from_cache</code>, chosen from the promotion flag and deliberately ignoring whatever status was cached. The two timescales stay distinguishable in the logs.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>N identical concurrent questions cost one plan, one tool run and one synthesis. The rest are replayed from Redis.</li>
+      <li><code>PromoteForCache</code> is the <strong>only</strong> queue-jumping edge in the system. There are no priority classes and no other path that reorders the FIFO.</li>
+      <li>Send-then-remove ordering makes promotion safe under a full priority channel: the worst case is that the request processes normally.</li>
+      <li>Promotion serves from the cache rather than the LLM, so a queue-jump costs a Redis read, not a model call.</li>
+  </ul>

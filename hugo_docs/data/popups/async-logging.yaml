@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  data-handling-integrity
+order: 60
+label: "Asynchronous Chat Logging"
+body: |2
+  <h2>Asynchronous Chat Logging</h2>
+  <p>The moment a request is accepted, an initial chat-log row is queued rather than written. <code>logQueue</code> is a buffered channel of 100 <code>LogDataForDB</code> values; <code>submitRequest</code> sends on it inside a <code>select</code> with a <code>default</code> branch, so the send never blocks. A single <code>asyncLogWorker</code> goroutine ranges over the channel and performs the write.</p>
+  <p>The back-pressure behaviour is a drop, and it is deliberate. If the buffer is full the log is discarded with a warning and the request proceeds — the row is a resume and observability aid, not the answer, and blocking the accept path on a database write would be the worse failure. Because the queue has a single consumer, writes stay in submission order. Nothing else uses the queue: the later lifecycle writes, including the final answer, go through <code>CreateOrUpdateChatLog</code> directly on the processing goroutine, after the tokens have already been delivered to the client.</p>
+  <p>Two details make the deferral safe. The worker writes with <code>context.Background()</code>, so a request the user cancelled a millisecond after submitting still gets its row. And before writing it reads the current completion status: if the row already carries a terminal <code>cancelled</code> or <code>errored...</code> state, written by an earlier status update, the queued "submitted" row would clobber it — so the worker skips the write and instead backfills only the owner and identity fields, which the ownership check on the status endpoint needs in order not to reject the caller forever.</p>
+  <p>Shutdown closes the queue and waits on a wait group for the worker to drain, with a 10 second bound; a timeout is logged as "some logs may be lost" rather than hidden.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>A database write is removed from the accept path, so submit latency does not track database latency.</li>
+      <li>Drop-on-full degrades observability under load instead of degrading the service.</li>
+      <li>A background context means cancellation cannot lose the record of the request that was cancelled.</li>
+      <li>The terminal-status check stops an in-flight queued row from resurrecting a finished request.</li>
+  </ul>

@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  performance-architecture
+order: 30
+label: "Plan-and-Execute Pipeline"
+body: |2
+  <h2>Plan-and-Execute Pipeline</h2>
+  <p>The orchestration core is a custom implementation of the <strong>plan-and-execute / LLMCompiler</strong> pattern. One LLM call in <code>tools/toolcore/planner</code> emits the entire execution graph as JSON up front; a deterministic engine in <code>tools/toolcore/pipeline</code> then runs it. It is not a ReAct loop — the model does not observe a tool result and pick the next tool.</p>
+  <p>The planner classifies each turn into one of three plan modes: <code>simple</code> (independent tools, no dependencies), <code>pipeline</code> (ordered steps where later steps consume earlier output), and <code>fixed_answer</code> (a canned response, for example on prompt-injection detection). Simple mode is <em>not</em> a second code path — <code>plan.ToPipelinePlan()</code> converts it into a one-step pipeline so everything flows through the same executor.</p>
+  <p>Within a step the execution mode is <code>single</code> or <code>map</code>. Single runs the step's tools in order; map runs one tool once per item of an upstream array, normally the stock codes a generator step produced. The runtime switch also accepts <code>parallel</code> and treats the LLM's occasional <code>simple</code> step-level value as an alias for it. A separate per-step boolean, <code>AggregationMode</code>, marks a terminal step that executes no tools and instead concatenates every prior step's output for the synthesising LLM.</p>
+  <p>The interesting part is what happens <em>after</em> the model returns. An LLM's JSON is never trustworthy enough to execute directly, so the plan runs a deterministic repair gauntlet: argument-shape normalisation, the iron rule that step 1 of a real pipeline must be a stock-code generator (otherwise the plan is rewritten into aggregation mode), demotion of bogus pipelines back to simple mode when the declared dependencies do not exist, and correction of map-parallelism and direct-stream flags the model set wrong.</p>
+  <hr>
+  <p><strong>Why this is not LangChain, LangGraph or Eino:</strong></p>
+  <ul>
+      <li>Across Eino, Genkit-Go, trpc-agent-go and LangChainGo, the DAG is always author-defined in Go at compile time. Nothing in Go executes an <em>LLM-emitted</em> DAG off the shelf. Even LangGraph's LLMCompiler is a tutorial pattern you assemble yourself.</li>
+      <li>The repair layer and the domain resolver — JSONPath over step outputs, <code>&#123;&#123;code&#125;&#125;</code> substitution per map iteration, sector and rank tagging — encode Tuntun's tools and financial rules. No framework ships them. They stay ours under any choice.</li>
+      <li>So the real trade is "own a small execution substrate too" versus "bolt the unavoidable custom layer onto someone else's pre-1.0 API". Eino is v0.9.x, LangChainGo v0.1.x.</li>
+      <li>LangGraph matches the pattern but means returning to Python, which this codebase left for documented GIL reasons. <code>langchaingo</code> is already a dependency, used for exactly the right thing: a multi-provider LLM client, not orchestration.</li>
+  </ul>
+  <p>Full reasoning, with line references: <code>docs/architectures/custom_pipeline_vs_frameworks.md</code>.</p>

@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  resource-management
+order: 70
+label: "Per-User Usage Limits"
+body: |2
+  <h2>Per-User Usage Limits</h2>
+  <p><code>chatbot/usage</code> is a small tracker over a daily per-user counter in ArangoDB. <code>NewConfig</code> reads four knobs: <code>DAILY_USAGE_LIMIT</code> (default <strong>50</strong>), <code>USAGE_TRACKING_ENABLED</code> (default <strong>true</strong>), and the retry count and base delay used by the increment path.</p>
+  <p><strong>Admission.</strong> <code>CheckLimit</code> runs in the submit handler, before the request is registered or dispatched — a blocked turn costs one point read and nothing else. It compares today's count against the limit and returns whether it is exceeded.</p>
+  <p><strong>An exceeded limit is not an error.</strong> The handler answers <strong>HTTP 200</strong> with the standard success envelope carrying <code>status: "usage_limit_exceeded"</code> alongside the request and conversation ids, rather than a 4xx. Quota is a normal, expected state of a chat session, and the client renders it as a message in the conversation instead of as a failed HTTP call — a 429 would land in the same generic error handling as a network fault.</p>
+  <p><strong>Fail-open.</strong> If the counter cannot be read — Arango unreachable, breaker open — <code>CheckLimit</code> logs the error and returns "not exceeded", allowing the request through. A metering failure must not become an outage; over-serving a few turns is strictly preferable to refusing everyone.</p>
+  <p><strong>Increment is off the hot path.</strong> The counter is raised by <code>IncrementUsageAsync</code> after the stream has run to completion, in a fire-and-forget goroutine on a detached 30 s context. It retries with backoff and then fails silently — the user's answer is never delayed or failed by bookkeeping.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Cost exposure per user is bounded without any per-request coordination.</li>
+      <li>The rejection is cheap: one read, before any planning, tools or LLM call.</li>
+      <li>Quota exhaustion reaches the client as a first-class state, not an HTTP error.</li>
+      <li>A database problem degrades to unmetered service rather than a hard block.</li>
+  </ul>

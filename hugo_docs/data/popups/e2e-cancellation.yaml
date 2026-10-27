@@ -1,0 +1,54 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  resource-management
+order: 20
+label: "End-to-End Cancellation"
+body: |2
+                  <h2>End-to-End Cancellation</h2>
+                  <p><code>POST /chat/cancel/:request_id</code> propagates a <code>context.Context</code> cancellation from the HTTP handler down through the tool pipeline and the LLM stream. Tools check <code>ctx.Done()</code> before and between backend calls; <code>core.ResilientLLM</code> checks <code>ctx.Err()</code> before each attempt and treats <code>context.Canceled</code> as a non-alertable, non-failure outcome so a user's stop button does not pollute error metrics.</p>
+                  <div class="mermaid">
+  graph TD
+      subgraph API ["HTTP"]
+          CAN["POST /chat/cancel/:request_id"]
+          DISC["client disconnects from /chat/stream"]
+      end
+
+      subgraph HAND ["cancellation.Handler.CancelStream — ordered"]
+          S1["1. state set to cancelled<br/>BEFORE the context is cancelled"]
+          S2["2. cancelFunc on the request context"]
+          S3["3. read bowl content<br/>persist the partial answer"]
+          S4["4. CancelBowl — bowl deleted"]
+          S5["5. CleanupRequest + PurgeActiveRequest"]
+      end
+
+      subgraph DOWN ["Propagation"]
+          TOOLS["tool pipeline<br/>ctx.Done checks"]
+          LLM["LLM stream<br/>ResilientLLM"]
+      end
+
+      subgraph KEEP ["Disconnect is NOT a cancel"]
+          PURGE["PurgeActiveRequest only"]
+          BOWLK["bowl keeps accumulating<br/>the turn stays resumable"]
+      end
+
+      CAN --> S1 --> S2 --> S3 --> S4 --> S5
+      S2 --> TOOLS
+      S2 --> LLM
+      DISC --> PURGE --> BOWLK
+
+      class S1,S4 hot
+      class LLM ext
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+                  </div>
+                  <p><strong>Ordering is the interesting part.</strong> The state is written to <code>cancelled</code> <em>before</em> <code>cancelFunc()</code> is called. Otherwise the streaming goroutine notices its context die first and records <code>errored</code>, and the turn is misfiled forever. The state machine backs this up by forcing any post-cancel transition back to <code>cancelled</code>, and the cancelled write is the one state update performed synchronously with retry rather than asynchronously. Partial tokens are read out of the bowl and persisted <em>before</em> the bowl is deleted, so a cancelled answer keeps whatever the user already saw.</p>
+                  <p><strong>A client disconnect is not a cancel.</strong> The SSE handler says so explicitly. When the connection drops it calls <code>PurgeActiveRequest</code> to release the active-request slot — freeing it for resubmission — and returns. It does <em>not</em> call <code>CancelStream</code>. The pipeline keeps running and the bowl keeps accumulating, so the turn can be resumed. Because the purge removed the request from the map cancellation relies on, a later resume re-registers it, otherwise the resumed-but-still-running turn would answer 404 to a genuine cancel.</p>
+                  <hr>
+                  <p><strong>Benefits:</strong></p>
+                  <ul>
+                      <li>A stop actually stops the tools and the LLM call, not just the SSE writer.</li>
+                      <li>Cancelled turns are recorded as cancelled, never as errors.</li>
+                      <li>The partial answer the user already read is preserved.</li>
+                      <li>Closing a tab costs nothing and loses nothing — it stays resumable.</li>
+                      <li>A resumed request remains cancellable.</li>
+                  </ul>

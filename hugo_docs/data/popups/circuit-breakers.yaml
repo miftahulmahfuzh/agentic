@@ -1,0 +1,33 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  resource-management
+order: 60
+label: "Circuit Breakers"
+body: |2
+                  <h2>Circuit Breakers</h2>
+                  <p>Three <code>sony/gobreaker</code> breakers are constructed in <code>core/services.go</code> and injected into the clients they guard: <strong>LLM</strong> (<code>core.ResilientLLM</code>), <strong>Redis</strong> (<code>db.RedisStore</code>) and <strong>ArangoDB</strong> (<code>db.ArangoStore</code>). Nothing else is wrapped — the BE tool HTTP calls, Consul and the auth service rely on retries and timeouts instead.</p>
+                  <div class="mermaid">
+  graph LR
+      CLOSED["Closed<br/>calls pass through<br/>failures counted in a sliding window"]
+      OPEN["Open<br/>calls fail fast with ErrOpenState"]
+      HALF["Half-open<br/>a small number of probes allowed"]
+
+      CLOSED -->|"enough traffic AND failure rate over threshold"| OPEN
+      OPEN -->|"cooldown elapses"| HALF
+      HALF -->|"probe succeeds"| CLOSED
+      HALF -->|"probe fails"| OPEN
+
+      class OPEN hot
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+                  </div>
+                  <p>Each breaker is ratio-based rather than count-based. <code>ReadyToTrip</code> divides <code>TotalFailures</code> by <code>Requests</code> over the sliding <code>Interval</code>: LLM trips at 0.5 over a 15 s window with a 60 s cooldown, Redis at 0.6 over 10 s with 30 s, ArangoDB at 0.5 over 5 s with 30 s. The Arango wrapper also classifies its errors first — an application-level error (a missing document, a validation failure) is reported to the breaker as a success, so only genuine infrastructure failures count toward tripping.</p>
+                  <p><strong>Honest caveat.</strong> All three breakers are configured with <code>minRequests = 1000</code>: <code>ReadyToTrip</code> returns <code>false</code> outright until that many calls have been observed inside the window. At the traffic this service actually sees, that threshold is not reached, so the breakers are dormant in practice and do not trip. They are a safeguard that only becomes load-bearing under sustained high volume, not an active protection today. The mechanism is real and wired; the threshold is what currently keeps it idle.</p>
+                  <hr>
+                  <p><strong>Benefits:</strong></p>
+                  <ul>
+                      <li>Failing fast beats holding worker slots open against a dead dependency — once the threshold is reachable.</li>
+                      <li>Error classification stops ordinary "not found" results from being read as an outage.</li>
+                      <li>Recovery is automatic: a cooldown, then a bounded number of probes.</li>
+                      <li>Every state transition is logged, so a trip is visible in log aggregation.</li>
+                  </ul>
