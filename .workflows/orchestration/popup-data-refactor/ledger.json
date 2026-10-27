@@ -23,23 +23,23 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "4b2496f",
       "depends_on": [
         1
       ],
       "difficulty": "NORMAL",
       "n": 2,
-      "note": null,
+      "note": "61 data files + popups_emit.py; D1 split as planned (feature-flags = dead :2885 body via SPLIT_OCCURRENCE); I4 whole-site identical; trailer says Haiku not Opus, left unrewritten",
       "package": "hugo_docs/data",
       "plan": ".workflows/plan/popup-data-refactor/phase-2.md",
-      "reported_at": null,
+      "reported_at": "2026-10-27T06:00:20+00:00",
       "satisfies": [
         "R1",
         "R2",
         "R3"
       ],
-      "status": "pending",
-      "task_id": null,
+      "status": "done",
+      "task_id": "P2-HD-A001",
       "title": "Generate the popup data tree"
     },
     {
@@ -58,7 +58,7 @@
         "R1",
         "R3"
       ],
-      "status": "pending",
+      "status": "spawned",
       "task_id": null,
       "title": "Rewire the template, delete the switch"
     }
@@ -66,6 +66,6 @@
   "plan": "/home/miftah/agentic/.workflows/orchestration/popup-data-refactor/PLAN.md",
   "repo": "/home/miftah/agentic",
   "slug": "popup-data-refactor",
-  "updated": "2026-10-27T05:55:18+00:00",
+  "updated": "2026-10-27T06:00:45+00:00",
   "worktree": "/home/miftah/.worktrees/agentic/popup-data-refactor"
 }
