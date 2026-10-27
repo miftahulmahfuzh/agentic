@@ -1,6 +1,77 @@
 {{- $desc := .Site.Params.description -}}
 {{- $ogImage := "og-image.png" | absURL -}}
 {{- $ogAlt := "Link-preview card for the Tuntun Go Agentic Chatbot: the headline \"High-concurrency agentic engine, built in Go\" above a five-stage request-lifecycle diagram." -}}
+{{- /* ---------------------------------------------------------------------
+     POPUP DATA - index, build-time integrity guards, and render order.
+
+     Source of truth: hugo_docs/data/popup_cards/*.yaml (10) and
+     hugo_docs/data/popups/*.yaml (51). ONE popup file carries both the
+     trigger button's `label` and the modal's `body`, and the three feature
+     grids and the carrier block below both iterate $all - so "a trigger with
+     no body" is not a bug that gets caught, it is a state that cannot be
+     written down. That is R1.
+
+     Everything here runs once, before a byte renders. Every violation is an
+     errorf, and errorf fails `hugo` with a non-zero exit:
+       G1  a popup names a card that does not exist
+       G2  a card has no popups pointing at it
+       G3  two popups in one card share an `order`
+       G4  a card's `section` is not one of the three rendered sections - such
+           a card renders nowhere while its popups still emit bodies, which is
+           the mirror image of G1 and the same failure
+     plus per-field assertions: heading / icon / order / label / body present
+     and non-empty, and no body carrying a literal script-closing tag, which
+     would terminate its carrier element early.
+
+     `hugo.Data`, not `.Site.Data`: the latter is deprecated as of Hugo
+     v0.156.0 and logs a WARN, which invariant I3 forbids.
+   */ -}}
+{{- $cards := hugo.Data.popup_cards -}}
+{{- $popups := hugo.Data.popups -}}
+{{- if not $cards }}{{ errorf "popup data: hugo_docs/data/popup_cards/ is missing or empty" }}{{ end -}}
+{{- if not $popups }}{{ errorf "popup data: hugo_docs/data/popups/ is missing or empty" }}{{ end -}}
+{{- $sections := slice "agents" "screener" "features" -}}
+{{- $cardList := slice -}}
+{{- range $cid, $c := $cards -}}
+  {{- if not ($c.heading | default "") }}{{ errorf "popup_cards/%s.yaml: missing or empty 'heading'" $cid }}{{ end -}}
+  {{- if not ($c.icon | default "") }}{{ errorf "popup_cards/%s.yaml: missing or empty 'icon'" $cid }}{{ end -}}
+  {{- if not (isset $c "order") }}{{ errorf "popup_cards/%s.yaml: missing 'order' - the card would silently sort to the front of its section" $cid }}{{ end -}}
+  {{- if not (in $sections ($c.section | default "")) }}{{ errorf "G4 unknown section: popup_cards/%s.yaml has section %q, expected one of %v. A card in no section renders nowhere while its popups still emit bodies - a body with no trigger." $cid ($c.section | default "") $sections }}{{ end -}}
+  {{- $cardList = $cardList | append (dict
+        "id"      $cid
+        "section" ($c.section | default "")
+        "heading" ($c.heading | default "")
+        "icon"    ($c.icon | default "")
+        "sortkey" (printf "%012d|%s" (int ($c.order | default 0)) $cid)) -}}
+{{- end -}}
+{{- $cardList = sort $cardList "sortkey" -}}
+{{- $all := slice -}}
+{{- range $id, $p := $popups -}}
+  {{- $card := $p.card | default "" -}}
+  {{- if not $card }}{{ errorf "G1 unknown card: popups/%s.yaml has no 'card' field" $id }}
+  {{- else if not (index $cards $card) }}{{ errorf "G1 unknown card: popups/%s.yaml names card %q, but hugo_docs/data/popup_cards/%s.yaml does not exist" $id $card $card }}{{ end -}}
+  {{- if not (isset $p "order") }}{{ errorf "popups/%s.yaml: missing 'order' - the popup would silently sort to the front of card %q" $id $card }}{{ end -}}
+  {{- if not ($p.label | default "") }}{{ errorf "popups/%s.yaml: missing or empty 'label' - the trigger button would render blank" $id }}{{ end -}}
+  {{- if not ($p.body | default "") }}{{ errorf "popups/%s.yaml: missing or empty 'body' - the modal would open empty" $id }}{{ end -}}
+  {{- if strings.Contains ($p.body | default "") "</script>" }}{{ errorf "popups/%s.yaml: 'body' contains </script>, which would terminate its carrier element early and corrupt the page" $id }}{{ end -}}
+  {{- $all = $all | append (dict
+        "id"      $id
+        "card"    $card
+        "order"   ($p.order | default 0)
+        "label"   ($p.label | default "")
+        "body"    ($p.body | default "")
+        "sortkey" (printf "%012d|%s" (int ($p.order | default 0)) $id)) -}}
+{{- end -}}
+{{- range $cid, $c := $cards -}}
+  {{- $members := where $all "card" $cid -}}
+  {{- if eq (len $members) 0 }}{{ errorf "G2 orphan card: popup_cards/%s.yaml has no popups - no hugo_docs/data/popups/*.yaml sets card: %s, so the card would render an empty list" $cid $cid }}{{ end -}}
+  {{- $seen := dict -}}
+  {{- range $m := $members -}}
+    {{- $k := printf "%v" $m.order -}}
+    {{- if index $seen $k }}{{ errorf "G3 order collision: popups/%s.yaml and popups/%s.yaml are both in card %q with order: %v - render order would fall back to the id tie-break instead of the author's intent" $m.id (index $seen $k) $cid $m.order }}{{ end -}}
+    {{- $seen = merge $seen (dict $k $m.id) -}}
+  {{- end -}}
+{{- end -}}
 <!doctype html>
 <html lang="en">
   <head>
@@ -366,29 +437,14 @@ graph TD
         </div>
 
         <div class="feature-grid">
-          <div class="feature-card">
-            <h4><svg class="ic"><use href="#ic-architecture"/></svg> Multi-Agent System</h4>
+{{ range $i, $card := where $cardList "section" "agents" }}{{ if $i }}
+{{ end }}          <div class="feature-card">
+            <h4><svg class="ic"><use href="#{{ $card.icon }}"/></svg> {{ $card.heading | safeHTML }}</h4>
             <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('agent-roster')">Agent Roster &amp; Personas</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('server-owned-routing')">Server-Owned Routing</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('classify-and-plan')">Classify-and-Plan</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('ustm')">User Short-Term Memory</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('evidence-based-memory')">Evidence-Based Memory Editing</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('prompt-composition')">Seam-Marker Prompt Composition</button></li>
-            </ul>
+{{ range $p := sort (where $all "card" $card.id) "sortkey" }}                <li><button class="popup-trigger" type="button" onclick="showPopup('{{ $p.id }}')">{{ $p.label | safeHTML }}</button></li>
+{{ end }}            </ul>
           </div>
-
-          <div class="feature-card">
-            <h4><svg class="ic"><use href="#ic-database"/></svg> Multimodal Processing</h4>
-            <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('image-pipeline')">Image Upload Pipeline</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('file-assets')">Kind-Agnostic File Assets</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('multimodal-transport')">Dual Multimodal Transport</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('image-cache-fingerprint')">Attachment Cache Fingerprinting</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('dark-launch')">Dark-Launch Flag Discipline</button></li>
-            </ul>
-          </div>
-        </div>
+{{ end }}        </div>
       </section>
 
       <!-- Stock Screener -->
@@ -524,43 +580,14 @@ graph TD
         </div>
 
         <div class="feature-grid">
-          <div class="feature-card">
-            <h4><svg class="ic"><use href="#ic-shield"/></svg> The Lock</h4>
+{{ range $i, $card := where $cardList "section" "screener" }}{{ if $i }}
+{{ end }}          <div class="feature-card">
+            <h4><svg class="ic"><use href="#{{ $card.icon }}"/></svg> {{ $card.heading | safeHTML }}</h4>
             <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-lock')">The Three-Layer Lock</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-no-invented-numbers')">Ladders, Never Invented Numbers</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-content-is-routing')">Content Is the Routing</button></li>
-            </ul>
+{{ range $p := sort (where $all "card" $card.id) "sortkey" }}                <li><button class="popup-trigger" type="button" onclick="showPopup('{{ $p.id }}')">{{ $p.label | safeHTML }}</button></li>
+{{ end }}            </ul>
           </div>
-
-          <div class="feature-card">
-            <h4><svg class="ic"><use href="#ic-sliders"/></svg> Planning a Turn</h4>
-            <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-turn-modes')">Four Turn Modes, One Diff</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-lexicon')">The Lexicon &amp; the Registry</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-relaxation')">Relaxation &amp; the Near-Miss Exit</button></li>
-            </ul>
-          </div>
-
-          <div class="feature-card">
-            <h4><svg class="ic"><use href="#ic-activity"/></svg> The Measured API</h4>
-            <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-measured-api')">Measured Before Integrating</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-one-query-matrix')">One Loose Query, the Whole Matrix</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-display-vs-raw')">Display Strings In, Raw Numbers Out</button></li>
-            </ul>
-          </div>
-
-          <div class="feature-card">
-            <h4><svg class="ic"><use href="#ic-architecture"/></svg> Shape of the Tool</h4>
-            <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-import-dag')">The Import DAG</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-payload-not-answer')">A Payload, Not an Answer</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-kill-switch')">Runtime Kill Switch</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-not-built')">What Was Not Built</button></li>
-            </ul>
-          </div>
-        </div>
+{{ end }}        </div>
       </section>
 
       <!-- Core Engineering & Features -->
@@ -570,54 +597,14 @@ graph TD
         <p class="lede">Select any term to open a focused explanation with diagrams.</p>
 
         <div class="feature-grid">
-<div class="feature-card">
-  <h4><svg class="ic"><use href="#ic-bolt"/></svg> Performance &amp; Architecture</h4>
-  <ul>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('cache-fastlane')">Cache Fast-Lane</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('cache-promotion')">Cache Promotion &amp; Re-evaluation</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('plan-and-execute')">Plan-and-Execute Pipeline</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('parallel-map-execution')">Parallel Map Execution</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('fifo-queue')">FIFO Queue &amp; Processing Semaphore</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('stateful-conversation')">Stateful Conversations</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('data-driven-tools')">Data-Driven Tool Registry</button></li>
-  </ul>
-</div>
-<div class="feature-card">
-  <h4><svg class="ic"><use href="#ic-shield"/></svg> Resource Management</h4>
-  <ul>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('bowl-resume')">Magic Bowl: Resumable Streams</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('e2e-cancellation')">End-to-End Cancellation</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('janitors')">State-Aware Janitors</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('stale-while-revalidate')">Stale-While-Revalidate Reads</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('consul-discovery')">Service Discovery with Self-Healing Cache</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('circuit-breakers')">Circuit Breakers</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('usage-limits')">Per-User Usage Limits</button></li>
-  </ul>
-</div>
-          <div class="feature-card">
-            <h4><svg class="ic"><use href="#ic-database"/></svg> Data Handling &amp; Integrity</h4>
+{{ range $i, $card := where $cardList "section" "features" }}{{ if $i }}
+{{ end }}          <div class="feature-card">
+            <h4><svg class="ic"><use href="#{{ $card.icon }}"/></svg> {{ $card.heading | safeHTML }}</h4>
             <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('context-aware-caching')">Context-Aware Caching</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('summarisation-cache')">Summarisation Cache</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('citations')">Citation &amp; Source Tracking</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('file-asset-integrity')">File Asset Integrity</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('automated-indexing')">Automated Schema &amp; Indexing</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('async-logging')">Asynchronous Chat Logging</button></li>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('structured-persistence')">Structured Turn Records</button></li>
-            </ul>
+{{ range $p := sort (where $all "card" $card.id) "sortkey" }}                <li><button class="popup-trigger" type="button" onclick="showPopup('{{ $p.id }}')">{{ $p.label | safeHTML }}</button></li>
+{{ end }}            </ul>
           </div>
-<div class="feature-card">
-  <h4><svg class="ic"><use href="#ic-activity"/></svg> System Observability</h4>
-  <ul>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('structured-logging')">Structured JSON Logging</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('observability-stack')">Observability Stack</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('status-tracking')">Real-Time Status Tracking</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('alerting')">Alerting with Deduplication</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('prompt-versioning')">Prompt Versioning &amp; Golden Tests</button></li>
-      <li><button class="popup-trigger" type="button" onclick="showPopup('dark-launch')">Dark-Launch Feature Flags</button></li>
-  </ul>
-</div>
-        </div>
+{{ end }}        </div>
       </section>
 
 <section id="tools">
@@ -1459,6 +1446,15 @@ agentic_golang/
       </div>
     </div>
 
+    <!-- Popup bodies. One inert carrier per hugo_docs/data/popups/<id>.yaml,
+         emitted from the same $all slice the trigger buttons above iterate.
+         type="text/html" is a non-JS script type, so Go's context-aware
+         escaper leaves the content alone and safeHTML emits it verbatim;
+         script elements are raw text, so textContent hands showPopup() those
+         same bytes back with entities undecoded. Never rendered, never run. -->
+{{ range $p := sort $all "id" }}    <script type="text/html" class="popup-body" data-popup-id="{{ $p.id }}">{{ $p.body | safeHTML }}</script>
+{{ end }}
+
     <script>
       // Initialize Mermaid — restrained 3-role palette
       mermaid.initialize({
@@ -1487,1433 +1483,30 @@ agentic_golang/
         head.setAttribute("aria-expanded", String(open));
       }
 
+      // Popup bodies live in the <script type="text/html" class="popup-body">
+      // carriers above, one per hugo_docs/data/popups/<id>.yaml. Script
+      // elements are raw text, so textContent is the authored HTML
+      // byte-for-byte with entities undecoded — exactly what innerHTML wants.
       function showPopup(type) {
         lastTrigger = document.activeElement;
         const modal = document.getElementById("popup-modal");
         const content = document.getElementById("popup-content");
-
-        let popupContent = "";
-
-        switch (type) {
-case "agent-roster":
-  popupContent = `
-    <h2>Agent Roster &amp; Personas</h2>
-    <p>There are exactly two agents, and separately three personas. The agent is <em>who answers</em>; the persona is <em>which voice</em> the second agent wears.</p>
-    <p><code>tuntun_ai</code> is the professional investment analyst. It owns the tool pipeline, runs a fixed six-section analysis framework, and is token-streamed to the client.</p>
-    <p><code>customer_service_manager</code> is the relationship layer. It runs one-shot on a separate SSE endpoint, receives the already-executed tool result, and is instructed never to contradict the analyst or introduce analysis of its own.</p>
-    <p>The wire value is <code>customer_service_manager</code>. <code>cs_manager</code> is only code and route shorthand — <code>cs_manager_person</code>, <code>/chat/cs_manager/answer</code>, <code>ENABLE_CS_MANAGER</code> — and never travels in <code>selected_agents</code>.</p>
-    <p>Personas are <code>Luna</code> (the default whenever settings are nil, empty, or unrecognised), <code>Kevin</code>, and <code>Mia</code>. Each has two embedded prompt files under <code>core/persona/prompts/</code> — an answer variant and a suggestion variant — selected by call site, not by a heuristic. The persona is frozen per turn as <code>cs_manager_person</code>, so changing your setting never re-labels old messages.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>One analyst, one relationship layer — no second opinion to reconcile.</li>
-        <li>Persona is a prompt file, not code; adding a fourth is a text file and an enum value.</li>
-        <li>Per-turn persona persistence keeps conversation history historically accurate.</li>
-        <li>Independent failure domains: a customer service manager failure cannot fail an already-streamed analyst turn.</li>
-    </ul>
-`;
-break;
-
-case "server-owned-routing":
-  popupContent = `
-    <h2>Server-Owned Routing</h2>
-    <p>The LLM does not choose the agent. It emits three <em>understanding</em> booleans; the server owns the truth table and re-derives <code>selected_agents</code> unconditionally. The planning prompt is written to match, and says so out loud: "You do NOT decide which agent(s) respond."</p>
-    <div class="mermaid">
-graph TD
-    IN["routing booleans from classify_and_plan"]
-    P{"need_professional_analysis"}
-    Q{"need_personalization OR marketing_opportunity"}
-    A1["customer_service_manager only"]
-    A2["tuntun_ai then customer_service_manager"]
-    A3["tuntun_ai only"]
-
-    IN --> P
-    P -->|"false"| A1
-    P -->|"true"| Q
-    Q -->|"true"| A2
-    Q -->|"false"| A3
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-
-    class P,Q hot
-    class A1,A2,A3 ext
-    </div>
-    <p>Ordering is a contract. When both run, <code>tuntun_ai</code> is first, because the customer service manager reviews and follows up on its output.</p>
-    <p><strong>EnforceRoutingRules runs six ordered steps</strong> after the plan JSON is parsed:</p>
-    <ul>
-        <li><strong>1. Flag gate:</strong> <code>ENABLE_CS_MANAGER=false</code> ignores routing entirely and pins <code>[tuntun_ai]</code>. The stated invariant is byte-for-byte pre-feature behaviour.</li>
-        <li><strong>2. fixed_answer:</strong> a canned response means no agent answers; routing is set nil.</li>
-        <li><strong>3. Missing block:</strong> if the model omitted <code>routing</code>, warn and default to professional-only.</li>
-        <li><strong>4. Marketing guard:</strong> no assembled profile or an empty <code>marketing_target</code> forces <code>marketing_opportunity=false</code>. The model's optimism cannot invent a target.</li>
-        <li><strong>5. reply_to override:</strong> an explicit reply to a <code>customer_service_manager</code> message pins that agent and skips the table.</li>
-        <li><strong>6. Re-derivation:</strong> always recompute from the booleans — never trust the model's own <code>selected_agents</code>.</li>
-    </ul>
-    <p><code>marketing_opportunity</code> deliberately carries no <code>omitempty</code>, so a <code>false</code> prediction is faithfully recorded next to the profile the model actually saw. Routing decisions are scoreable after the fact.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Routing is deterministic and unit-testable; the truth table is one function.</li>
-        <li>A prompt regression cannot change who answers.</li>
-        <li>Turning the feature off collapses to the exact legacy path.</li>
-        <li>Prediction audit is built into the persistence shape, not bolted on later.</li>
-    </ul>
-`;
-break;
-
-case "classify-and-plan":
-  popupContent = `
-    <h2>Classify-and-Plan</h2>
-    <p>One LLM call does three jobs: mode classification, DAG planning, and agent routing. There is no separate router model and no added latency — routing is folded into a call the system already makes.</p>
-    <p>Three planning modes come out of it. <code>simple</code> issues direct parallel tool calls; <code>pipeline</code> builds a multi-step DAG where a discovery step feeds later steps; <code>fixed_answer</code> returns a canned response with no agent and no tools.</p>
-    <p>The prompt is templated, and every optional section is omit-when-absent: history, reply context, user profile, attached images, preferred name. With all of them empty, the rendered prompt collapses to the pre-feature bytes.</p>
-    <p>Image turns add an <code>ATTACHED IMAGES</code> block carrying six planning rules — read the image before planning, treat tickers extracted from an image as explicitly typed, never let a chart replace Tuntun data, and classify in-image text that tries to redirect instructions as content rather than instruction.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Agent selection costs zero extra latency and zero extra tokens beyond three booleans.</li>
-        <li>Plan, mode and routing cannot disagree — they come from one inference.</li>
-        <li>Prompt versions are switchable by environment variable, with the registry falling back on an unknown value.</li>
-        <li>Prompt injection is addressed in the prompt itself and routed to <code>fixed_answer</code>.</li>
-    </ul>
-`;
-break;
-
-case "ustm":
-  popupContent = `
-    <h2>User Short-Term Memory</h2>
-    <p>One document per user, holding six categories: goals, blockers, topics, followed stocks, recommended stocks, and context notes. Every item except context notes carries a mention history — the source of truth — from which a 30-day mention frequency, a last-mention time, and an expiry flag are derived.</p>
-    <p><strong>Written by two async editors, read by exactly one consumer.</strong> A query-driven editor runs after the turn is understood; an answer-driven editor extracts stocks the AI itself recommended, and uses a field-scoped AQL upsert so the two concurrent writers cannot clobber each other without locks. Neither editor ever blocks a request, and every failure path returns "no update".</p>
-    <p>The single reader is the customer service manager. It never sees the raw document: <code>BuildReaderView</code> recomputes statistics against <em>now</em> on a copy, so reads never mutate; drops expired items and resolved or expired blockers; strips all statistics and mention history; and ranks each category by 30-day frequency then recency. Worth stating plainly — with <code>ENABLE_CS_MANAGER=false</code>, memory is written but never read.</p>
-    <p><strong>A 65-second endpoint on a chat path.</strong> The user-lifecycle status endpoint really does take around 65 seconds, with a 90-second timeout. It is nonetheless consumed on the request path, because it is never called inline: the value is served stale-while-revalidate from ArangoDB. A miss returns empty immediately and backfills in the background; a stale hit serves the stale value and refreshes behind it. Refreshes are deduplicated by a package-global <strong>single-flight refresh guard</strong> — it deduplicates concurrent <em>refreshes of one cached value</em>, so two subsystems cannot both fire the 65-second call — and run panic-guarded on a detached context with a dial timeout matched to the budget.</p>
-    <p>The governing rule is deliberate: on an ArangoDB read error, do <em>not</em> refresh. There is no point launching a 65-second call whose result could not be persisted anyway. An absent status renders as an empty string, so the prompt section vanishes rather than carrying a placeholder.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Memory quality improves without ever adding latency to a turn.</li>
-        <li>The reader gets a ranked, decayed projection instead of raw storage.</li>
-        <li>A very slow upstream dependency is consumed safely on a live chat path.</li>
-        <li>Two concurrent writers, one document, no locks.</li>
-    </ul>
-`;
-break;
-
-case "evidence-based-memory":
-  popupContent = `
-    <h2>Evidence-Based Memory Editing</h2>
-    <p>The memory editor is prompted against its own worst instinct. Existing items are framed as a "reference dictionary, NOT a checklist to copy", and the model is forbidden from emitting any derived statistic field — frequencies and expiry are backend-computed.</p>
-    <p><strong>Lifecycle status is evidence only.</strong> The prompt states it must never by itself create a goal, blocker, topic, followed stock, or context note. It exists solely to justify flipping an existing blocker to <code>RESOLVED</code> — objective proof, not a source of new memory.</p>
-    <p><strong>The model structurally cannot write <code>EXPIRED</code>.</strong> A normaliser collapses anything that is not <code>OPEN</code> or <code>RESOLVED</code> down to <code>OPEN</code>. Expiry is backend-only: the system independently flips stale-but-unresolved blockers. That gives three keys to closing a blocker — explicit user confirmation, objective lifecycle proof, or time — and the model holds only one of them.</p>
-    <p>Merge semantics are additive with no deletes. Canonical keys are case-insensitive trimmed strings, matches record a mention, misses append. Items leave only via 30-day expiry or capacity eviction. Context notes are the single full-replace category, and only when the model explicitly sets <code>context_notes_update</code>, so a structured-only turn cannot wipe them.</p>
-    <p>Cost is gated too: the answer-driven editor runs a cheap pre-filter — a standalone four-uppercase-letter IDX ticker shape, or one of twelve bilingual recommendation keywords — before it will spend an LLM call, and defers its database read until the model confirms a recommendation.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Memory cannot be inflated by a system signal the user never mentioned.</li>
-        <li>State transitions the model should not own are made unrepresentable, not merely discouraged.</li>
-        <li>Additive merging makes accidental data loss a capacity decision, not a model decision.</li>
-        <li>Non-recommendation answers skip the LLM call entirely.</li>
-    </ul>
-`;
-break;
-
-case "prompt-composition":
-  popupContent = `
-    <h2>Seam-Marker Prompt Composition</h2>
-    <p>Persona files are plain English. They keep literal tokens — <code>&#123;&#123;AI Answer&#125;&#125;</code>, <code>&#123;&#123;User Short Term Memory&#125;&#125;</code>, <code>&#123;&#123;User Profile&#125;&#125;</code> — whose embedded spaces make them invalid Go template fields, and they delimit optional spans with HTML comments such as <code>&lt;!-- USTM_START --&gt;</code> and <code>&lt;!-- USER_PROFILE_START --&gt;</code>.</p>
-    <p>Rendering is therefore <strong>not</strong> <code>text/template</code>. The builder does line-based span stripping followed by a <code>strings.Replacer</code> pass. Leftover tokens with no value to substitute are neutralised into ordinary section references — "the AI Answer section below" — so no raw token and no delimiter comment ever reaches the model, and a blank-line collapse tidies what stripping leaves behind.</p>
-    <p>The point is authorship. A persona is a character sheet a non-engineer can edit: no template syntax to break, no build step, and a missing value removes a whole section cleanly rather than leaving an empty header.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Prompt authors edit readable English, not template expressions.</li>
-        <li>A malformed token degrades to prose instead of failing the render.</li>
-        <li>Optional sections disappear entirely, keeping token counts honest.</li>
-        <li>The same seam markers make the flag-off render provably identical to pre-feature.</li>
-    </ul>
-`;
-break;
-
-case "image-pipeline":
-  popupContent = `
-    <h2>Image Upload Pipeline</h2>
-    <p>Images arrive as multipart parts on <code>POST /v2/chat/submit</code>, alongside a JSON <code>payload</code> part. A body cap is applied <em>before</em> the multipart parse, sized as files-per-query times per-file limit plus a megabyte of headroom. Each part is read behind a bounded reader, so an oversize upload is detected without ever being buffered whole.</p>
-    <div class="mermaid">
-graph TD
-    UP["POST /v2/chat/submit<br/>multipart form-data"]
-    CAP["Body cap applied<br/>BEFORE multipart parse"]
-    VAL["Validate + sniff + mint id<br/>no disk, no DB"]
-    CTX["requestcontext.WithImageAttachments<br/>single injection point"]
-    GATE["core.ImageAttachmentsFromContext<br/>canonical read gate"]
-    LLM["Five multimodal call sites"]
-    ASYNC["PersistAsync<br/>detached, own 30s timeout"]
-    BLOB["Blob store<br/>temp file then rename"]
-    META["Arango file_assets<br/>unique hash index on file_id"]
-    RB["Blob removed<br/>no orphan can exist"]
-    DL["GET /files/image/:image_file_id<br/>owner-enforced raw bytes"]
-
-    UP --> CAP
-    CAP --> VAL
-    VAL --> CTX
-    VAL --> ASYNC
-    CTX --> GATE
-    GATE --> LLM
-    ASYNC --> BLOB
-    BLOB --> META
-    META -.->|"metadata write fails"| RB
-    META --> DL
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-
-    class VAL,CTX,GATE hot
-    class BLOB,META,DL ext
-    </div>
-    <p><strong>Validation never trusts the client.</strong> Not the declared <code>Content-Type</code>, not the filename extension — only sniffed bytes. HEIC is probed explicitly by ISO-BMFF <code>ftyp</code> brand across ten brands, because the standard library reports <code>application/octet-stream</code> for all of them and iOS uploads would otherwise be rejected. Other ISO-BMFF brands deliberately fall through, so a video cannot pass as an image. An empty allow-list rejects everything: a misparsed configuration fails closed, never open.</p>
-    <p>Limits are three files per query, 20 MB each, <code>image/jpeg</code>, <code>image/png</code>, <code>image/heic</code>. IDs are <code>img_</code> plus twelve hex characters from <code>crypto/rand</code>, so ownership is not the only defence.</p>
-    <p><strong>Persistence never gates answering.</strong> The synchronous step does no I/O at all. Persistence is detached and builds its own 30-second context, because the 202 response cancels the request context. Failures are logged, never returned — a disk problem degrades to "the answer still streams, the image just is not downloadable later".</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Oversize and malformed uploads are rejected without buffering or touching disk.</li>
-        <li>Storage failures cannot fail a turn.</li>
-        <li>Blob-then-metadata ordering with rollback makes orphan blobs unrepresentable.</li>
-        <li>Persisted ids are read from the same context the model read, so history cannot claim an image the model never saw.</li>
-    </ul>
-`;
-break;
-
-case "file-assets":
-  popupContent = `
-    <h2>Kind-Agnostic File Assets</h2>
-    <p>Everything below the ingestion handler is kind-generic. The blob store, the metadata store, the download handler, and the id grammar know nothing about images. All kind-specific knowledge lives in two maps: id prefixes, and the validator policy handed to the service.</p>
-    <p>On-disk layout is <code>&lt;root&gt;/&lt;kind&gt;/&lt;yyyy&gt;/&lt;mm&gt;/&lt;dd&gt;/&lt;id&gt;.&lt;ext&gt;</code>, UTC-sharded so directories stay small and a future TTL sweep is a directory operation. Directories are <code>0700</code>, files <code>0600</code>. Writes go to a temp file in the destination directory and are renamed into place, with cleanup on every error path, so a crash mid-write cannot leave a truncated blob under an id that metadata already references.</p>
-    <p>Metadata lives in an Arango <code>file_assets</code> collection with a <strong>unique hash index on <code>file_id</code></strong> — the backstop behind random id minting — plus persistent indexes for per-request resolution and per-owner sweeps. Writes use a create, not an upsert: a duplicate id must be a loud error, because silently overwriting would hand one user's id to another user's bytes.</p>
-    <p>Two id checks exist and they are not interchangeable. One classifies by prefix only and is documented as accepting <code>img_../../etc/passwd</code>; the other enforces the full grammar. Anything that touches a store or a path must use the second.</p>
-    <p><strong>Voice is scaffolding only.</strong> The kinds and id prefixes exist, storage collapses the streaming variant onto <code>voice</code>, audio extensions are already mapped, and the download handler is per-kind gated. But both voice kinds are hardcoded disabled, there is no voice configuration flag, no <code>/voice/stream</code> socket, no voice route, no registered voice validator, and no speech-to-text. Voice does not ship today; what shipped is the shape it will land into.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Adding a modality is a kind plus a policy entry, not a new subsystem.</li>
-        <li>Atomic writes and restrictive permissions by default.</li>
-        <li>Traversal-shaped ids are rejected before any store call.</li>
-        <li>Dark kinds return 404 without revealing that they exist.</li>
-    </ul>
-`;
-break;
-
-case "multimodal-transport":
-  popupContent = `
-    <h2>Dual Multimodal Transport</h2>
-    <p>Two wire formats, because two clients are in play.</p>
-    <p><strong>Data URIs, for the langchaingo path.</strong> The application reaches Gemini through an OpenAI-compatible client, and langchaingo marshals <code>llms.BinaryContent</code> into a shape no OpenAI-compatible endpoint understands. Only <code>llms.ImageURLContent</code> carrying a base64 <code>data:</code> URI serialises to the accepted <code>image_url</code> form. A test asserts the emitted JSON, so this cannot be "simplified" back into a broken state.</p>
-    <p><strong>Native inline data, for <code>web_search</code>.</strong> That tool sits on the native SDK, so it emits real <code>inline_data</code> parts with raw bytes and no base64 inflation.</p>
-    <p><strong>Five multimodal call sites:</strong></p>
-    <ul>
-        <li>The <strong>planner</strong> — images on the human message only, since provider support for images in a system message is inconsistent.</li>
-        <li>The <strong>simple-mode streamer</strong> — switches to a content-generation call with a streaming callback, because the string-only streaming API cannot carry parts. The text-only path stays untouched.</li>
-        <li><strong>compare_stocks</strong> synthesis — every construction of the message pair goes through one helper, so the degraded-data path cannot silently drop image parts.</li>
-        <li><strong>web_search</strong> grounding — native inline data, with a conditional system-prompt block appended only for image turns.</li>
-        <li>The <strong>customer service manager</strong> — added after the agent answered "I don't have the image in front of me" to the most common conversational image question.</li>
-    </ul>
-    <p><strong>Pixels never go into prompts.</strong> A text summary carries only the count, the ids, and the ordering, so a prompt can say "the second chart" and the model can resolve it. Embedding base64 in a text section would roughly double the per-image token cost. Every site reaches the attachments through the one canonical gate; four duplicated copies of that flag-check were deliberately collapsed into it.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>One documented wire format per client, asserted by tests rather than by comment.</li>
-        <li>Token cost stays linear in images, not doubled by base64 in text.</li>
-        <li>A single gate means the flag flip lands everywhere at once.</li>
-        <li>Text-only turns keep their original, cheaper code path.</li>
-    </ul>
-`;
-break;
-
-case "image-cache-fingerprint":
-  popupContent = `
-    <h2>Attachment Cache Fingerprinting</h2>
-    <p>The cache key was question text plus language. That is a correctness hole the moment images exist: "what does this chart say?" <em>with</em> an image would hit the entry cached for the same sentence <em>without</em> one, and return an image-blind answer.</p>
-    <p>The fix is a fingerprint over content, not ids. SHA-256 across each blob, <strong>length-prefixed and in order</strong>, truncated to sixteen hex characters and appended as <code>:img_&lt;fp&gt;</code> after the language suffix. Length-prefixing keeps two different splits of the same bytes distinct; ordering makes a swapped pair a different key. Hashing content rather than the minted id means the same screenshot legitimately shares an entry.</p>
-    <p><strong>Three independent bypass guards</strong> then keep image turns off the cache entirely:</p>
-    <ul>
-        <li><strong>Routing</strong> — an image-bearing turn skips the cache fast-lane and goes straight to the queue.</li>
-        <li><strong>Read</strong> — the cached-request handler returns early before obtaining a Redis client, so no round trip is issued at all. This covers both entry points and any future third caller.</li>
-        <li><strong>Write</strong> — one <code>ShouldCache</code> field gates both the Redis write and the cache-populated notification, which also closes the promotion path: a key that was never notified can never be matched.</li>
-    </ul>
-    <p>Three reasons are recorded for the bypass. A cache hit rebuilds the log row inside the fast lane without image ids, so replaying would silently drop them from history. An image-only turn has an empty question, collapsing the key until the digest is the sole discriminator. And a 64-bit digest is realistically never hit twice, so the entry is pure Redis bloat.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>An image turn can never be answered from a text-only cache entry.</li>
-        <li>Both key segments stay independently greppable.</li>
-        <li>With the flag off, keys are byte-identical to pre-feature — nothing already cached is invalidated.</li>
-        <li>Guards are independent, so no single missed branch re-opens the hole.</li>
-    </ul>
-`;
-break;
-
-case "dark-launch":
-  popupContent = `
-    <h2>Dark-Launch Flag Discipline</h2>
-    <p><code>ENABLE_IMAGE_PROCESSING</code> defaults to <code>false</code>, and the off-path contract is written down verbatim next to the flag: parts read past and discarded, no cache fingerprint, prompts text-only, no <code>file_assets</code> documents, image ids absent everywhere, download endpoint 404.</p>
-    <p>The interesting part is that the contract is <strong>mechanically proven, not claimed</strong>. Building a multimodal message with no attachments is byte-for-byte identical to the plain text-parts constructor. Building search contents with no images is exactly the plain text query. And twelve pinned prompt goldens are checked in and asserted, so a prompt change surfaces as a reviewable diff — regenerating them requires an explicit flag.</p>
-    <p>Earlier guards compared the render against <code>HEAD</code>, which silently accepted any regression the moment it was committed. Checked-in goldens do not.</p>
-    <p>The same discipline runs through the multi-agent work: <code>ENABLE_CS_MANAGER=false</code> pins routing to the single agent, removes the routing section from the planning prompt, skips profile assembly, and collapses dispatch to the legacy single call. Every optional prompt section — routing, profile, memory, reply context, images, preferred name — disappears entirely when absent rather than rendering an empty placeholder.</p>
-    <p>The download route exists while dark and returns 404, so flipping the flag needs no redeploy and a dark deployment reveals nothing about what is coming.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Features ship to production disabled, with the disabled path under test.</li>
-        <li>"No behaviour change" is an assertion in CI, not a reviewer's judgement.</li>
-        <li>Enabling is a configuration change, not a deployment.</li>
-        <li>Prompt drift is visible as a diff before it reaches a model.</li>
-    </ul>
-`;
-break;
-
-case "screener-lock":
-  popupContent = `
-    <h2>The Three-Layer Lock</h2>
-    <p>A condition the user stated out loud is locked, and the lock is a <strong>flag test, never a language test</strong>. There is no <code>Locked</code> boolean on the domain type: <code>origin = user_explicit</code> <em>is</em> the lock. Nothing re-reads the sentence to decide.</p>
-    <div class="mermaid">
-graph TD
-    C["Condition<br/>origin = user_explicit"]
-    R{"toolpicker.RelaxationCandidates"}
-    EX["Excluded from the auto-relax set<br/>layer 1"]
-    P["Planner changed it anyway"]
-    A{"baseline.Authorize<br/>Span, or RelaxRequest.Target == CID"}
-    OK["Change kept<br/>explicit_relax_by_name"]
-    REV["Change reverted<br/>planner_violation, layer 2"]
-    AUD["observe R1 drift audit<br/>scores both halves, layer 3"]
-
-    C --> R
-    R --> EX
-    C --> P
-    P --> A
-    A -->|"authorized"| OK
-    A -->|"not authorized"| REV
-    OK --> AUD
-    REV --> AUD
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-
-    class R,A hot
-    class OK,REV,EX ext
-    </div>
-    <p><strong>Layer 1 — exclusion.</strong> <code>toolpicker.RelaxationCandidates</code> leaves every <code>user_explicit</code> condition out of the auto-relax candidate set, so the relaxation engine cannot reach it at all.</p>
-    <p><strong>Layer 2 — authorization.</strong> <code>baseline.Authorize</code> compares the planner's condition list against the baseline, reverts any unauthorized change to a locked condition, and records a <code>planner_violation</code>. There are exactly two authorization signals, and deliberately no third: the condition's own <code>Span</code>, and a <code>RelaxRequest</code> whose <code>Target</code> matches the <code>CID</code>.</p>
-    <p><strong>Layer 3 — the audit.</strong> The daily drift audit in <code>observe</code> needs <em>both</em> halves of the evidence: the negative (<code>planner_violation</code>) and the positive (<code>explicit_relax_by_name</code>). Score only the negative and every legitimate user-requested loosen becomes a false P1. The engine writes both from one function, so neither can be wired up without the other.</p>
-    <p>Sacrifice order composes with the lock rather than duplicating it. Each <code>Origin</code> also carries a relaxation rank — <code>constraint_default</code> 0 &lt; <code>preset_default</code> 1 &lt; <code>inferred</code> 2 &lt; <code>user_explicit</code> 3 — and the lowest is given up first. A <strong>new</strong> <code>Origin</code> value falls to the default arm and is therefore held longest: an unclassified origin must never inherit "give this up first" by accident, and <code>TestEveryOriginHasADistinctRelaxationRank</code> fails until someone classifies it deliberately.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>The lock cannot be defeated by phrasing, because phrasing is never consulted.</li>
-        <li>A planner regression surfaces as a reverted change plus an audit row, not as a silently loosened filter.</li>
-        <li>The drift audit measures both directions, so it does not punish the behaviour it wants.</li>
-        <li>Adding an <code>Origin</code> fails a test until its sacrifice order is stated.</li>
-    </ul>
-`;
-break;
-
-case "screener-no-invented-numbers":
-  popupContent = `
-    <h2>Ladders, Never Invented Numbers</h2>
-    <p>Numbers in this tool come from exactly two places: the user types one, or the registry supplies a ladder step. Nothing else may produce one. <code>RelaxedParams</code> being non-nil <em>is</em> the relaxability gate for a condition, and every value in it must be a step on that filter's ladder — so relaxation walks a ladder it was handed rather than guessing a looser bound.</p>
-    <p>The rule used to have an exception, and the exception was <strong>deleted, not deferred</strong>. An earlier design let the system propose a looser threshold and ask the user to confirm it; the whole mechanism was removed on the reasoning that a proposal saves the user nothing — both paths cost two turns — while forcing the system to invent the very number the rule forbids. Gone entirely: <code>suggestions</code>, <code>expected_hits</code>, <code>pending_written</code>, <code>PendingConfirmation</code> and its session slot, <code>confirms_pending</code>, <code>explicit_relax_suggested</code>, <code>explicit_relax_confirmed</code>, and the suggest-then-confirm state machine that tied them together.</p>
-    <p>Deleting it made the lock <em>stricter</em>. The system now never touches a locked condition at all — not even by proposing a value for one.</p>
-    <p>What replaced it carries two facts and no proposal: the near-miss report names which condition is blocking (<code>n_dropped</code>) and the value actually <strong>reachable</strong> on that metric. Both are read off a sensitivity matrix <code>execute</code> has already paid for, so the report costs nothing extra.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>No threshold on screen is ever a model's guess — it is the user's or the registry's.</li>
-        <li>One fewer state machine, one fewer session slot, and one fewer way to drift.</li>
-        <li>The near-miss report is derived from data already in hand, not from a second query.</li>
-        <li>The rule is checkable: a number with no ladder step behind it is a bug, not a judgement call.</li>
-    </ul>
-`;
-break;
-
-case "screener-content-is-routing":
-  popupContent = `
-    <h2>Content Is the Routing; the Label Only Lies</h2>
-    <p>One design principle runs through the whole tool: <strong>content is the routing; the label only lies.</strong> When a field's content and the planner's own label disagree, the code trusts the content and logs the mismatch.</p>
-    <p>It shows up first at the tool boundary. The caller must pass the user's message <strong>close to verbatim</strong> in <code>demand_description</code>, because fuzzy Indonesian terms — <code>murah</code>, <code>bagus</code>, <code>bandar</code>, <code>likuid</code> — have to survive intact for the tool's own planner to resolve them against the lexicon. A caller that helpfully normalises the sentence destroys the signal before the only component that could use it.</p>
-    <p>The LLM-facing tool description carries two routing rules in bold, both written against observed misrouting. A <em>combination</em> of criteria is always this tool, never <code>stock_ranks</code> — that is the trap, because a single-criterion request genuinely does look like a ranking table. And criteria may arrive as Pine-Script-style code, a formula, or a checklist, not only as a sentence.</p>
-    <p>Inside the turn the same principle governs <code>turn_mode</code>. It is the only multi-turn signal the code trusts from the planner, and all it does is select which baseline this turn builds on. What actually changed is derived by diffing the full condition list against that baseline — never reported by the model.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>A mislabelled turn still produces the right screen, because the label is not load-bearing.</li>
-        <li>Fuzzy natural-language terms reach the one component that can resolve them.</li>
-        <li>The misrouting trap is documented where the router reads it, not in a wiki.</li>
-        <li>Label and content mismatches are logged, so prompt drift is measurable.</li>
-    </ul>
-`;
-break;
-
-case "screener-turn-modes":
-  popupContent = `
-    <h2>Four Turn Modes, One Diff</h2>
-    <p><code>TurnMode</code> has four values and one job: choose the condition list this turn builds on.</p>
-    <ul>
-        <li><code>continue</code> — build on the previous turn's list.</li>
-        <li><code>fresh</code> — start from an empty baseline.</li>
-        <li><code>next_batch</code> — the baseline is the stored list verbatim, and the model's own <code>conditions</code> field is <strong>ignored outright</strong>.</li>
-        <li><code>handback</code> — not a picking request at all.</li>
-    </ul>
-    <p>Everything downstream is derived. <code>baseline.Diff</code> compares the planner's full condition list against the selected baseline; the lock runs on that diff; constraint derivation runs deliberately <em>after</em> the lock, so a system-derived constraint can never be mistaken for something the user said.</p>
-    <p>Identity is two-level by design. <code>CID</code> (<code>c1</code>, <code>c2</code> and so on) is within-turn and model-supplied; <code>CondKey</code> is cross-turn and derived in code by <code>DeriveCondKey</code>. The model never gets to name a condition across turns.</p>
-    <p>Provenance is recorded, never inferred. Normalization merges an auto-added bound into the user's own condition object, so <code>SystemAddedKeys</code> exists to say which keys the system put there. The type's own comment is blunt about it: do not infer provenance from the value — a <code>minValue</code> of zero does not mean system-added, because a user can legitimately state a zero floor.</p>
-    <p>A <code>next_batch</code> turn is usually not a query at all. A lineage row-set cache with a short TTL (<code>STOCK_PICKER_RESULT_CACHE_TTL</code>, default five minutes) makes the next page a local slice rather than a re-query, and sessions live 24 hours.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>One enum carries the whole multi-turn contract; everything else is computed.</li>
-        <li>Paging is cheap, because the next page is a slice of a result already held.</li>
-        <li>Cross-turn identity is code-owned, so a model-renamed condition cannot orphan its history.</li>
-        <li>Provenance survives the merge that would otherwise erase it.</li>
-    </ul>
-`;
-break;
-
-case "screener-lexicon":
-  popupContent = `
-    <h2>The Lexicon &amp; the Registry</h2>
-    <p>"Murah" is not a number, and engineers are not the right people to decide what it means. The <code>lexicon</code> package owns the schema and the loader; the <strong>content belongs to the product manager</strong>, held as JSON and uploaded through <code>POST /stock_picker/lexicon/overwrite</code>. That endpoint always uses static auth, deliberately ignoring <code>DYNAMIC_AUTH</code>.</p>
-    <p>Two expansions run off it. A <strong>preset</strong> turns one fuzzy word into a set of conditions. A <strong>constraint</strong> adds an implicit bound a human would assume but nobody typed — a liquidity floor under a value screen, say. Both are tagged at birth: preset output carries <code>origin = preset_default</code>, constraint output <code>constraint_default</code>, and those origins are exactly what make them the first things relaxation sacrifices.</p>
-    <p>The ordering is deliberate. Preset expansion runs <em>before</em> the lock; constraint derivation runs <em>after</em> it. A preset is part of what the user asked for and must be diffed; a constraint is the system's own addition and must never enter the diff as if it were the user's.</p>
-    <p>Underneath sits the capability registry — <strong>98 filters across 11 groups</strong>, generated from the screener's own <code>get-all-indicator</code> response and refreshed hourly, with a hand-authored overlay supplying what the API does not carry: each filter's polarity and its relaxation ladder. The filter identifier <em>is</em> the API's <code>indicatorTag</code> verbatim, so there is no translation table to drift.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>The meaning of a vague word is a product decision, editable without a deploy.</li>
-        <li>Generated-plus-overlay keeps the registry honest about which half is vendor truth.</li>
-        <li>Origin tagging makes "give this up first" fall out of where a condition came from.</li>
-        <li>No translation table between the domain model and the API means no drift to debug.</li>
-    </ul>
-`;
-break;
-
-case "screener-relaxation":
-  popupContent = `
-    <h2>Relaxation &amp; the Near-Miss Exit</h2>
-    <p>A screen that returns nothing is a failure of the product, not of the user. <code>relax</code> runs three strategies in a fixed order and proposes nothing of its own.</p>
-    <p><strong>Single-point</strong> first: loosen one condition by one ladder step and recount. Then <strong>cumulative greedy</strong>: keep loosening, cheapest first, where cheapest is one comparator built from <code>Priority</code> — larger means more important, so the smallest is sacrificed first — composed with the origin's relaxation rank. Locked <code>user_explicit</code> conditions are not in the candidate set at any point, so neither strategy can reach them.</p>
-    <p>If nothing reachable remains, the <strong>near-miss exit</strong> ends the turn with two facts and no proposal: which condition is blocking, and the value actually reachable on that metric. Both come from the sensitivity matrix already computed, so the exit costs no extra call.</p>
-    <p>The guard beside it matters as much. A fresh screen that arrives with zero conditions to screen on exits as <code>clarify:no_conditions</code> — a clarification, explicitly <strong>not</strong> a <code>tool_error</code>. Asking the user a question is a normal outcome here, not a failure, and the logs keep the two apart.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>An empty result set becomes an explanation instead of a dead end.</li>
-        <li>Relaxation order is one comparator, so it is testable and stable.</li>
-        <li>Every loosened value is a ladder step, so the result stays defensible to a user.</li>
-        <li>"Ask a question" and "something broke" stay distinguishable in the logs.</li>
-    </ul>
-`;
-break;
-
-case "screener-measured-api":
-  popupContent = `
-    <h2>Measured Before Integrating</h2>
-    <p>The screener runs on top of a separate filter API. Before a line of integration code was written, a standalone probe exercised that API end to end and captured every response to disk. The integration was then designed against those captures, and six of its properties are load-bearing enough that the client is built around them:</p>
-    <ul>
-        <li>Transport is <strong>JSON</strong>. <code>application/x-www-form-urlencoded</code> is rejected outright.</li>
-        <li>The indicator catalogue is fetched with <strong>POST</strong>, not GET.</li>
-        <li>The envelope carries <code>data</code>, <code>errorCode</code> and <code>message</code>, so <strong>HTTP 200 is not success</strong> — a business error arrives as 200 with an <code>errorCode</code> other than <code>FS000000</code>. The client reads the body, never the status line.</li>
-        <li>The catalogue is <strong>98 filters across 11 groups</strong>, and that response is exactly what the capability registry is generated from.</li>
-        <li><strong>No server paging, no server sort, no count-only mode.</strong> Eight paging and sort parameter spellings were sent and silently ignored; a single response simply carries every match.</li>
-        <li>Responses are <strong>human-formatted display strings</strong> while requests take raw numbers.</li>
-    </ul>
-    <p>Two further measurements shaped the design. No authentication is required — 2046 matches came back with no user id and no token. And a broad query is expensive enough to budget for: 611ms for 2046 rows and 223KB at concurrency 1, rising to 2547ms and 2.1MB at concurrency 9. That cost is precisely why the sensitivity matrix is recomputed locally from one response instead of asking the API the same question 2N+1 times.</p>
-    <p><code>execute</code> is the only package in the tree permitted to speak to this API, so every one of these six properties is handled in exactly one place.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>The integration was designed against captured responses rather than assumptions.</li>
-        <li>Those captures double as fixtures, so a change on the far side surfaces as a failing test rather than a production mystery.</li>
-        <li>One package owns the API, so a seventh surprise has exactly one place to land.</li>
-        <li>Latency budgets rest on numbers someone actually observed.</li>
-    </ul>
-`;
-break;
-
-case "screener-one-query-matrix":
-  popupContent = `
-    <h2>One Loose Query, the Whole Matrix</h2>
-    <p>The expensive question a screener asks is "how many would match if I moved this one bound?" — once per condition, in each direction, plus the strict count. That is 2N+1 queries against an API with no count-only mode, where every count costs a full payload.</p>
-    <p>The measured API makes the obvious version unnecessary. One response carries <strong>every</strong> match, with one value column per filter requested. So issue a single <em>loose</em> query — the conditions with their bounds widened — and the entire 2N+1 sensitivity matrix can be recounted <strong>locally</strong> from that one response. No second call.</p>
-    <p>It is treated as an optimisation, not as doctrine. The local recount was verified exactly against the server once — 478 against 478 — then shipped behind an interface with a per-variant-call fallback and a boundary-condition suite. The evidence is filed as <em>encouraging, not proven</em> — one exact match is a good sign, not a proof, and the fallback exists precisely because of that distinction.</p>
-    <p>The matrix is built <strong>lazily</strong>, so a turn that returns plenty of results never pays for it. Relaxation and the near-miss report are both readers of the matrix, which is why neither of them costs a round trip.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Sensitivity analysis collapses from 2N+1 network calls to one.</li>
-        <li>The fallback keeps the per-variant path alive, so the optimisation can be switched off.</li>
-        <li>Laziness means the common, successful turn pays nothing for it.</li>
-        <li>The confidence level is recorded honestly rather than rounded up to "proven".</li>
-    </ul>
-`;
-break;
-
-case "screener-display-vs-raw":
-  popupContent = `
-    <h2>Display Strings In, Raw Numbers Out</h2>
-    <p>The screener API is asymmetric, and the asymmetry is a factor of 10<sup>12</sup>. Requests take <strong>raw</strong> numbers: a 50 trillion rupiah market-cap floor is sent as <code>50000000000000</code>. Responses come back as <strong>human-formatted display strings</strong> — <code>"204.44T"</code>, <code>"5,050"</code>, <code>"-65.99%"</code>.</p>
-    <p>Confusing the two is not a rounding error, it is a twelve-order-of-magnitude error, and it bit the measurement probe itself twice before the contract was written down.</p>
-    <p>So the rule is positional rather than clever: <code>execute</code> performs the conversion in <strong>exactly three places</strong> and nowhere else. Every other package in the tree works in raw numbers only and never sees a display string. A fourth conversion site anywhere is the bug.</p>
-    <p>The same instinct governs storage. The per-turn audit row embeds the planner output, the conditions, the sensitivity map, the relaxation steps, the near-miss report, the result rows, the disclosures and the reachable outcome <em>directly</em> — which is exactly why the root package's own documentation says a JSON tag change there is a storage-format change, not a refactor.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>A whole class of silent magnitude bug is confined to three reviewable lines.</li>
-        <li>Domain code never has to ask which representation it is holding.</li>
-        <li>The three-places rule is auditable by grep, not by discipline.</li>
-        <li>The storage contract is stated where someone editing a struct tag will read it.</li>
-    </ul>
-`;
-break;
-
-case "screener-import-dag":
-  popupContent = `
-    <h2>The Import DAG</h2>
-    <p>Three import cycles appeared independently while the feature was being built — <code>baseline</code> against <code>relax</code>, <code>toolpicker</code> against <code>lexicon</code>, <code>toolpicker</code> against <code>ragpick</code>. One rule resolved all three at once, and it is now the shape of the tree.</p>
-    <p>Every subpackage imports <code>toolpicker</code>, the root. The root holds <strong>types, constants and pure helpers only</strong> — no behaviour. No subpackage imports another except in the direction stated. And <strong>nothing imports <code>engine</code></strong>: <code>engine</code> is the single orchestrator, the only subpackage permitted to import every other, and the only thing the tool registry imports.</p>
-    <p>The rule buys properties that are hard to retrofit. <code>baseline</code> — the lock, the diff, normalization — has <strong>no</strong> database, LLM, clock or goroutine in any exported function, so the most security-sensitive logic in the feature is also the most trivially testable. <code>observe</code> is the only picker package that touches <code>db</code>. <code>serve</code> is the only place allowed to construct a payload. <code>execute</code> is the only package that speaks to the screener API.</p>
-    <p>The root's own cost is stated plainly: because the audit row embeds root types directly, <code>types.go</code> is a <strong>persisted wire contract</strong>, and a JSON tag change there is a storage-format change.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Three cycles were closed by one rule instead of three workarounds.</li>
-        <li>Pure packages need no fixtures, so the lock is covered by ordinary unit tests.</li>
-        <li>Each capability has exactly one owner, so "where does this happen?" has one answer.</li>
-        <li>The orchestrator reads top to bottom, because nothing calls back into it.</li>
-    </ul>
-`;
-break;
-
-case "screener-payload-not-answer":
-  popupContent = `
-    <h2>A Payload, Not an Answer</h2>
-    <p><code>stock_picker</code> ends by handing back a structured payload — totals, condition views, the relaxation trace, disclosures, <code>data_as_of</code> and risk notes — and the <em>pipeline's</em> LLM writes the sentence the user reads.</p>
-    <p>That the tool <em>could</em> have written the answer is the interesting part. An <code>answer</code> package exists, carrying an answer prompt and the compliance copy registries, and it has <strong>no production caller</strong>. <code>engine</code> does not import it at all. Calling it inside the tool would produce a finished answer as a tool <em>result</em>, which the pipeline LLM would then be asked to answer from: two models writing the same paragraph, the second paraphrasing the first.</p>
-    <p>Persistence is the last thing the turn does, not the first thing it forgets. Every exit path — a handback, a clarification, a near-miss, a successful screen — writes its row to <code>ai_stock_picker_turns</code> <strong>before</strong> the tool returns. The row embeds the planner output and the full derived state, so a turn can be reconstructed exactly.</p>
-    <p>Fourteen stages run in a fixed order per turn, and the schema the calling LLM sees is a single required string, <code>demand_description</code>. Everything above is derived from that one field.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>One voice answers the user; the tool contributes facts, not prose.</li>
-        <li>The payload is renderable by a non-LLM client too, because it is structured.</li>
-        <li>Persist-before-return means no completed turn is unexplainable after the fact.</li>
-        <li>A one-field schema gives the calling planner nothing to get wrong.</li>
-    </ul>
-`;
-break;
-
-case "screener-kill-switch":
-  popupContent = `
-    <h2>Runtime Kill Switch</h2>
-    <p>Two different mechanisms gate this tool and they are not interchangeable.</p>
-    <p>The <code>ENABLE_STOCK_PICKER</code> family is <strong>boot-time</strong>. <code>ENABLE_STOCK_PICKER</code> is unusual among the project's flags in that it gates <em>registration</em> rather than callability — off, the tool is not in the registry and the planner never sees its schema. <code>DISABLED_TOOLS</code> remains an independent kill switch on top of it. <code>ENABLE_STOCK_PICKER_SIMILAR</code>, <code>ENABLE_STOCK_PICKER_RISK_FLAGS</code> and <code>ENABLE_STOCK_PICKER_AUDIT_JOB</code> gate the branches: with the similar branch off the turn tail is byte-identical to its shape before that branch existed, and with risk flags off the resolver is a no-op and the risk notes stay empty.</p>
-    <p>The <strong>incident</strong> switch is something else entirely: a control-plane document in <code>ai_stock_picker_flags</code>, read by <code>observe</code> on <em>every</em> invocation and cached 30 seconds. Flipping it stops the tool within half a minute, with no redeploy and no restart. Collection bootstrap is deliberately <em>not</em> gated on <code>ENABLE_STOCK_PICKER</code>, so a flag flip on a deployment that has never run the tool still finds its collections.</p>
-    <p>Around it, <code>observe</code> is the single event API for the feature: it writes the audit row, scores seven guardrails daily, and raises four realtime rate alerts to DingTalk. The deployment status today: <code>ENABLE_STOCK_PICKER=true</code> is pinned in both the production and staging compose files, and <code>stock_picker</code> has been live in production since 2026-09-23.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>An incident is a flag flip measured in seconds, not a deploy measured in minutes.</li>
-        <li>Boot flags keep a dark path genuinely dark — no schema, no tool, no surface.</li>
-        <li>Bootstrapping outside the flag means enabling never meets a missing collection.</li>
-        <li>Guardrail scoring and alerting live with the event API that already sees every turn.</li>
-    </ul>
-`;
-break;
-
-case "screener-not-built":
-  popupContent = `
-    <h2>What Was Not Built</h2>
-    <p>Three capabilities were designed in full and deliberately not built. Saying so out loud is part of the design.</p>
-    <p><strong>The RAG-picking branch.</strong> It has no package. When the planner emits a <code>rag_request</code>, the branch is left <strong>nil</strong> rather than faked — the turn does not pretend to have run a retrieval it never ran.</p>
-    <p><strong>The second similarity engine.</strong> The similar-stock side branch ships one engine; a second, retrieval-based comparables engine was designed and deliberately not built. The engine that did ship has five distinct exits and carries its lineage across <code>next_batch</code> turns, so paging a similarity result behaves like paging a screen.</p>
-    <p><strong>The <code>answer</code> package.</strong> Built and tested, with no production caller, for the reason given under "A Payload, Not an Answer": the pipeline LLM writes the answer.</p>
-    <p>The same precision governs what <em>is</em> built. The risk-flag resolver handles the <strong>17 IDX Notasi Khusus codes</strong> and is explicitly <em>not</em> an UMA resolver — an AST test fails the build on any identifier that claims otherwise. The feed is one whole-market fetch on a refresh schedule, held in memory with the last good value served on failure, so the answer path's <code>ResolveFlags</code> is a map read under a read lock with <strong>no reachable network call</strong>.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>An unbuilt branch returns nil, so nothing downstream mistakes it for an empty result.</li>
-        <li>The gap between the plan set and the shipped tree is written down, not inferred.</li>
-        <li>A test, not a convention, stops the risk-flag resolver from drifting into UMA.</li>
-        <li>Risk annotation adds no latency and no new failure mode to the answer path.</li>
-    </ul>
-`;
-break;
-
-case "cache-fastlane":
-  popupContent = `
-    <h2>Cache Fast-Lane</h2>
-    <p>Every text-only submit is offered to the cache fast-lane before it is allowed near the FIFO queue. <code>dispatchForProcessing</code> pushes the request onto <code>cacheRequestChan</code> with a 10 ms bound; if that channel is full the request falls through to the queue. Three dedicated goroutines (<code>TOTAL_CACHE_WORKERS</code>, default 3) drain the channel. They never acquire <code>processingSemaphore</code>, so a cache hit costs nothing from the normal worker budget.</p>
-    <p>The key is built exactly once per submit, in <code>helpers.GenerateCacheKeyWithHistory</code> — the single place in the system where cache keys are generated. It concatenates the previous questions and the current question, normalises the result to lowercase letters and digits only (Unicode-aware, so Chinese survives), and prefixes it. A <code>:lang</code> suffix is appended when a language is set, and <code>:img_&lt;fp&gt;</code> when the turn carries image attachments, where the fingerprint is the first 16 hex characters of a SHA-256 over each blob, length-prefixed.</p>
-    <p><strong><code>conversation_id</code> is deliberately excluded from the key.</strong> Two people asking the same question in two different conversations land on the same entry. That exclusion is the whole point: it is what turns a per-conversation cache into a cross-conversation, cross-user duplicate-work collapser.</p>
-    <div class="mermaid">
-graph TD
-    SUB["POST /chat/submit"]
-    KEY["GenerateCacheKeyWithHistory<br/>normalised prev questions + question<br/>plus lang plus optional image fingerprint"]
-    DISP["dispatchForProcessing"]
-    CH["cacheRequestChan<br/>10 ms enqueue bound"]
-    CW["3 cache workers<br/>TOTAL_CACHE_WORKERS<br/>no processingSemaphore"]
-    GET["Redis lookup"]
-    HIT["wait for client attach<br/>then emit 3 events"]
-    MISS["routeToNormalProcessing<br/>takes processingSemaphore"]
-    IMG["image turn<br/>fast-lane skipped"]
-    QM["FIFO queue"]
-    REDIS[("Redis<br/>ai_chatbot_conv entry<br/>TTL 24h")]
-
-    SUB --> KEY --> DISP
-    DISP -->|"text turn"| CH
-    DISP -->|"has images"| IMG --> QM
-    CH --> CW --> GET
-    GET -->|"read"| REDIS
-    GET -->|"hit"| HIT
-    GET -->|"miss"| MISS
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-    class CH,CW,GET,HIT hot
-    class REDIS ext
-    </div>
-    <p>A hit does not stream immediately. <code>waitForClientConnection</code> blocks on the request holder's <code>ClientConnected</code> channel first, because a cache hit can land before the browser has opened the SSE connection and streaming into a closed pipe would lose the answer. Once the client is attached the fast-lane emits three events: a time-to-first-token record tagged <code>cache_fastlane</code>, the whole answer as one token event, and a completion event with status <code>completed_from_cache</code>.</p>
-    <p>Image-bearing turns are never cached, guarded independently at three layers: routing skips the fast-lane tier, the read path returns before any Redis call, and the preparer sets <code>ShouldCache = false</code> so nothing is ever written.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>This is now the system's <strong>only</strong> duplicate-request collapsing mechanism. There is no separate deduplication layer above it.</li>
-        <li>Cache workers are isolated from the normal worker pool, so cached answers stay fast while the pipeline is saturated.</li>
-        <li>Excluding <code>conversation_id</code> means popular questions are answered once for the whole user base.</li>
-        <li>The language and image suffixes keep semantically different turns from colliding on one entry.</li>
-    </ul>
-`;
-break;
-
-case "cache-promotion":
-  popupContent = `
-    <h2>Cache Promotion &amp; Re-evaluation</h2>
-    <p>The up-front cache check only helps a request that arrives <em>after</em> an answer exists. Promotion covers the other case: a twin that missed the cache and is already sitting in the FIFO queue when the first request finishes computing.</p>
-    <p>The loop has five steps, all on the write side of the streamer:</p>
-    <ul>
-        <li><strong>Write.</strong> <code>RedisResponseCache.Store</code> marshals the response, selected tools, completion status, detected language and sources, sets the key with a 24 h TTL, and then <em>verifies the write</em> before anything else happens.</li>
-        <li><strong>Notify.</strong> <code>Streamer.Stream</code> calls <code>NotifyCachePopulated(cacheKey)</code>, a non-blocking send onto a buffered channel. A full channel is logged and dropped — the notification is an optimisation, never a correctness requirement.</li>
-        <li><strong>Re-evaluate.</strong> A single <code>ReevaluationWorker</code> goroutine consumes cache keys and calls <code>PromoteFromQueueForCache</code>.</li>
-        <li><strong>Promote.</strong> <code>queue.Manager.PromoteForCache</code> looks up every queued request sharing that key in O(1) through <code>cacheKeyIndexMap</code>. For each one it sends the request id to <code>priorityChan</code> <em>first</em>, and only on a successful send removes the item from the FIFO and stashes it in <code>promotedItems</code>. If the priority channel is full the request simply stays in the queue. No orphans, and no window in which a normal worker can race in and regenerate it.</li>
-        <li><strong>Serve.</strong> <code>priorityRequestWorker</code> picks the id up and tries <code>HandleCachedRequestViaReevaluation</code> <strong>before</strong> anything else. Because the write was verified before the notification fired, the answer is already durably in Redis. Only a genuine miss — the entry evicted or expired between write and pickup — falls back to regeneration.</li>
-    </ul>
-    <p>Promoted turns complete with status <code>completed_from_cache_reevaluation</code> rather than <code>completed_from_cache</code>, chosen from the promotion flag and deliberately ignoring whatever status was cached. The two timescales stay distinguishable in the logs.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>N identical concurrent questions cost one plan, one tool run and one synthesis. The rest are replayed from Redis.</li>
-        <li><code>PromoteForCache</code> is the <strong>only</strong> queue-jumping edge in the system. There are no priority classes and no other path that reorders the FIFO.</li>
-        <li>Send-then-remove ordering makes promotion safe under a full priority channel: the worst case is that the request processes normally.</li>
-        <li>Promotion serves from the cache rather than the LLM, so a queue-jump costs a Redis read, not a model call.</li>
-    </ul>
-`;
-break;
-
-case "plan-and-execute":
-  popupContent = `
-    <h2>Plan-and-Execute Pipeline</h2>
-    <p>The orchestration core is a custom implementation of the <strong>plan-and-execute / LLMCompiler</strong> pattern. One LLM call in <code>tools/toolcore/planner</code> emits the entire execution graph as JSON up front; a deterministic engine in <code>tools/toolcore/pipeline</code> then runs it. It is not a ReAct loop — the model does not observe a tool result and pick the next tool.</p>
-    <p>The planner classifies each turn into one of three plan modes: <code>simple</code> (independent tools, no dependencies), <code>pipeline</code> (ordered steps where later steps consume earlier output), and <code>fixed_answer</code> (a canned response, for example on prompt-injection detection). Simple mode is <em>not</em> a second code path — <code>plan.ToPipelinePlan()</code> converts it into a one-step pipeline so everything flows through the same executor.</p>
-    <p>Within a step the execution mode is <code>single</code> or <code>map</code>. Single runs the step's tools in order; map runs one tool once per item of an upstream array, normally the stock codes a generator step produced. The runtime switch also accepts <code>parallel</code> and treats the LLM's occasional <code>simple</code> step-level value as an alias for it. A separate per-step boolean, <code>AggregationMode</code>, marks a terminal step that executes no tools and instead concatenates every prior step's output for the synthesising LLM.</p>
-    <p>The interesting part is what happens <em>after</em> the model returns. An LLM's JSON is never trustworthy enough to execute directly, so the plan runs a deterministic repair gauntlet: argument-shape normalisation, the iron rule that step 1 of a real pipeline must be a stock-code generator (otherwise the plan is rewritten into aggregation mode), demotion of bogus pipelines back to simple mode when the declared dependencies do not exist, and correction of map-parallelism and direct-stream flags the model set wrong.</p>
-    <hr>
-    <p><strong>Why this is not LangChain, LangGraph or Eino:</strong></p>
-    <ul>
-        <li>Across Eino, Genkit-Go, trpc-agent-go and LangChainGo, the DAG is always author-defined in Go at compile time. Nothing in Go executes an <em>LLM-emitted</em> DAG off the shelf. Even LangGraph's LLMCompiler is a tutorial pattern you assemble yourself.</li>
-        <li>The repair layer and the domain resolver — JSONPath over step outputs, <code>&#123;&#123;code&#125;&#125;</code> substitution per map iteration, sector and rank tagging — encode Tuntun's tools and financial rules. No framework ships them. They stay ours under any choice.</li>
-        <li>So the real trade is "own a small execution substrate too" versus "bolt the unavoidable custom layer onto someone else's pre-1.0 API". Eino is v0.9.x, LangChainGo v0.1.x.</li>
-        <li>LangGraph matches the pattern but means returning to Python, which this codebase left for documented GIL reasons. <code>langchaingo</code> is already a dependency, used for exactly the right thing: a multi-provider LLM client, not orchestration.</li>
-    </ul>
-    <p>Full reasoning, with line references: <code>docs/architectures/custom_pipeline_vs_frameworks.md</code>.</p>
-`;
-break;
-
-case "parallel-map-execution":
-  popupContent = `
-    <h2>Parallel Map Execution</h2>
-    <p>A map step runs one tool once per item of an upstream array — typically the stock codes a generator step produced, capped at 30 by default. Run serially that is 30 sequential backend calls. <code>ExecuteToolsMap</code> instead fans out over a bounded worker pool: a buffered channel of size <code>ParallelLimit</code> acts as the semaphore, one goroutine per item takes a slot, and a <code>sync.WaitGroup</code> joins them. Each result carries its index and is written into a pre-sized slice, so the joined output stays ordered regardless of completion order, and a failed iteration becomes a failure marker rather than failing the whole step.</p>
-    <p>The limit is per step. <code>ExecuteToolsMap</code> reads <code>step.ParallelLimit</code> and falls back to <code>config.AppSettings.DefaultParallelLimit</code> when the planner left it unset — <code>DEFAULT_PARALLEL_LIMIT</code>, default 5, raised to 20 in the development <code>.env</code>. Each individual tool call is retried through the shared retry helper at <code>DEFAULT_RETRY_LIMIT</code> (default 3) with exponential backoff from 1 s, capped at 30 s.</p>
-    <div class="mermaid">
-graph TD
-    subgraph SERIAL ["Serial - one call at a time"]
-        S0["30 stock codes"]
-        S1["call 1"]
-        S2["call 2"]
-        S3["call 30"]
-        SEND["total is the sum of all 30 calls"]
-        S0 --> S1 --> S2 --> S3 --> SEND
-    end
-
-    subgraph BOUNDED ["Map mode - bounded worker pool"]
-        B0["map source array<br/>capped by MAX_TOTAL_STOCKS_FOR_MAP_EXECUTION"]
-        SEM["buffered channel sized ParallelLimit<br/>default from DEFAULT_PARALLEL_LIMIT"]
-        W1["goroutine per item<br/>retry up to DEFAULT_RETRY_LIMIT"]
-        W2["goroutine per item"]
-        W3["goroutine per item"]
-        WG["sync.WaitGroup joins<br/>results reordered by index"]
-        B0 --> SEM
-        SEM --> W1 --> WG
-        SEM --> W2 --> WG
-        SEM --> W3 --> WG
-    end
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-    class B0,SEM,W1,W2,W3,WG hot
-    </div>
-    <p>Two guards sit around the fan-out. <code>MAX_TOTAL_STOCKS_FOR_MAP_EXECUTION</code> (default 30) truncates the item list in all three source-resolution paths in <code>map_fallback.go</code> — the pre-extracted stock codes, the peek fallback, and the LLM extraction fallback — so a generator that returns 400 codes cannot turn one turn into 400 backend calls. And when the map source cannot be resolved at all, the step degrades gracefully instead of failing: <code>ErrMapSourceNotNeeded</code> tells the executor to fall back to plain parallel execution, which is correct whenever the tools already carry complete arguments.</p>
-    <p>Anchors: <code>tools/toolcore/pipeline/execution/map.go:138-145</code> for the pool setup, <code>tools/toolcore/pipeline/execution/map_fallback.go</code> for source resolution and the cap.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Wall-clock time for a map step is roughly the slowest call, not the sum of all calls.</li>
-        <li>Bounded rather than unbounded fan-out: backends are never hit by 30 simultaneous requests unless the limit says so.</li>
-        <li>Per-step overrides let an expensive tool run narrower than the global default.</li>
-        <li>The cap and the parallel fallback make a bad plan degrade in latency, not in correctness.</li>
-    </ul>
-`;
-break;
-
-case "fifo-queue":
-  popupContent = `
-    <h2>FIFO Queue &amp; Processing Semaphore</h2>
-    <p>Admission control is deliberately plain. <code>queue.Manager</code> is a slice-backed FIFO with two index maps for O(1) lookup and removal. <code>EnqueueNewRequest</code> rejects with <code>ErrQueueFull</code> at <code>QUEUE_SIZE</code> (default 100), then does a non-blocking wakeup send onto a signal channel — the channel carries a nudge, not the payload. <code>DequeueRequest</code> takes index 0. That is the entire scheduling policy: <strong>fairness is plain arrival order</strong>.</p>
-    <p>Concurrency is capped by two semaphores at different stages:</p>
-    <ul>
-        <li><code>processingSemaphore</code>, sized <code>MAX_CONCURRENT_REQUESTS</code> (default <strong>50</strong>), acquired in <code>processRequest</code> and released when the task hands off. The normal worker pool is also sized to the same number, so the semaphore is the real ceiling on in-flight processing.</li>
-        <li><code>llmStreamSemaphore</code>, sized <code>MAX_CONCURRENT_LLM_STREAMS</code> (default <strong>5</strong>), held by <code>runBoundedStream</code> for the <em>whole</em> stream. The preparer stage hands a stream off and moves on, so without this leash a burst of prepared requests would spawn unbounded concurrent streams and push the provider into 429s, which trips the circuit breaker.</li>
-    </ul>
-    <p>The development <code>.env</code> raises two of these: <code>QUEUE_SIZE=1000</code> and <code>MAX_CONCURRENT_LLM_STREAMS=30</code>. <code>MAX_CONCURRENT_REQUESTS</code> is left at its default of 50. Two channels bypass the queue entirely — the cache fast-lane workers, which never take <code>processingSemaphore</code>, and the priority workers that serve cache-promoted requests.</p>
-    <p>A janitor runs every <code>JANITOR_INTERVAL</code> (2 m) and reaps three classes of stuck request: cancelled but never picked up (1 s), queued past <code>QUEUE_TIMEOUT</code> (1 h), and processing past <code>PROCESSING_TIMEOUT</code> (10 m).</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>One queue, one policy. No priority classes, no scan-and-select, nothing to reason about beyond arrival order.</li>
-        <li>Separating the processing cap from the LLM-stream cap lets planning proceed at width 50 while only 5 streams talk to the provider.</li>
-        <li>Rejecting at <code>QUEUE_SIZE</code> gives the client a fast 503 instead of an unbounded wait.</li>
-        <li>The janitor bounds the blast radius of anything that gets stuck, without any per-request timer.</li>
-    </ul>
-`;
-break;
-
-case "stateful-conversation":
-  popupContent = `
-    <h2>Stateful Conversations</h2>
-    <p>History is fetched once per turn, at submit time, not during preparation. <code>helpers.FetchAndFormatHistory</code> (<code>chatbot/helpers/history.go</code>) takes the last <code>HISTORY_ITEMS</code> turns — default 1, set to 3 in the development <code>.env</code> — via <code>arangoStore.GetConversationHistory(ctx, conversationID, limit)</code>. When the caller supplies <code>prev_context</code> on the request, that is used instead and the database is not touched at all.</p>
-    <p>It is called from <code>helpers.GenerateCacheKeyWithHistory</code>, so a single call produces both things the turn needs: the formatted transcript and the list of previous question strings that feed the cache key. The result travels on <code>types.CacheKeyData</code> for the rest of the request's life — into <code>PreparedRequestData.FormattedHistory</code>, into the planner's <code>PlanOnly</code> call, and into the final synthesis prompt.</p>
-    <p>The default rendering is one line pair per turn:</p>
-    <pre><code>Human: What is the market cap of BBCA?
-Assistant: BBCA's market capitalisation is ...
-Human: What about BBRI?
-Assistant: ...</code></pre>
-    <p>Turns that were answered by both agents render with role labels instead — <code>Tuntun AI:</code> and <code>CS Manager:</code> — so the customer-service agent can recognise its own prior turns. That branch only fires when the split output fields are non-empty, which happens under <code>ENABLE_CS_MANAGER</code>; older rows take the legacy path and render byte-for-byte as before. Either way the extracted question list is unchanged, so the cache key is unaffected by the transcript format.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Follow-up questions ("what about BBRI?") resolve against the previous turn.</li>
-        <li>One fetch serves both the prompt and the cache key — no second read, and no chance of the two disagreeing.</li>
-        <li><code>prev_context</code> lets a caller supply history directly and skip the database round trip.</li>
-        <li>Failures degrade to empty history rather than failing the turn.</li>
-    </ul>
-`;
-break;
-
-case "data-driven-tools":
-  popupContent = `
-    <h2>Data-Driven Tool Registry</h2>
-    <p>Tools are data, not code paths. All 30 are declared as <code>DynamicTool</code> values in one file, <code>tools/toolcore/definitions.go</code>, grouped into ten small builder functions (<code>buildSectorTools</code>, <code>buildFinancialDataTools</code>, <code>buildUserDataTools</code> and so on) that <code>BuildAllTools</code> concatenates. A repo-wide grep for <code>NameStr:</code> outside that file returns nothing: there is no second registry.</p>
-    <p>The struct is four fields plus an optional fifth: a name, a description shown to the LLM, a JSON schema for the arguments, an <code>Executor</code> closure, and — for the one tool that supports it — a <code>StreamExecutor</code>. The engine only ever reads those fields. It has no knowledge of what any individual tool does.</p>
-    <div class="mermaid">
-graph TD
-    subgraph HARD ["Hard-coded engine"]
-        SW["engine switches on tool name"]
-        C1["case tool_a"]
-        C2["case tool_b"]
-        C3["a new tool means editing the engine"]
-        SW --> C1
-        SW --> C2
-        SW --> C3
-    end
-
-    subgraph DATA ["Data-driven registry"]
-        REG["BuildAllTools<br/>30 DynamicTool values"]
-        FLT["filterDisabledTools<br/>reads DISABLED_TOOLS"]
-        ENG["generic engine reads<br/>Name Description Schema Executor"]
-        ADD["a new tool means appending one struct"]
-        REG --> FLT --> ENG
-        REG -.-> ADD
-    end
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-    class REG,FLT,ENG,ADD hot
-    </div>
-    <p>Configuration operates on the same list rather than on branches in the engine. <code>filterDisabledTools</code> drops anything named in <code>DISABLED_TOOLS</code> at build time, so a disabled tool's schema never reaches the LLM at all — the model cannot plan a call it was never shown. Other environment lists work the same way: <code>TIMEBOUND_TOOLS</code> and <code>USERBOUND_TOOLS</code> mark plans as non-cacheable, <code>STOCK_CODE_GENERATOR_TOOLS</code> declares which tools may legally occupy step 1 of a pipeline, and <code>EXCLUDE_TOOLS_FROM_CITATION</code> suppresses source references for private or synthesised output.</p>
-    <p>One name in the plan grammar is deliberately <em>not</em> a registered tool: <code>compare_stocks</code>. The planner can emit it as a terminal step, and the pipeline routes it to the injected comparison synthesiser instead of looking it up in the registry.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Open for extension, closed for modification — adding the 31st tool is one struct, no engine change.</li>
-        <li>A single source of truth for what the system can do, greppable in one file.</li>
-        <li>Capability changes ship as configuration: disabling a tool is an environment variable, not a deploy of new logic.</li>
-        <li>The cache, citation and planning rules all key off tool <em>names</em>, so they stay correct as the catalogue grows.</li>
-    </ul>
-`;
-break;
-
-        case "bowl-resume":
-          popupContent = `
-                <h2>Magic Bowl: Resumable Streams</h2>
-                <p>An HTTP connection can drop mid-answer: tab close, page refresh, mobile network. The LLM stream behind it is a one-shot Go channel, so without help the tokens are gone. The bowl (<code>chatbot/bowl</code>) makes a turn's event history durable in memory for the lifetime of that turn, so the same client can reattach and receive everything it missed.</p>
-                <p><strong>This is disconnect and reconnect resilience for one client. It is not fan-out.</strong> A bowl is explicitly single-consumer: <code>CreatePipe</code> permits exactly one active pipe and closes the previous one before handing out a new one, so a bowl structurally cannot serve two clients at the same time. Replay survives a reconnect; simultaneous delivery to multiple viewers does not exist here and cannot be configured on.</p>
-                <div class="mermaid">
-graph TD
-    subgraph WRITE ["Write side — one ResponseBowl per request_id"]
-        STRM["streamer channel"]
-        BW["bowl-writer goroutine<br/>filters the LLM completion event"]
-        BOWL["ResponseBowl<br/>events accumulate permanently<br/>the bowl is never drained"]
-    end
-
-    subgraph PIPES ["CreatePipe — exactly one active pipe"]
-        CP["new pipe closes the previous one"]
-        PS["stream pipe<br/>historical tokens skipped"]
-        PR["resume pipe<br/>handleCatchUpTokens"]
-    end
-
-    subgraph OUT ["Consumers — always the same request"]
-        SSE["GET /chat/stream/:request_id"]
-        RES["GET /chat/resume/:request_id"]
-        INC["GET /session/incomplete/:conversation_id"]
-        STAT["GET /chat/status/:request_id<br/>progress mirror"]
-    end
-
-    subgraph LIFE ["Lifecycle"]
-        JAN["bowl janitor every 5m<br/>TTL 24h · 30s grace after completion"]
-        CAN["POST /chat/cancel/:request_id<br/>bowl deleted outright"]
-    end
-
-    STRM --> BW --> BOWL
-    BOWL --> CP
-    CP --> PS
-    CP --> PR
-    PS --> SSE
-    PR -->|"one concatenated catch-up token"| RES
-    BOWL --> INC
-    BOWL --> STAT
-    JAN --> BOWL
-    CAN --> BOWL
-
-    class BOWL,CP,PR hot
-    class SSE,RES,INC,STAT ext
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-                </div>
-                <p><strong>The catch-up token.</strong> A naive replay re-emits every historical token event one at a time — the "dripping pipe" that makes a reconnect feel slower than the original answer. For a <code>resume</code> pipe on an incomplete bowl, <code>handleCatchUpTokens</code> concatenates all historical tokens into a <strong>single</strong> token event and sends that; <code>shouldSkipEvent</code> then suppresses the individual tokens. Hundreds of events collapse into one.</p>
-                <p><strong>Integration detail worth knowing.</strong> With <code>USE_BOWL=true</code> the client never reads the streamer channel. The manager interposes a bowl-writer goroutine that copies every event into the bowl, and hands the SSE handler a <em>bowl pipe</em> instead. The live path and the resume path are therefore the same path. With <code>USE_BOWL=false</code> the raw stream is returned directly, <code>/chat/resume/:request_id</code> answers 404 with error code <code>RESUME_DISABLED</code>, and <code>/session/incomplete/:conversation_id</code> returns an empty list.</p>
-                <p><strong>Ending a bowl.</strong> Completion records a status, emits a final <code>info</code> event, closes the pipe and triggers cleanup immediately. Cancellation is different: partial tokens are read out and persisted first, then the bowl is deleted from the map outright — after a cancel there is deliberately nothing left to resume. Everything else expires through the janitor: 24 h TTL, with a 30 s grace window after completion so a resume fired right at the end still lands.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>A refresh or a dropped mobile connection does not lose the answer.</li>
-                    <li>Reconnect is one event, not a re-run of the whole token stream.</li>
-                    <li><code>/chat/status</code> keeps reporting progress after the socket is gone, because the bowl mirrors it.</li>
-                    <li>Cancelled turns still persist whatever was already written to the user.</li>
-                    <li>Pipe exclusivity removes a whole class of double-consumption bugs by construction.</li>
-                </ul>
-            `;
-          break;
-
-        case "circuit-breakers":
-          popupContent = `
-                <h2>Circuit Breakers</h2>
-                <p>Three <code>sony/gobreaker</code> breakers are constructed in <code>core/services.go</code> and injected into the clients they guard: <strong>LLM</strong> (<code>core.ResilientLLM</code>), <strong>Redis</strong> (<code>db.RedisStore</code>) and <strong>ArangoDB</strong> (<code>db.ArangoStore</code>). Nothing else is wrapped — the BE tool HTTP calls, Consul and the auth service rely on retries and timeouts instead.</p>
-                <div class="mermaid">
-graph LR
-    CLOSED["Closed<br/>calls pass through<br/>failures counted in a sliding window"]
-    OPEN["Open<br/>calls fail fast with ErrOpenState"]
-    HALF["Half-open<br/>a small number of probes allowed"]
-
-    CLOSED -->|"enough traffic AND failure rate over threshold"| OPEN
-    OPEN -->|"cooldown elapses"| HALF
-    HALF -->|"probe succeeds"| CLOSED
-    HALF -->|"probe fails"| OPEN
-
-    class OPEN hot
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-                </div>
-                <p>Each breaker is ratio-based rather than count-based. <code>ReadyToTrip</code> divides <code>TotalFailures</code> by <code>Requests</code> over the sliding <code>Interval</code>: LLM trips at 0.5 over a 15 s window with a 60 s cooldown, Redis at 0.6 over 10 s with 30 s, ArangoDB at 0.5 over 5 s with 30 s. The Arango wrapper also classifies its errors first — an application-level error (a missing document, a validation failure) is reported to the breaker as a success, so only genuine infrastructure failures count toward tripping.</p>
-                <p><strong>Honest caveat.</strong> All three breakers are configured with <code>minRequests = 1000</code>: <code>ReadyToTrip</code> returns <code>false</code> outright until that many calls have been observed inside the window. At the traffic this service actually sees, that threshold is not reached, so the breakers are dormant in practice and do not trip. They are a safeguard that only becomes load-bearing under sustained high volume, not an active protection today. The mechanism is real and wired; the threshold is what currently keeps it idle.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>Failing fast beats holding worker slots open against a dead dependency — once the threshold is reachable.</li>
-                    <li>Error classification stops ordinary "not found" results from being read as an outage.</li>
-                    <li>Recovery is automatic: a cooldown, then a bounded number of probes.</li>
-                    <li>Every state transition is logged, so a trip is visible in log aggregation.</li>
-                </ul>
-            `;
-          break;
-
-        case "consul-discovery":
-          popupContent = `
-                <h2>Service Discovery with Self-Healing Cache</h2>
-                <p>Most backend endpoints are configured as service URLs rather than hosts: 34 of the <code>BE_*</code> settings use the form <code>consul://service-name/path</code> (auth, feed-static-service, feedhistoryservice, value-investing-web, sector-concept-web, funds-service, and others). <code>toolutils.ResolveServiceURL</code> turns that into an <code>http://host:port/path</code> before any HTTP client sees it, because <code>http.Client</code> cannot dial a <code>consul://</code> scheme. A non-<code>consul</code> URL is returned untouched, so mixed configuration works.</p>
-                <p><strong>Retries.</strong> Consul is intermittently unreliable, and a service being redeployed produces a momentary window with no healthy instances. Neither should fail a user's request. The health query runs inside <code>utils.RetryWithDelay</code>, bounded by <code>CONSUL_RESOLVE_MAX_ATTEMPTS</code> (default 3) with <code>CONSUL_RESOLVE_RETRY_DELAY</code> between attempts (default 1s). Both a query error and an empty healthy-instance list are retryable. Exhausting the attempts emits a single caller-agnostic log line tagged <code>event=consul_resolution_failed</code>, so every failed resolution is findable regardless of which tool triggered it.</p>
-                <p><strong>Cache.</strong> A process-local map holds the chosen <code>host:port</code> per service until <code>CONSUL_RESOLVE_CACHE_TTL</code> expires (default 1h). Only the host and port are cached, keyed by service name — never the full URL — so one entry serves every path on that service. Setting the TTL to zero or below disables caching entirely. Live resolutions log at INFO with <code>event=consul_resolved_live</code>, which makes cache effectiveness directly measurable: more than one per service per TTL means the cache is not doing its job.</p>
-                <p><strong>Self-healing.</strong> A cached address can go stale — the instance dies, Consul knows, this process does not. <code>InvalidateService</code> evicts the entry for a service, and callers invoke it on failure. The auth client is the live example: on a transient <code>ErrAuthUnavailable</code> it evicts the entry before its next retry, so the retry re-resolves against Consul instead of hammering a dead address.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>Backend instances can move without a config change or a redeploy.</li>
-                    <li>A redeploy window on a dependency does not surface as a user-visible failure.</li>
-                    <li>Consul is queried at most once per service per TTL instead of once per tool call.</li>
-                    <li>A dead cached address is corrected by the first request that trips over it.</li>
-                </ul>
-            `;
-          break;
-
-        case "stale-while-revalidate":
-          popupContent = `
-                <h2>Stale-While-Revalidate Reads</h2>
-                <p>The user-lifecycle-status endpoint takes roughly 65 seconds to answer. Its configured budget, <code>BE_USER_LIFECYCLE_STATUS_TIMEOUT</code>, is 90 s. It nonetheless feeds a chat turn, because the lifecycle tag is evidence for memory editing and for the marketing funnel. <code>lifecyclecache.Cache.Fetch</code> resolves this by never calling it inline.</p>
-                <p>Every read is a single ArangoDB point read against the <code>user_lifecycle_status</code> collection:</p>
-                <ul>
-                    <li><strong>Fresh hit</strong> — serve the stored value.</li>
-                    <li><strong>Stale hit</strong> (older than <code>USER_LIFECYCLE_STATUS_TTL</code>, 24h) — serve the stale value anyway, and spawn a background refresh.</li>
-                    <li><strong>Miss</strong> — return empty immediately, spawn a refresh to backfill. The prompt section simply vanishes rather than carrying a placeholder.</li>
-                    <li><strong>Arango read error</strong> — return empty and deliberately <em>do not</em> refresh. There is no point launching a 65 s call whose result could not be persisted.</li>
-                </ul>
-                <p><strong>Refresh discipline.</strong> <code>refreshAsync</code> is single-flighted per user through a package-global <code>sync.Map</code>, shared by every <code>Cache</code> instance, so the memory editor and the profile assembler cannot both fire the slow call for the same user. To be precise about what that deduplicates: it collapses concurrent <em>refreshes of one cached value</em>, not user requests — the requests themselves were already served from the cache and never waited. The goroutine is panic-guarded, detached onto <code>context.Background()</code> so it outlives the triggering request, and builds a cloned transport with <code>DialContext</code> set to the same budget, so an unreachable backend fails at the configured 90 s rather than at the default transport's dial timeout. The raw response body is persisted verbatim, so backend schema drift needs no migration.</p>
-                <p><strong>The same shape guards authentication.</strong> When <code>CACHE_VALID_CREDENTIALS</code> is on, a successfully validated dynamic-auth credential is stored in Redis under two windows: <code>VALID_CREDENTIAL_TTL</code> (1h) is the freshness boundary, <code>VALID_CREDENTIAL_STALE_TTL</code> (24h) is the actual key TTL. Inside the fresh window the auth service is not contacted at all. Past it, the credential is revalidated — and the outcome matters: a definitive rejection evicts the entry and rejects the request, but if the auth service is merely <em>unavailable</em> the stale credential is served within the grace window. A Redis failure fails open to remote validation. An auth outage therefore degrades to "recently seen users keep working" instead of locking everyone out.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>A 65-second dependency sits on a chat path without adding measurable latency.</li>
-                    <li>Concurrent consumers of one user's lifecycle value trigger exactly one refresh.</li>
-                    <li>Nothing is refreshed that could not be stored, so a database outage does not become a stampede on the backend.</li>
-                    <li>An auth-service outage does not log out active users.</li>
-                </ul>
-            `;
-          break;
-
-        case "janitors":
-          popupContent = `
-                <h2>State-Aware Janitors</h2>
-                <p>Two independent background sweepers keep in-memory state from accumulating. They cover different maps with different rules.</p>
-                <h3>1. Request janitor</h3>
-                <p>A ticker on <code>JANITOR_INTERVAL</code> (default 2m) walks <code>activeRequests</code> and applies a timeout chosen by the request's current state, because "stuck" means something different in each:</p>
-                <ul>
-                    <li><strong><code>StateCancelled</code></strong> — <code>CLIENT_PICKUP_TIMEOUT</code>, default <strong>1s</strong>. The cancellation packet has been emitted; if the client has not collected it almost immediately, the slot is reclaimed.</li>
-                    <li><strong><code>StateQueued</code></strong> — <code>QUEUE_TIMEOUT</code>, default <strong>1h</strong>. Waiting in a busy FIFO is normal behaviour, not a fault.</li>
-                    <li><strong><code>StateTaskExecution</code> and <code>StateFastLaneProcessing</code></strong> — <code>PROCESSING_TIMEOUT</code>, default <strong>10m</strong>. Long enough for a real multi-step pipeline, short enough to kill a genuinely wedged one.</li>
-                </ul>
-                <p>The scan reads every holder field under the read lock and captures the pointer, so the cleanup phase needs no second lookup that could race. A timed-out request gets an error pushed onto its error channel, then <code>CleanupRequest</code>.</p>
-                <h3>2. Bowl janitor</h3>
-                <p>A separate 5-minute ticker inside <code>chatbot/bowl</code> drops expired bowls and their request metadata. Expiry is also state-aware: a completed or cancelled bowl expires 30 s after completion — the grace window that lets a resume fired right at the end still succeed — while a still-active bowl is given twice the 24 h TTL. Completion additionally runs the sweep synchronously, so the frontend's auto-resume loop does not find a bowl that has already finished.</p>
-                <p><strong>Shutdown.</strong> <code>Manager.Shutdown</code> closes the async log queue first and waits up to 10 s for the log writer to drain before stopping the cache workers, the cache re-evaluation worker and the bowl manager. Pending chat-log writes are flushed rather than dropped on exit.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>No unbounded growth in <code>activeRequests</code> or the bowl map.</li>
-                    <li>A patient queued request is never mistaken for a stuck one.</li>
-                    <li>The resume grace window is respected instead of being cleaned out from under a reconnecting client.</li>
-                    <li>Graceful shutdown does not lose queued log rows.</li>
-                </ul>
-            `;
-          break;
-
-        case "e2e-cancellation":
-          popupContent = `
-                <h2>End-to-End Cancellation</h2>
-                <p><code>POST /chat/cancel/:request_id</code> propagates a <code>context.Context</code> cancellation from the HTTP handler down through the tool pipeline and the LLM stream. Tools check <code>ctx.Done()</code> before and between backend calls; <code>core.ResilientLLM</code> checks <code>ctx.Err()</code> before each attempt and treats <code>context.Canceled</code> as a non-alertable, non-failure outcome so a user's stop button does not pollute error metrics.</p>
-                <div class="mermaid">
-graph TD
-    subgraph API ["HTTP"]
-        CAN["POST /chat/cancel/:request_id"]
-        DISC["client disconnects from /chat/stream"]
-    end
-
-    subgraph HAND ["cancellation.Handler.CancelStream — ordered"]
-        S1["1. state set to cancelled<br/>BEFORE the context is cancelled"]
-        S2["2. cancelFunc on the request context"]
-        S3["3. read bowl content<br/>persist the partial answer"]
-        S4["4. CancelBowl — bowl deleted"]
-        S5["5. CleanupRequest + PurgeActiveRequest"]
-    end
-
-    subgraph DOWN ["Propagation"]
-        TOOLS["tool pipeline<br/>ctx.Done checks"]
-        LLM["LLM stream<br/>ResilientLLM"]
-    end
-
-    subgraph KEEP ["Disconnect is NOT a cancel"]
-        PURGE["PurgeActiveRequest only"]
-        BOWLK["bowl keeps accumulating<br/>the turn stays resumable"]
-    end
-
-    CAN --> S1 --> S2 --> S3 --> S4 --> S5
-    S2 --> TOOLS
-    S2 --> LLM
-    DISC --> PURGE --> BOWLK
-
-    class S1,S4 hot
-    class LLM ext
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-                </div>
-                <p><strong>Ordering is the interesting part.</strong> The state is written to <code>cancelled</code> <em>before</em> <code>cancelFunc()</code> is called. Otherwise the streaming goroutine notices its context die first and records <code>errored</code>, and the turn is misfiled forever. The state machine backs this up by forcing any post-cancel transition back to <code>cancelled</code>, and the cancelled write is the one state update performed synchronously with retry rather than asynchronously. Partial tokens are read out of the bowl and persisted <em>before</em> the bowl is deleted, so a cancelled answer keeps whatever the user already saw.</p>
-                <p><strong>A client disconnect is not a cancel.</strong> The SSE handler says so explicitly. When the connection drops it calls <code>PurgeActiveRequest</code> to release the active-request slot — freeing it for resubmission — and returns. It does <em>not</em> call <code>CancelStream</code>. The pipeline keeps running and the bowl keeps accumulating, so the turn can be resumed. Because the purge removed the request from the map cancellation relies on, a later resume re-registers it, otherwise the resumed-but-still-running turn would answer 404 to a genuine cancel.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>A stop actually stops the tools and the LLM call, not just the SSE writer.</li>
-                    <li>Cancelled turns are recorded as cancelled, never as errors.</li>
-                    <li>The partial answer the user already read is preserved.</li>
-                    <li>Closing a tab costs nothing and loses nothing — it stays resumable.</li>
-                    <li>A resumed request remains cancellable.</li>
-                </ul>
-            `;
-          break;
-
-        case "usage-limits":
-          popupContent = `
-                <h2>Per-User Usage Limits</h2>
-                <p><code>chatbot/usage</code> is a small tracker over a daily per-user counter in ArangoDB. <code>NewConfig</code> reads four knobs: <code>DAILY_USAGE_LIMIT</code> (default <strong>50</strong>), <code>USAGE_TRACKING_ENABLED</code> (default <strong>true</strong>), and the retry count and base delay used by the increment path.</p>
-                <p><strong>Admission.</strong> <code>CheckLimit</code> runs in the submit handler, before the request is registered or dispatched — a blocked turn costs one point read and nothing else. It compares today's count against the limit and returns whether it is exceeded.</p>
-                <p><strong>An exceeded limit is not an error.</strong> The handler answers <strong>HTTP 200</strong> with the standard success envelope carrying <code>status: "usage_limit_exceeded"</code> alongside the request and conversation ids, rather than a 4xx. Quota is a normal, expected state of a chat session, and the client renders it as a message in the conversation instead of as a failed HTTP call — a 429 would land in the same generic error handling as a network fault.</p>
-                <p><strong>Fail-open.</strong> If the counter cannot be read — Arango unreachable, breaker open — <code>CheckLimit</code> logs the error and returns "not exceeded", allowing the request through. A metering failure must not become an outage; over-serving a few turns is strictly preferable to refusing everyone.</p>
-                <p><strong>Increment is off the hot path.</strong> The counter is raised by <code>IncrementUsageAsync</code> after the stream has run to completion, in a fire-and-forget goroutine on a detached 30 s context. It retries with backoff and then fails silently — the user's answer is never delayed or failed by bookkeeping.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>Cost exposure per user is bounded without any per-request coordination.</li>
-                    <li>The rejection is cheap: one read, before any planning, tools or LLM call.</li>
-                    <li>Quota exhaustion reaches the client as a first-class state, not an HTTP error.</li>
-                    <li>A database problem degrades to unmetered service rather than a hard block.</li>
-                </ul>
-            `;
-          break;
-
-case "context-aware-caching":
-  popupContent = `
-    <h2>Context-Aware Caching</h2>
-    <p>Finished answers are cached in Redis under a key built once per turn by <code>GenerateCacheKeyWithHistory</code> — the only place in the system that mints one. The key is the normalised question text plus recent history, a language suffix, and nothing else: <code>ai_chatbot_conv:&lt;simplified&gt;:&lt;lang&gt;</code>. Conversation id is deliberately excluded, so the same question from two users shares one entry. TTL is 24 hours.</p>
-    <p>Sharing entries is only safe if live data never enters one. Two env lists mark the tools that make a turn uncacheable: <code>TIMEBOUND_TOOLS</code> (deployed as <code>realtime_market,get_current_time</code>) and <code>USERBOUND_TOOLS</code> (the per-user memory, portfolio and watchlist tools). After planning, the preparer runs <code>checkTimeboundToolsInPlanJSON</code> over the generated plan and sets <code>TimeboundToolsCalled</code>. It also sets <code>ShouldCache</code>, via <code>shouldCacheTurn</code>.</p>
-    <p>The write gate ANDs both. <code>RedisResponseCache.ShouldCache</code> stores only when <code>data.ShouldCache</code> is true, a Redis client exists, <code>TimeboundToolsCalled</code> is false, and the response is non-empty. A skip logs each of the four conditions, so "why was this not cached" is one log line rather than an investigation.</p>
-    <p>Image turns are excluded by the same field plus two independent guards. Routing skips the cache fast-lane entirely for a turn carrying attachments; the fast-lane read returns before it would obtain a Redis client, so no round trip is issued at all; and <code>ShouldCache</code> being false closes both the Redis write and the cache-populated notification that the promotion path keys on. The cache key also carries a content fingerprint of the attachments, so an image question can never collide with the same sentence asked without one.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Live market data is never served from a stale entry, and freshness is configuration, not code.</li>
-        <li>One key generator means the read side and the write side cannot disagree about what a turn is.</li>
-        <li>Excluding conversation id makes the cache genuinely cross-user rather than per-thread.</li>
-        <li>Three independent image guards: any one of them alone is sufficient.</li>
-    </ul>
-`;
-break;
-
-case "summarisation-cache":
-  popupContent = `
-    <h2>Summarisation Cache</h2>
-    <p>Separate from the response cache, and much narrower. When a comparison pipeline's collected tool output exceeds the token budget, each oversized output is summarised by an LLM call. Those summaries are cached in Redis under <code>summary:&lt;sha256&gt;</code>, with a 24 hour TTL.</p>
-    <p>The digest is taken over the tool <em>inputs</em> — tool name, marshalled arguments, and whether extreme-reduction mode is active — not over the output text. Identical tool calls therefore share a summary even when the upstream response varies in whitespace or ordering. The stored value keeps the summary, the original and summarised token counts, the reduction percentage, and the time it was cached, so a cache hit still reports honest metrics into the pipeline's LLM-call ledger rather than a zero-cost gap.</p>
-    <p><code>USE_SUMMARIZATION_CACHE</code> gates it by <strong>passing a nil Redis client</strong>, not by branching. <code>prepare.go</code> sets the client to nil when the flag is off, and <code>GetLLMSummary</code> takes the cached path only when its client is non-nil. There is one code path, exercised identically in both modes. The other caller of the summariser, the aggregation fallback in <code>tools/toolcore/executor</code>, simply never supplies a client — so it is uncached by construction, with no flag to get wrong. Timebound and userbound tools are excluded from the cache here too, via the same lists the response cache uses.</p>
-    <p>It is not request deduplication. A hit skips exactly one summarisation call inside a turn that is already running; it never returns an answer, never short-circuits a request, and does not coordinate concurrent turns. Two identical requests arriving before either has written the entry will both summarise.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Repeated comparisons over the same instruments skip the most expensive non-answer LLM calls.</li>
-        <li>Keying on inputs makes hits reproducible instead of dependent on byte-identical tool output.</li>
-        <li>Nil-client gating means the disabled path is the same path, so the flag cannot introduce a behavioural fork.</li>
-        <li>Cached results still carry token and reduction figures, so cost accounting stays complete.</li>
-    </ul>
-`;
-break;
-
-case "citations":
-  popupContent = `
-    <h2>Citation &amp; Source Tracking</h2>
-    <p>Every citable tool execution is registered during pipeline execution and given a sequential key — <code>source_1</code>, <code>source_2</code>, and so on — together with its input arguments and any extracted output metadata. The tool's output is then handed to the model as a JSON map entry keyed by that same number, so the number the model cites and the record the API later serves are the same object.</p>
-    <div class="mermaid">
-graph TD
-    T["Tool step completes"]
-    ST["Static registry<br/>EXCLUDE_TOOLS_FROM_CITATION"]
-    DY["Dynamic registry<br/>per-tool predicate over the real output"]
-    EX{"ShouldExcludeFromCitation"}
-    NC["Emitted as tool_NAME DO NOT CITATE<br/>context only, no number"]
-    REG["registerToolExecution<br/>assigns source_N"]
-    RN["Filter unresolved sources<br/>then renumber to close gaps"]
-    PR["Prompt block<br/>source_N with tool and content"]
-    LLM["Model appends the source number<br/>in backticks at end of sentence"]
-    DB["sources map persisted<br/>on the chat-log row"]
-    EP["GET /chat/sources<br/>GET /chat/sources_map/:request_id"]
-
-    T --> EX
-    ST --> EX
-    DY --> EX
-    EX -->|"excluded"| NC
-    EX -->|"citable"| REG
-    REG --> RN
-    RN --> PR
-    NC --> PR
-    PR --> LLM
-    RN --> DB
-    DB --> EP
-
-    class EX,REG,RN hot
-    class EP ext
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-    </div>
-    <p>Exclusion has two layers, both behind <code>sourceops.ShouldExcludeFromCitation</code>. The <strong>static</strong> layer is <code>EXCLUDE_TOOLS_FROM_CITATION</code>: tools whose output is the user's own data or an internal aggregate — portfolio, memory, watchlist, the FAQ lookup, <code>compare_stocks</code> — are never citable, checked first and unconditionally. The <strong>dynamic</strong> layer is <code>DynamicExcluderRegistry</code>, a map of eleven per-tool predicates that read the actual output and exclude a tool that ran successfully but returned nothing worth citing: all instruments unavailable in <code>realtime_market</code>, no rows from <code>historical_marketdata</code>, an empty <code>news_summary</code>, a missing research document. Excluded tools still reach the model, formatted with a DO NOT CITATE marker so their content informs the answer without earning a footnote.</p>
-    <p>Citation instructions are themselves conditional: the prompt's citation block renders only when <code>INCLUDE_CITATION</code> is on <em>and</em> the turn actually produced at least one citable source. Sources whose input arguments still contain unresolved pipeline template variables are dropped and the survivors renumbered, so the sequence handed to the model never has holes.</p>
-    <p>Two read endpoints serve the persisted map, both behind authentication and per-request ownership. <code>GET /chat/sources</code> takes <code>req_id</code> and a <code>lang</code> of <code>en</code>, <code>id</code> or <code>zh</code> and returns an array sorted by numeric suffix — lexicographic ordering would put <code>source_10</code> before <code>source_2</code>. <code>GET /chat/sources_map/:request_id</code> returns the original keyed map and takes its language from the row's own detected language. Both merge input and output arguments into one <code>metadata</code> object and apply per-tool tidying. A turn with no surviving sources returns an empty array or object, not an error.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Footnote numbers are assigned by the executor, so a citation always resolves to a real tool call with real arguments.</li>
-        <li>Dynamic exclusion stops the model citing a source that returned no data — the most common cause of a hollow footnote.</li>
-        <li>Two endpoint shapes: ordered for rendering, keyed for lookup, neither one a client-side sort away from being wrong.</li>
-        <li>Adding a tool to either exclusion layer is one registry entry or one env value.</li>
-    </ul>
-`;
-break;
-
-case "file-asset-integrity":
-  popupContent = `
-    <h2>File Asset Integrity</h2>
-    <p>Uploaded bytes are treated as hostile. Neither the client's declared <code>Content-Type</code> nor the filename extension is ever trusted or persisted: <code>SniffMIME</code> reads the leading bytes, probing for the ISO-BMFF <code>ftyp</code> box and its ten HEIF brands first — the standard library reports <code>application/octet-stream</code> for all of them, so iPhone uploads would otherwise be unclassifiable — then falling back to the stdlib sniffer. Other ISO-BMFF brands such as MP4 deliberately fall through, so a video cannot present itself as an image. The allow-list <strong>fails closed</strong>: an empty list rejects everything, because a misparsed <code>IMAGE_ALLOWED_MIME_TYPES</code> must not silently become "accept anything". A PNG-named file with an executable header is a clean 400.</p>
-    <p>Ids are minted from <code>crypto/rand</code>: a kind prefix plus six random bytes as twelve lowercase hex characters, so <code>img_</code> ids are unguessable and ownership checking is not the only defence. A separate grammar check, not a prefix check, guards anything that touches a store, so a traversal-shaped id is rejected by construction rather than by a lookup happening to fail.</p>
-    <div class="mermaid">
-graph TD
-    U["Uploaded part<br/>declared MIME and extension ignored"]
-    SNF["SniffMIME<br/>HEIF ftyp brands, then stdlib sniffer"]
-    AL{"Sniffed type in allow-list?"}
-    REJ["400 — no disk write, no document"]
-    ID["NewFileID<br/>img_ plus 12 crypto-random hex"]
-    ASYNC["PersistAsync<br/>detached goroutine, own 30s context"]
-    TMP["CreateTemp in destination dir<br/>write, chmod 0600, close"]
-    REN["Rename into place<br/>root/kind/yyyy/mm/dd/id.ext, dirs 0700"]
-    META["SaveFileAsset<br/>insert, never upsert"]
-    OK["Retrievable, owner-checked"]
-    RB["Blob removed<br/>rollback, no orphan bytes"]
-
-    U --> SNF
-    SNF --> AL
-    AL -->|"no"| REJ
-    AL -->|"yes"| ID
-    ID --> ASYNC
-    ASYNC --> TMP
-    TMP --> REN
-    REN --> META
-    META -->|"ok"| OK
-    META -->|"write fails"| RB
-
-    class SNF,AL,META,RB hot
-    class OK,REJ ext
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-    </div>
-    <p>Blobs live at <code>&lt;root&gt;/&lt;kind&gt;/&lt;yyyy&gt;/&lt;mm&gt;/&lt;dd&gt;/&lt;id&gt;.&lt;ext&gt;</code>, UTC date-sharded so no directory grows unmanageable and a future retention sweep is a directory operation. Directories are <code>0700</code>, files <code>0600</code>. Writes go to a temporary file in the destination directory and are renamed into place, with cleanup on every error path, so a crash mid-write cannot leave a truncated blob under an id that metadata already references. The extension comes from an explicit MIME table rather than the standard library's, whose ordering varies by platform and would make storage paths non-reproducible.</p>
-    <p>Ordering is bytes first, metadata second. If the metadata write fails, <code>Persist</code> removes the blob it just wrote — a file with no document pointing at it is an uncollectable leak, so it is never allowed to exist. Persistence runs in <code>PersistAsync</code>, a detached goroutine that deliberately does not inherit the request context: the endpoint answers 202 immediately, which cancels that context, so the goroutine builds its own 30 second timeout instead. Failures are logged, not returned; a disk problem degrades to "the answer still streams, the image just is not downloadable later".</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Format enforcement rests on actual bytes, so extension and header spoofing both fail.</li>
-        <li>HEIC is accepted rather than rejected as octet-stream, which is what most phone uploads are.</li>
-        <li>No half-written blobs and no orphaned blobs, under crash or under database failure.</li>
-        <li>Storage never sits on the answer's critical path, and a wedged disk cannot leak goroutines.</li>
-    </ul>
-`;
-break;
-
-case "automated-indexing":
-  popupContent = `
-    <h2>Automated Schema &amp; Indexing</h2>
-    <p>There is no migration step to forget. On startup <code>initializeSchema</code> runs <code>ensureAllCollections</code> and then <code>ensureAllIndexes</code>; every call is an idempotent <code>Ensure...</code>, so a fresh database, a restored backup and a running production instance all converge on the same schema. Collections are created unconditionally — including <code>file_assets</code> while image processing is still dark — because gating schema on a runtime flag is exactly how a flag flip returns 500s against a collection that does not exist yet. An empty collection is inert.</p>
-    <p>Several indexes are correctness constraints as much as query accelerators. Uniqueness on the chat log's <code>request_id</code>, on <code>file_assets.file_id</code> and on a research report's <code>stock_code</code> turns a duplicate into a loud write error rather than a silent overwrite.</p>
-    <p><strong>Chat logs</strong></p>
-    <ul>
-        <li><code>idx_log_request_id</code> — unique hash on <code>request_id</code>; the lookup behind status, sources and feedback.</li>
-        <li><code>idx_log_user_conv_time</code> — persistent on <code>user_id, conversation_id, user_query_timestamp</code>; conversation history in order.</li>
-        <li><code>idx_log_user_session_sort</code> — persistent on <code>user_id, session_sort_ts, user_query_timestamp</code>; backs the session-list query.</li>
-    </ul>
-    <p><strong>Sessions, research, portfolio, memory</strong></p>
-    <ul>
-        <li><code>idx_sessions_user_id</code> — hash on <code>user_id</code>.</li>
-        <li><code>idx_research_stock_code</code> — unique hash; one equity research report per instrument.</li>
-        <li><code>idx_portfolio_perm_user_id</code> — unique hash on the portfolio access permission collection.</li>
-        <li><code>idx_user_memory_user_id</code> — unique hash; one memory document per user.</li>
-    </ul>
-    <p><strong>File assets</strong></p>
-    <ul>
-        <li><code>idx_file_assets_file_id</code> — unique hash; the backstop behind random id minting.</li>
-        <li><code>idx_file_assets_request_id</code> — persistent; resolve every asset attached to one turn.</li>
-        <li><code>idx_file_assets_user_created</code> — persistent on <code>user_id, created_at</code>; ownership sweeps and future retention jobs.</li>
-    </ul>
-    <p><strong>Caches and suggestion questions</strong></p>
-    <ul>
-        <li><code>idx_concept_cache_query</code> — unique hash on the cached query string; <code>idx_concept_data_cache_id</code> — persistent on the sector id.</li>
-        <li><code>idx_all_questions_en</code> — unique hash on the English text, which is how question deduplication is enforced.</li>
-        <li><code>idx_click_record_question_id</code> and <code>idx_watchlist_portfolio_stocks_user_id</code> — unique hash; <code>idx_welcome_page_user_timestamp</code>, <code>idx_new_answer_request_timestamp</code> and <code>idx_overwrite_data_timestamp</code> — persistent, all time-ordered reads.</li>
-    </ul>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Deployment is start the binary; there is no separate migration to run or to skip.</li>
-        <li>Named indexes make an unexpected collection scan attributable to a specific missing entry.</li>
-        <li>Unique indexes encode invariants in the database, not only in Go.</li>
-        <li>Schema is flag-independent, so enabling a feature never requires a schema change first.</li>
-    </ul>
-`;
-break;
-
-case "async-logging":
-  popupContent = `
-    <h2>Asynchronous Chat Logging</h2>
-    <p>The moment a request is accepted, an initial chat-log row is queued rather than written. <code>logQueue</code> is a buffered channel of 100 <code>LogDataForDB</code> values; <code>submitRequest</code> sends on it inside a <code>select</code> with a <code>default</code> branch, so the send never blocks. A single <code>asyncLogWorker</code> goroutine ranges over the channel and performs the write.</p>
-    <p>The back-pressure behaviour is a drop, and it is deliberate. If the buffer is full the log is discarded with a warning and the request proceeds — the row is a resume and observability aid, not the answer, and blocking the accept path on a database write would be the worse failure. Because the queue has a single consumer, writes stay in submission order. Nothing else uses the queue: the later lifecycle writes, including the final answer, go through <code>CreateOrUpdateChatLog</code> directly on the processing goroutine, after the tokens have already been delivered to the client.</p>
-    <p>Two details make the deferral safe. The worker writes with <code>context.Background()</code>, so a request the user cancelled a millisecond after submitting still gets its row. And before writing it reads the current completion status: if the row already carries a terminal <code>cancelled</code> or <code>errored...</code> state, written by an earlier status update, the queued "submitted" row would clobber it — so the worker skips the write and instead backfills only the owner and identity fields, which the ownership check on the status endpoint needs in order not to reject the caller forever.</p>
-    <p>Shutdown closes the queue and waits on a wait group for the worker to drain, with a 10 second bound; a timeout is logged as "some logs may be lost" rather than hidden.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>A database write is removed from the accept path, so submit latency does not track database latency.</li>
-        <li>Drop-on-full degrades observability under load instead of degrading the service.</li>
-        <li>A background context means cancellation cannot lose the record of the request that was cancelled.</li>
-        <li>The terminal-status check stops an in-flight queued row from resurrecting a finished request.</li>
-    </ul>
-`;
-break;
-
-case "structured-persistence":
-  popupContent = `
-    <h2>Structured Turn Records</h2>
-    <p>One turn is one document, created or updated in place on <code>request_id</code> as the request progresses — queued, planned, streamed, finalised. It is not a response log; it is the full execution record, and it is what the status, history, sources and feedback endpoints all read.</p>
-    <p><strong>Identity and content.</strong> Conversation, request and user ids; the user query and the preserved <code>original_message</code>; the assembled final input and the final output; the detected language; the model identity in <code>llm</code>; <code>is_event</code> with its event metadata; any user reaction and feedback with their timestamps. Dual-agent turns store per-agent prompts and outputs in separate fields alongside <code>selected_agents</code> and the resolved persona, leaving the legacy fields untouched when the feature is off. <code>image_file_ids</code> carries the attachments of that turn, in the order the client sent them, read from the same request context the model was grounded on — so the persisted ids cannot disagree with the pixels that were actually sent.</p>
-    <p><strong>Tool metadata.</strong> <code>selected_tools</code> maps a tool name to a <em>list</em> of executions, because the same tool is legitimately called more than once in a turn. Each entry holds the input arguments, the full output text and its token count, the execution duration, a timestamp, the assigned <code>source_number</code>, and, on failure, the error plus the raw provider error body — captured below the client, because the LLM library discards provider detail when the error shape does not match what it expects. Backend tools record the external API address, request payload and response body; multi-API tools record one entry per call. Tools that make their own LLM calls record their input, output, total and grounding token counts.</p>
-    <p><strong>Timing and tokens.</strong> Completion status is a specific value, not a boolean — <code>completed</code>, <code>completed_from_cache</code>, <code>completed_via_pipeline_direct_stream</code>, <code>cancelled</code>, <code>errored_planning</code>, and a dozen more, each naming the path taken. Alongside it: time to first token and the model-only portion of it, plan generation and final answer generation durations, the tools phase wall clock, and a pre-pipeline breakdown down to session setup, cache key generation, queue wait, semaphore wait, language detection and memory access. Token counts are stored per segment — prompt template, tool input, tool output, chat history, completion — rather than as one total. The footnote <code>sources</code> map and the original LLM-generated plan are stored with them.</p>
-    <p>Cached replays carry the same shape. A cache entry stores the response together with the tool metadata, completion status, time to first token, detected language and sources of the original run, so a fast-lane answer presents the same execution detail as a freshly generated one instead of arriving as a bare string.</p>
-    <hr>
-    <p><strong>Benefits:</strong></p>
-    <ul>
-        <li>Latency regressions are attributable to a stage, because every stage is a stored field.</li>
-        <li>A failed turn keeps the provider's own error text, which is usually the only thing that explains it.</li>
-        <li>Per-segment token counts make cost analysis a query rather than a reconstruction.</li>
-        <li>Named completion statuses distinguish the several different ways a turn can legitimately succeed.</li>
-    </ul>
-`;
-break;
-
-        case "structured-logging":
-          popupContent = `
-                <h2>Structured JSON Logging</h2>
-                <p>Logging is <code>zerolog</code> throughout: 218 non-test Go files import it. <code>logging.Init()</code> runs first in <code>main()</code>, reads <code>LOG_LEVEL</code> (default <code>INFO</code>), and picks a writer from <code>GIN_MODE</code> — JSON to stdout under <code>release</code>, a pretty console writer otherwise. It also redirects the standard library <code>log</code> package into zerolog, so third-party <code>log.Printf</code> output is captured rather than lost.</p>
-
-                <p>One line is emitted per HTTP request by <code>AccessLog()</code>, registered as the outermost middleware so it records the final status even when an earlier middleware aborts. Successful requests log at Debug, 4xx at Warn, 5xx at Error — at the staging default of <code>INFO</code> only failures surface, which keeps the frontend's sub-second status polling from flooding Loki.</p>
-
-                <pre><code>{
-  "level": "warn",
-  "time": "2026-07-25T09:14:02+07:00",
-  "event": "http_request",
-  "method": "GET",
-  "path": "/chat/status/:request_id",
-  "http_status": 404,
-  "client_ip": "10.194.2.20",
-  "user_id": "u_88213",
-  "request_id": "req_1753412042_0731",
-  "latency_ms": 3.412,
-  "message": "http request completed"
-}</code></pre>
-
-                <p>The <code>path</code> field is the route pattern from <code>c.FullPath()</code>, not the raw URL, so requests aggregate cleanly by endpoint. Stable <code>event</code> markers exist specifically to be queried: <code>http_request</code>, <code>submit_request_failed</code>, <code>auth_unavailable</code> (with a <code>phase</code> of <code>consul_resolve</code>, <code>be_request_build</code>, <code>be_call</code> or <code>be_5xx</code>), <code>consul_resolve_cache_hit</code>, <code>consul_resolved_live</code>, <code>consul_resolution_failed</code>.</p>
-
-                <p>Beyond the request line, each turn persists a detailed record to ArangoDB. <code>LogDataForDB</code> carries a time-to-first-token decomposition — <code>queue_wait_duration_sec</code>, <code>semaphore_wait_duration_sec</code>, <code>cache_key_generation_duration_sec</code>, <code>language_detection_duration_sec</code>, <code>db_status_check_duration_sec</code>, <code>pre_pipeline_plan_generation_duration_sec</code>, <code>time_to_first_token_llm_service_only</code>, plus an ordered <code>time_to_first_token_breakdown</code> array. Per-tool telemetry lands in <code>pipeline_metrics</code> as <code>ToolExecutionDetail</code>: input args, output token count, <code>duration_sec</code>, retry attempts, cache-hit flag, and the raw external API request and response bodies via <code>api_address</code>/<code>api_input</code>/<code>api_output</code> or an <code>external_apis</code> list for multi-call tools.</p>
-
-                <p>Provider errors are captured rather than swallowed. langchaingo discards error bodies whose shape it does not recognise — notably Gemini's OpenAI-compatible 429 — so the raw body is intercepted below the client and stored as <code>llm_error_detail</code>. Failures during streaming are persisted too, through a read-merge-write upsert that records the error and completion status without clobbering fields already written.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>A single request is traceable end to end by <code>request_id</code>, across the access line, the pipeline logs and the stored turn record.</li>
-                    <li>Latency regressions can be attributed to a specific stage rather than guessed at.</li>
-                    <li>Rate limits and upstream 5xx keep their original provider text, so triage does not depend on reproducing the failure.</li>
-                </ul>
-            `;
-          break;
-
-        case "observability-stack":
-          popupContent = `
-                <h2>Observability Stack</h2>
-                <p>The stack is logs-only: zerolog writes JSON to stdout, Vector tails the Docker socket, Loki indexes, Grafana queries. There is no Prometheus, no <code>/metrics</code> endpoint and no pprof surface — every panel is a LogQL query over the log stream, so what looks like a metric is derived from logs at read time.</p>
-
-                <div class="mermaid">
-graph TD
-    App["Go application<br/>zerolog JSON to stdout"] --> Sock["Docker log driver"]
-    subgraph Pipe ["Log pipeline in docker-compose"]
-        Vector["Vector 0.34.0-alpine<br/>docker_logs source<br/>VRL parse and relabel"]
-        Loki["Loki 3.3.2<br/>host port 3100"]
-        Grafana["Grafana 11.4.0<br/>host port 3000"]
-        Vector --> Loki --> Grafana
-    end
-    Sock --> Vector
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-    class Vector,Loki hot
-    class App,Sock,Grafana ext
-                </div>
-
-                <p>Vector's <code>docker_logs</code> source is scoped to an explicit container allow-list — <code>chatbot-app-1</code>, <code>chatbot-app-cd</code> and the two backup daemons. A VRL <code>remap</code> transform preserves <code>container_name</code> as <code>service_name</code>, tries <code>parse_json</code> on the message and falls back to plain text for the shell-based backup daemon, then deletes the noisy Docker fields. Loki receives one indexed label, <code>service</code>; everything else stays in the log body. Vector publishes no port — it only reads <code>/var/run/docker.sock</code>.</p>
-
-                <p><strong>Where it is defined:</strong> all three services appear in <code>docker-compose.yml</code>, <code>docker-compose.local.yml</code>, <code>docker-compose.staging.yml</code> and <code>docker-compose.cd.yml</code>. They are absent from <code>docker-compose.db.yml</code>, which starts Redis and ArangoDB only. The CD stack remaps its host ports to 3101 and 3001 to avoid colliding with a dev stack on the same host, and bakes <code>vector-config/vector.toml</code> and <code>grafana-cd-provisioning/</code> into images via <code>dockerfile_inline</code> because GitLab runners cannot use static bind mounts. Staging still pins Grafana 10.2.2.</p>
-
-                <p><strong>Provisioned assets in the repo:</strong> <code>vector-config/</code> holds the CD-scoped Vector config (identical to the root <code>vector.toml</code> apart from a narrower container list). <code>grafana/provisioning/</code> holds the Loki datasource and the "Chatbot Latency Breakdown" dashboard — TTFT composition, stacked duration by stage, average duration per stage, TTFT percentiles and distribution, average tool duration, error counts and errors by type, and a drill-down into slow and error logs. All 36 panel queries target Loki.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>Dashboards ship with the code, so a fresh environment comes up already instrumented.</li>
-                    <li>One indexed label keeps Loki cardinality low while the full JSON body stays queryable.</li>
-                    <li>Log shipping is out of process — the application never blocks on the observability path.</li>
-                </ul>
-                <p><strong>Caveat:</strong> the provisioning file also declares an ArangoDB datasource typed <code>postgres</code>. No dashboard panel uses it.</p>
-            `;
-          break;
-
-        case "status-tracking":
-          popupContent = `
-                <h2>Real-Time Status Tracking</h2>
-                <p><code>GET /chat/status/:request_id</code> and <code>GET /v2/chat/status/:request_id</code> expose where a request sits in the pipeline. Both are behind <code>RequireAuth</code> plus an ownership check. They are polled, not pushed: the bundled frontend's turn controller polls every 600 ms while a turn is live.</p>
-
-                <div class="mermaid">
-graph TD
-    Submit["POST /chat/submit"] --> Queued["submitted"]
-    Queued --> FastLane["fastlane_processing"]
-    Queued --> Choosing["choosing_tools"]
-    Choosing --> Calling["calling_tools"]
-    Calling --> Formulating["formulating_final_answer"]
-    Formulating --> Ready["ready_to_stream"]
-    Formulating --> CSGen["cs_manager_generating<br/>v2 only"]
-    Ready --> Completed["completed"]
-    CSGen --> Completed
-    FastLane --> Completed
-    Choosing --> Errored["errored"]
-    Calling --> Errored
-    Ready --> Cancelled["cancelled"]
-
-    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
-    classDef ext fill:#FBFBF9,stroke:#CFCDC4
-    class Queued,FastLane hot
-    class Completed,Cancelled,Errored ext
-                </div>
-
-                <p><strong>One wire divergence worth knowing.</strong> The Go constant is <code>StateQueued</code> but its serialised value is <code>"submitted"</code>, not <code>"queued"</code>. Clients must match on <code>"submitted"</code>. It is also the fallback: <code>stageToState</code> maps any unrecognised stage string to <code>submitted</code>.</p>
-
-                <p><strong>The full set of <code>RequestState</code> values</strong> (<code>types/enums.go</code>): <code>submitted</code>, <code>choosing_tools</code>, <code>calling_tools</code>, <code>formulating_final_answer</code>, <code>ready_to_stream</code>, <code>fastlane_processing</code>, <code>cs_manager_generating</code>, <code>completed</code>, <code>cancelled</code>, <code>errored</code>. <code>IsTerminal()</code> is true only for the last three. Two further constants exist but are not status-endpoint values in practice: <code>not_selected</code> is an SSE info signal, and <code>task_execution</code> is declared and read but never assigned outside tests.</p>
-
-                <p><strong>What the progress object actually contains.</strong> <code>ProgressInfo</code> reports <code>stage</code>, <code>stage_start_time</code>, <code>completion_ratio</code>, and the name lists <code>tools_selected</code> and <code>tools_completed</code>. The ratio advances <strong>per pipeline step</strong> — it is computed as <code>(stepNum - 1) / totalSteps</code> — not per individual tool, so a step running several tools moves the bar once. <code>estimated_eta_seconds</code> is declared on the struct and copied defensively, but nothing in the codebase ever sets it, so it is omitted from responses. <code>selected_agents</code> is present on <code>/v2</code> only.</p>
-
-                <p><strong>Resolution order</strong> is in-memory active requests, then bowl progress when <code>USE_BOWL=true</code> (this is what makes a status poll survive a dropped SSE connection), then ArangoDB with <code>is_from_database: true</code> and a <code>completion_ratio</code> of 1.0. Two races are handled by retry: a 2 s wait at 100 ms intervals for async logging to land, and a 3 s re-check at 200 ms when the database says <code>cancelled</code>. Exhausting all three sources returns 404 <code>NOT_FOUND</code>.</p>
-
-                <p>The v1 path deliberately pins the legacy shape: <code>cs_manager_generating</code> is rewritten to <code>formulating_final_answer</code> and <code>progress.selected_agents</code> is stripped. The progress struct is copied before this rewrite because the bowl path returns a live shared pointer.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>Existing v1 clients see no new states even as the dual-agent path ships behind its flag.</li>
-                    <li>A client that loses its stream can recover state from the bowl instead of restarting the turn.</li>
-                </ul>
-            `;
-          break;
-
-        case "alerting":
-          popupContent = `
-                <h2>Alerting with Deduplication</h2>
-                <p><code>common/alert/</code> pushes operational failures to a DingTalk group webhook. It is three files: <code>dingtalk.go</code> (transport), <code>dedup.go</code> (spam control), <code>manager.go</code> (global wiring and message formatting). The whole subsystem is inert unless <code>DINGTALK_ALERT_ENABLED=true</code> and <code>DINGTALK_WEBHOOK_TOKEN</code> is non-empty — <code>Initialize</code> returns early inside a <code>sync.Once</code>, leaving the global client nil. The default is off.</p>
-
-                <p>The webhook client signs each request: HMAC-SHA256 over <code>timestamp + "\\n" + secret</code> keyed with the secret, base64-encoded and URL-escaped, with a 10 s HTTP timeout.</p>
-
-                <p><strong>The dedup algorithm.</strong> An <code>ErrorSignature</code> carries message, error type, model, function, request id and code location — but the bucket key is a SHA-256 of the <strong>error type alone</strong>. This is deliberately coarse: every <code>RATE_LIMIT_EXCEEDED</code> collapses into one bucket no matter which tool, model or request produced it. Each bucket then applies, in order:</p>
-                <ul>
-                    <li><strong>Fresh window</strong> — if the current window has expired, the alert always passes and the window restarts.</li>
-                    <li><strong>Cooldown</strong> — <code>ALERT_COOLDOWN_SECONDS</code>, default 30. Suppressed if the last alert of this type was more recent.</li>
-                    <li><strong>Per-window cap</strong> — <code>ALERT_MAX_PER_WINDOW</code>, default 1. Suppressed once the bucket has spent its budget.</li>
-                    <li><strong>Window length</strong> — <code>ALERT_WINDOW_MINUTES</code>, default 60.</li>
-                </ul>
-
-                <p>Suppression is not silent. Every suppressed alert records its <code>request_id</code> in a set, so one request that retries and trips the same error ten times counts once. The first alert of the next window carries that distinct-request count in its body: "N other request(s) hit a X error and were suppressed in the previous window". A background ticker prunes buckets untouched for two window lengths every 10 minutes.</p>
-
-                <p>The message itself carries timestamp, request id, function, model, error type, the error string, and a <code>CodeLocation</code> such as <code>tools/toolcore/planner/planner.go:252 (ClassifyAndPlan)</code>, plus optional user query, tool query, user id and prompt preview from the context map.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>An incident produces one actionable alert per error type per hour instead of a pager storm.</li>
-                    <li>The representative alert still reports true blast radius, so coarse bucketing does not hide scale.</li>
-                    <li>Defaults are off — a fresh checkout cannot page anyone by accident.</li>
-                </ul>
-            `;
-          break;
-
-        case "prompt-versioning":
-          popupContent = `
-                <h2>Prompt Versioning &amp; Golden Tests</h2>
-                <p>Prompts are selected at runtime by version string, not edited in place. Four independent knobs exist in <code>config/config.go</code>: <code>PROMPT_VERSION</code> (default <code>v1</code>) for the final answer prompt, <code>CLASSIFY_AND_PLAN_PROMPT_VERSION</code> (default <code>v2</code>) for the planner, <code>SUGGESTION_QUESTIONS_PROMPT_VERSION</code> (default <code>v1</code>), and <code>WEB_SEARCH_PROMPT_VERSION</code> (default <code>v2</code>). Each indexes a template map at call time, so rolling a prompt back is an environment change rather than a deploy of different code. All four are echoed in the startup configuration summary.</p>
-
-                <p>The versions are pinned by golden fixtures. <code>core/testdata/flagoff_golden/</code> holds the rendered final-answer prompt for <code>v1</code> through <code>v7</code> plus the comparison prompt, and <code>tools/tooltypes/testdata/flagoff_golden/</code> holds <code>classify_and_plan_v1</code> and <code>v2</code>. The tests render each version and assert byte-for-byte equality with its fixture.</p>
-
-                <p>The point is not prompt quality — it is proving a feature flag is inert. With <code>ENABLE_IMAGE_PROCESSING</code> off, <code>TestFinalPromptRender_FlagOffMatchesPinnedBaseline</code> and <code>TestClassifyAndPlanRender_FlagOffMatchesPinnedBaseline</code> demonstrate that the prompt the model receives is byte-identical to the pre-feature prompt. Separate <code>..._FlagOnMatchesPinnedBaseline</code> and <code>..._ImagesSectionAppearsWhenSet</code> fixtures pin the flag-on rendering, so the on-path is guarded too rather than left unasserted.</p>
-
-                <p>Goldens regenerate only under an explicit flag: <code>go test ./core/ -run FlagOff -update-golden</code>. That matters because an earlier version of these tests diffed against <code>git show HEAD:</code> and therefore silently blessed any regression that had already been committed. Requiring the flag forces a prompt change to land as a reviewable diff in the fixture file.</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>Accidental whitespace or ordering drift in a prompt fails CI instead of quietly changing model behaviour.</li>
-                    <li>A dark feature is provably invisible to the model while it is off.</li>
-                    <li>Intentional prompt changes are reviewed as a diff, by a human, in the pull request.</li>
-                </ul>
-            `;
-          break;
-
-        case "dark-launch":
-          popupContent = `
-                <h2>Dark-Launch Feature Flags</h2>
-                <p>Substantial features ship disabled. <code>ENABLE_IMAGE_PROCESSING</code> (multimodal upload and vision), <code>ENABLE_CS_MANAGER</code> (the dual-agent Luna/Kevin/Mia framework) and <code>ENABLE_USER_SHORT_TERM_MEMORY</code> all default to <code>false</code>. <code>USE_BOWL</code> defaults to <code>true</code> and gates resume. <code>DYNAMIC_AUTH</code> and <code>PRODUCTION_MODE</code> default to <code>false</code>, which together decide whether per-user identity exists at all and whether the <code>mockPass</code> development backdoor is accepted.</p>
-
-                <p><strong>The discipline is: gate at the edge, then prove the off-path is unchanged.</strong> Flags are checked at the boundary where new data would first enter — request binding, cache-key composition, prompt rendering, history formatting — rather than sprinkled through the core. With <code>ENABLE_IMAGE_PROCESSING</code> off, <code>extractImageAttachments</code> returns silently ignored parts, so a multipart submit from a new client degrades to the old text behaviour instead of erroring.</p>
-
-                <p>Tests then assert the disabled path byte-for-byte, not merely "still works": <code>TestCacheKey_FlagOffShapeUnchanged</code>, <code>TestFetchAndFormatHistory_FlagOffByteForByte</code>, <code>TestExtractImageAttachments_FlagOff</code>, <code>TestBuildSearchContents_FlagOffIgnoresContext</code>, <code>TestResolveInterruption_FlagOff_Noop</code>, <code>TestSubmitGate_V2_ImageOnlyRejectedWhenFlagOff</code>, plus the pinned prompt goldens. <code>DYNAMIC_AUTH</code> gets the same treatment through <code>TestAuthStorage_DynamicAuthDisabled</code> and <code>TestHandleSubmitRequest_AuthStorageDisabled</code>.</p>
-
-                <p><strong>The operational caveat.</strong> Routes are registered unconditionally so a flag can be flipped without a redeploy, which means a dark endpoint answers rather than 404s at the router — with its own code:</p>
-                <ul>
-                    <li><code>GET /chat/resume/:request_id</code> — 404 <code>RESUME_DISABLED</code> when <code>USE_BOWL=false</code>.</li>
-                    <li><code>GET /user/settings/:user_id</code> and <code>POST /user/settings</code> — 403 <code>ENDPOINT_DISABLED</code> when <code>ENABLE_CS_MANAGER=false</code>.</li>
-                    <li><code>GET /files/image/:image_file_id</code> — a plain 404 <code>NOT_FOUND</code> when <code>ENABLE_IMAGE_PROCESSING=false</code>, indistinguishable from a missing file, so a prober learns nothing from the dark route.</li>
-                </ul>
-                <p>Clients must therefore treat these codes as "feature unavailable", not as "resource gone" or "you are forbidden".</p>
-                <hr>
-                <p><strong>Benefits:</strong></p>
-                <ul>
-                    <li>Incomplete work merges to the mainline instead of ageing on a branch.</li>
-                    <li>Enabling or reverting a feature is an environment variable, not a rollback.</li>
-                    <li>The off-path has test evidence, so "the flag is off" is a verified claim rather than an assumption.</li>
-                </ul>
-            `;
-          break;
-
-          default:
-            popupContent =
-              "<h2>Feature Details</h2><p>Feature details not available.</p>";
+        const carrier = document.querySelector(
+          '.popup-body[data-popup-id="' + type + '"]'
+        );
+
+        if (!carrier) {
+          // Unreachable by construction: the button and its body are emitted
+          // from one data file in one loop, and the build fails on a popup
+          // whose card is unknown (G1) or a card that renders nowhere (G4).
+          // If it happens anyway, fail loudly and do not open — an empty
+          // modal reading "Feature details not available." is a shippable
+          // failure, which is the thing this refactor exists to delete.
+          console.error("showPopup: no popup body for id " + JSON.stringify(type));
+          return;
         }
 
-        content.innerHTML = popupContent;
+        content.innerHTML = carrier.textContent;
         modal.style.display = "block";
 
         // Re-initialize Mermaid for new content

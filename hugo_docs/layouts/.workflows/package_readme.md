@@ -7,7 +7,7 @@
 
 Hugo template package for the Tuntun Go Agentic Chatbot documentation site. It owns
 exactly two things: the standalone landing page (`page/custom-home.html`, a
-self-contained 3,000-line document that becomes the deployed `index.html`), and a
+self-contained ~1,600-line document that becomes the deployed `index.html`), and a
 small set of partial overrides that bend the vendored `hugo-theme-stack` where its
 defaults were wrong for this site.
 
@@ -17,8 +17,11 @@ generated from the Go repo. Edits to the landing page are made here and nowhere 
 **Key Responsibilities:**
 - Render the landing page — the canonical, highest-signal description of what the
   chatbot system is and how it behaves.
-- Carry the page's entire client runtime inline: section disclosures, the popup
-  registry, and the hand-off to the standalone Mermaid diagram viewer.
+- Render the popup triggers and popup bodies from the data files under
+  `hugo_docs/data/popup_cards/` and `hugo_docs/data/popups/`, and fail the build when
+  that data is inconsistent.
+- Carry the page's client runtime inline: section disclosures, the popup modal, and
+  the hand-off to the standalone Mermaid diagram viewer.
 - Override four theme partials so documentation pages advertise a link-preview image
   and lead with their revised date.
 
@@ -43,8 +46,49 @@ inherits nothing from the theme's baseof. Everything — icon sprite, CSS link, 
 script tag, markup, and the whole `<script>` runtime — lives in this one file.
 
 Hugo variables consumed: `.Title`, `.Permalink`, `.Site.Title`,
-`.Site.Params.description`, and `absURL` for `style.css`, `favicon.png`,
-`og-image.png`, `diagram.html`.
+`.Site.Params.description`, `hugo.Data.popup_cards`, `hugo.Data.popups`, and `absURL`
+for `style.css`, `favicon.png`, `og-image.png`, `diagram.html`.
+
+`hugo.Data` is used rather than `.Site.Data`: the latter is deprecated as of Hugo
+v0.156.0 and logs a WARN.
+
+### Popup data (build-time, top of `page/custom-home.html`)
+
+Before a byte renders, a template preamble indexes the popup data and validates it.
+
+**Inputs** (source of truth since phase 2 of popup-data-refactor; edit prose there,
+not in the template):
+
+| Directory | Files | Fields |
+|---|---|---|
+| `hugo_docs/data/popup_cards/<card-id>.yaml` | 10 | `section` (one of `agents`, `screener`, `features`), `heading`, `icon` (sprite id, e.g. `ic-database`), `order` |
+| `hugo_docs/data/popups/<popup-id>.yaml` | 51 | `card` (a card id), `order` (within the card), `label` (trigger button text), `body` (modal HTML) |
+
+The file basename is the id. One popup file carries both the trigger `label` and the
+modal `body`, so a trigger without a body cannot be written down.
+
+**Build guards** — each is an errorf call, which makes `hugo` exit non-zero:
+
+| Guard | Fails when |
+|---|---|
+| G1 unknown card | a popup has no `card`, or names a card with no `popup_cards/<id>.yaml` |
+| G2 orphan card | a card has no popups pointing at it |
+| G3 order collision | two popups in one card share an `order` |
+| G4 unknown section | a card's `section` is not `agents`, `screener` or `features` |
+| content assertions | a card with empty `heading`/`icon` or missing `order`; a popup with missing `order` or empty `label`/`body`; a `body` containing a literal closing script tag (it would terminate its carrier early) |
+
+**Rendering**: cards are sorted by `order` (id tie-break) and each of the three
+feature grids ranges over the cards whose `section` matches, emitting a
+`.feature-card` with its icon, heading, and one `<button class="popup-trigger"
+onclick="showPopup('<popup-id>')">` per popup sorted by `order`. After the grids, one
+inert carrier per popup is emitted from the same slice, sorted by id:
+
+```html
+<script type="text/html" class="popup-body" data-popup-id="<popup-id>">…body…</script>
+```
+
+`type="text/html"` is a non-JS script type, so Go's context-aware escaper leaves the
+content alone and safeHTML emits it verbatim. Never rendered, never executed.
 
 **Twelve sections**, in document order, each an `<section id="…">` the masthead can
 target:
@@ -85,25 +129,28 @@ bundler, no module system, and no external JS beyond Mermaid from cdnjs.
 ### `showPopup(type)` / `closePopup()`
 
 ```js
-function showPopup(type)   // one switch, 51 cases
+function showPopup(type)   // ~30 lines, no per-popup code
 function closePopup()
 ```
 
-A single `switch (type)` assigns an HTML string to `popupContent`, which is written to
-`#popup-content.innerHTML` and the modal shown. If the injected content contains
-`.mermaid`, `mermaid.init()` is re-run after a 100ms timeout.
+Looks up the carrier `.popup-body[data-popup-id="<type>"]` and writes its
+`textContent` to `#popup-content.innerHTML`, then shows the modal. Script elements are
+raw text, so `textContent` is the authored HTML byte-for-byte with entities
+undecoded. If the injected content contains `.mermaid`, `mermaid.init()` is re-run
+after a 100ms timeout. (The former 1,174-line `switch` with 51 inline HTML-string
+cases is gone.)
 
 Focus is restored on close via a module-scoped `lastTrigger`, captured from
 `document.activeElement` at open. Dismissal: click outside (`window.onclick`), or
 Escape (`keydown` listener).
 
-**Contract**: a trigger is `<button class="popup-trigger" type="button"
-onclick="showPopup('<key>')">`. The key must match a `case` label. An unmatched key
-falls through to `default`, which renders "Feature details not available" — a silent
-failure with no console warning.
+**Contract**: the key is a `hugo_docs/data/popups/<key>.yaml` basename. Triggers and
+carriers are both generated from that data, so they match by construction. Should a
+carrier still be missing, `showPopup` logs `console.error` and does not open the modal
+(there is no "Feature details not available" fallback any more).
 
-Key groups: `screener-*` (13), `agent-*`/routing/multimodal (11), plus cache,
-queueing, resilience, observability and persistence keys.
+Key groups: `screener-*` (13), agent/routing/multimodal (11), plus cache, queueing,
+resilience, observability and persistence keys.
 
 ### `openDiagramTab(id)`
 
@@ -155,11 +202,15 @@ to `.rail__node--hot` (or the first node) on `mouseleave` of the flow.
 content/_index.md (layout: custom-home, type: page)
   → Hugo lookup → layouts/page/custom-home.html
     → template execution: .Title, .Permalink, .Site.Params.description, absURL
+        data/popup_cards/*.yaml + data/popups/*.yaml (hugo.Data)
+          → guards G1-G4 + content assertions (errorf fails the build)
+          → feature-card triggers + script.popup-body carriers
       → public/index.html (gitignored build output)
         → browser:
             static/style.css              (all presentation)
             cdnjs mermaid 10.6.1          (#architecture renders inline)
-            inline <script>               (popups, disclosures, rail)
+            inline <script>               (popup modal, disclosures, rail)
+            showPopup(id) → .popup-body[data-popup-id=id].textContent → modal
             openDiagramTab → localStorage → static/diagram.html?d=<id>
 ```
 
@@ -187,6 +238,17 @@ package's four overrides substituted by lookup order.
   LinkedIn downgrades to the small square card.
 - `favicon.png`.
 
+### Data (`hugo_docs/data/`)
+- `popup_cards/*.yaml` and `popups/*.yaml` — popup content and card layout, read via
+  `hugo.Data`. Generated once by `hugo_docs/scripts/popups_emit.py` (phase 2) and now
+  hand-edited as the source of truth.
+
+### Tooling (`hugo_docs/scripts/`)
+- `popups_verify.py` — verifies the built page against `popups_baseline.json`
+  (51 popups, 10 cards).
+- `popups_emit.py check` — re-asserts the data files against the baseline.
+- `popups_extract.py` — phase-1 extractor from the old `switch`; historical.
+
 ### Config (`hugo_docs/hugo.toml`)
 - `params.description` — feeds `<meta name="description">` and `og:description`. Keep
   under ~200 chars; LinkedIn and Slack both truncate past that.
@@ -209,23 +271,27 @@ the 100ms `setTimeout` before `mermaid.init()` on freshly-injected popup content
 
 ## Error Handling
 
-There is no error surface — failures are silent by design:
+Popup data errors are build failures (see guards G1-G4 and the content assertions
+under Template Surface). The rest of the client runtime fails silently:
 
-- `showPopup` with an unknown key → `default` case, "Feature details not available".
+- `showPopup` with an id that has no carrier → `console.error`, modal not opened.
+  Unreachable by construction.
 - `openDiagramTab` with an unknown id, or markup missing `.diagram-code` → early
   `return`, no tab opens, nothing logged.
 - `localStorage.setItem` throwing (private mode, blocked storage) → caught and ignored;
   the tab still opens and the viewer explains itself.
 - A typo'd icon `href` (`#ic-…`) renders an empty `<svg>` with no warning.
 
-Consequence: verification is visual. A Hugo build succeeding proves nothing about
-whether a popup or diagram actually works.
+Consequence: a successful Hugo build proves every popup trigger has a body, but not
+that the body reads correctly or that a diagram works; run
+`hugo_docs/scripts/popups_verify.py` and check visually.
 
 ## Performance
 
-`page/custom-home.html` renders once at build time into a single ~3,000-line
-`index.html`. All 51 popups ship as string literals in the initial payload whether or
-not any is opened; all three Mermaid sources ship as hidden text. The page is heavy but
+`page/custom-home.html` renders once at build time into a single large `index.html`.
+All 51 popup bodies ship as inert `script.popup-body` carriers in the initial payload
+whether or not any is opened (the payload is unchanged by the data refactor; only the
+template source shrank); all three Mermaid sources ship as hidden text. The page is heavy but
 has no runtime fetches — the cost is download size, not latency.
 
 Only the `#architecture` diagram renders Mermaid on page load. The `agents` and
@@ -245,9 +311,11 @@ hidden-source indirection.
 
 ### Adding a popup
 
-Add a `case "<key>":` to the `showPopup` switch, and a matching
-`<button class="popup-trigger" onclick="showPopup('<key>')">`. Nothing else is wired —
-there is no registry to update.
+Create `hugo_docs/data/popups/<key>.yaml` with `card`, `order` (unique within the
+card), `label` and `body` (HTML, as a YAML block scalar). The trigger and carrier are
+generated; do not touch the template or `showPopup`. A new card is a
+`hugo_docs/data/popup_cards/<card-id>.yaml` with `section`, `heading`, `icon`,
+`order`, and needs at least one popup or G2 fails the build.
 
 ### Adding a diagram
 
@@ -256,12 +324,13 @@ Add the `.diagram-source` block and a `.diagram-open` button calling
 
 ### Gotchas
 
-- **`showPopup` has a duplicate `case "dark-launch"`** (lines ~1754 and ~2885). JS
-  switch takes the first match, so the second block is unreachable dead code. Both
-  triggers (in `#agents` and `#features`) render the first. Pre-existing; noted so an
-  editor does not "fix" the live copy and leave the dead one.
-- **51 cases, 51 triggers** — the counts match today, but nothing enforces it. An
-  orphaned case is invisible; an orphaned trigger degrades silently to the `default`.
+- **No double curly braces in prose under `hugo_docs/layouts/`.** Hugo parses every
+  file there as a Go template, including this README and `todos.md`; a stray pair
+  breaks the build.
+- **Popup body HTML must not contain a closing script tag** — it would end the carrier
+  early. The build guard rejects it.
+- The old duplicate `dark-launch` case is resolved: the `#features` trigger is now its
+  own popup, `feature-flags`, in card `system-observability`.
 - **`content/docs/**` is generated.** Fix prose in the Go repo's `docs/` and run
   `/update-hugo-docs <section> <anchor_dir>`. Frontmatter dates come from the anchor's
   git log. Only `_index.md` and a page `title` belong to this repo.
@@ -279,6 +348,17 @@ Add the `.diagram-source` block and a `.diagram-open` button calling
 home-page section).
 
 ### Recent Changes
+
+**2026-10-27 — P2-HL-A002** (popup-data-refactor phase 3, "Rewire the template, delete
+the switch"):
+- The 1,174-line `showPopup` `switch` is deleted; `showPopup` now reads the
+  `script.popup-body` carrier for its id.
+- Feature-card markup in `#agents`, `#screener` and `#features` and all popup bodies
+  are rendered from `hugo_docs/data/popup_cards/` and `hugo_docs/data/popups/` via
+  `hugo.Data`.
+- Build guards G1-G4 plus content assertions fail the Hugo build on inconsistent data.
+- `page/custom-home.html` went from 3,011 to 1,604 lines. Verified with
+  `hugo_docs/scripts/popups_verify.py`: 51/51 popups and 10/10 cards PASS.
 
 **2026-10-27 — P1-HL-A001**, purely additive, no existing behaviour changed:
 - New `<section id="screener">` ("Multi-Turn Stock Screening") between `#agents` and
