@@ -77,6 +77,7 @@
       <nav class="masthead__nav" aria-label="Primary">
         <a href="#architecture">Architecture</a>
         <a href="#agents">Agents</a>
+        <a href="#screener">Screener</a>
         <a href="#tools">Tools</a>
         <a href="#api">API</a>
         <a class="is-ext" href="docs/">Docs <svg class="ic"><use href="#ic-arrow-up-right"/></svg></a>
@@ -390,6 +391,178 @@ graph TD
         </div>
       </section>
 
+      <!-- Stock Screener -->
+      <section id="screener">
+        <p class="eyebrow"><svg class="ic"><use href="#ic-sliders"/></svg> STOCK SCREENER</p>
+        <h2>Multi-Turn Stock Screening</h2>
+        <p class="lede">
+          One tool owns an entire screening conversation. It receives the user's message close to
+          verbatim, calls its own planner LLM exactly once, and then derives what changed by diffing
+          the full condition list against a stored baseline — the model is never asked what it
+          changed. Conditions the user stated out loud are locked by a flag rather than by re-reading
+          the sentence, and the system has no way to invent a number: every loosened value is a step
+          on a registry ladder. Thirteen feature plans, F01 through F13; live in production since
+          2026-09-23.
+        </p>
+
+        <button class="diagram-open" type="button" onclick="openDiagramTab('screener')">
+          <span class="diagram-open__icon"><svg class="ic"><use href="#ic-architecture"/></svg></span>
+          <span class="diagram-open__text">
+            <span class="diagram-open__title">Stock screener turn diagram</span>
+            <span class="diagram-open__meta">Opens in a new tab &middot; pinch to zoom, drag to pan</span>
+          </span>
+          <svg class="ic diagram-open__arrow"><use href="#ic-arrow-up-right"/></svg>
+        </button>
+
+        <!-- Diagram source. Not rendered here: the viewer tab reads this text. -->
+        <div class="diagram-source" data-diagram-id="screener"
+             data-diagram-title="Stock Screener: one turn" hidden>
+          <script type="text/plain" class="diagram-code">
+graph TD
+    IN["demand_description<br/>the user's message, passed close to verbatim"]
+    KS{"Kill switch<br/>read on every invocation, cached 30s"}
+    OFF["Turn refused<br/>a flag flip, not a redeploy"]
+
+    subgraph PLANNER ["Tool-internal planner - one LLM call"]
+        PL["plannerllm.Plan<br/>Gemini native, or OpenAI behind a breaker"]
+        PO["PlannerOutput<br/>turn_mode, conditions, relax_request"]
+    end
+
+    MODE{"turn_mode"}
+
+    subgraph BASE ["baseline F04 - pure: no DB, no LLM, no clock"]
+        BSEL["SelectBaseline<br/>fresh empty, continue last list, next_batch verbatim"]
+        DIFF["Diff<br/>what changed is derived here, never reported by the model"]
+        LOCK["Authorize - the lock<br/>origin = user_explicit, a flag test"]
+        NORM["Normalize<br/>merge implicit bounds, snap to ladder steps, validate"]
+    end
+
+    LEX["lexicon F07<br/>murah, bagus, likuid to thresholds<br/>preset and constraint expansion"]
+    REG["registry F01<br/>98 filters, 11 groups, polarity and ladders"]
+
+    subgraph EXEC ["execute F05 - the only package that speaks to the screener"]
+        UNIV["Universe resolution"]
+        Q["One loose query<br/>no server paging, no sort, no count-only mode"]
+        MAT["Sensitivity matrix<br/>all 2N+1 counts recomputed from that one response"]
+    end
+
+    RLX["relax F06<br/>single-point, then cumulative greedy<br/>walks registry ladders, invents no number"]
+    NM["Near-miss report<br/>which condition blocks, and the reachable value"]
+    SIM["similar F11<br/>side branch, Engine A only"]
+    RAGB["rag_request<br/>F12 not built, the branch stays nil"]
+    RISK["riskflags F13<br/>17 Notasi Khusus codes, map read under RLock"]
+
+    subgraph SERVE ["serve F08 - the only payload builder"]
+        DEDUP["Lineage dedup, then client-side pagination"]
+        PAY["AssemblePayload<br/>totals, condition views, relax_trace<br/>disclosures, data_as_of, risk notes"]
+    end
+
+    OBS["observe F10<br/>TurnRecord, R1-R7 guardrails, rate alerts"]
+    OUT["Payload returned to the pipeline<br/>the pipeline LLM writes the answer"]
+
+    subgraph SVC ["Backing services"]
+        LLMP["Planner LLM<br/>seed 42, 10s reasoning timeout"]
+        API["Screener v2.3 filter API<br/>JSON, BaseResponse envelope, no auth"]
+        FEED["IDX Notasi Khusus feed<br/>whole-market refresh, last-good on failure"]
+        ADB[("ArangoDB<br/>ai_stock_picker_turns, ai_stock_picker_flags")]
+    end
+
+    %% admission
+    IN --> KS
+    KS -->|"active"| OFF
+    KS -->|"clear"| PL
+    KS -.-> ADB
+
+    %% planning
+    PL -.->|"one call"| LLMP
+    PL --> PO
+    PO --> MODE
+    MODE -->|"handback, not a picking request"| OUT
+    MODE -->|"fresh, continue, next_batch"| BSEL
+
+    %% baseline and the lock
+    LEX --> BSEL
+    BSEL --> DIFF
+    DIFF --> LOCK
+    LOCK -->|"planner_violation"| OBS
+    LOCK -->|"explicit_relax_by_name"| OBS
+    LOCK --> NORM
+    LEX --> NORM
+    REG --> NORM
+
+    %% the branch fork
+    NORM --> UNIV
+    NORM -->|"similar request"| SIM
+    NORM -.->|"rag_request"| RAGB
+
+    %% execution
+    UNIV --> Q
+    Q -.-> API
+    REG --> Q
+    Q --> MAT
+    Q -->|"enough hits"| DEDUP
+    MAT --> RLX
+    RLX -->|"a relaxed set that reaches hits"| DEDUP
+    RLX -->|"nothing reachable"| NM
+
+    %% assembly and persistence
+    SIM --> DEDUP
+    NM --> PAY
+    DEDUP --> PAY
+    RISK --> PAY
+    RISK -.-> FEED
+    PAY --> OBS
+    OBS --> ADB
+    OBS -->|"persisted before the tool returns"| OUT
+
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    classDef ext fill:#FBFBF9,stroke:#CFCDC4
+
+    class KS,LOCK,MAT,RLX,PAY hot
+    class LLMP,API,FEED,ADB,RAGB ext
+          </script>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <h4><svg class="ic"><use href="#ic-shield"/></svg> The Lock</h4>
+            <ul>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-lock')">The Three-Layer Lock</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-no-invented-numbers')">Ladders, Never Invented Numbers</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-content-is-routing')">Content Is the Routing</button></li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4><svg class="ic"><use href="#ic-sliders"/></svg> Planning a Turn</h4>
+            <ul>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-turn-modes')">Four Turn Modes, One Diff</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-lexicon')">The Lexicon &amp; the Registry</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-relaxation')">Relaxation &amp; the Near-Miss Exit</button></li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4><svg class="ic"><use href="#ic-activity"/></svg> The Measured API</h4>
+            <ul>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-measured-api')">Six Facts the Techdoc Got Wrong</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-one-query-matrix')">One Loose Query, the Whole Matrix</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-display-vs-raw')">Display Strings In, Raw Numbers Out</button></li>
+            </ul>
+          </div>
+
+          <div class="feature-card">
+            <h4><svg class="ic"><use href="#ic-architecture"/></svg> Shape of the Tool</h4>
+            <ul>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-import-dag')">The Import DAG</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-payload-not-answer')">A Payload, Not an Answer</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-kill-switch')">Runtime Kill Switch</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-not-built')">What Was Not Built</button></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <!-- Core Engineering & Features -->
       <section id="features">
         <p class="eyebrow"><svg class="ic"><use href="#ic-bolt"/></svg> ENGINEERING</p>
@@ -498,6 +671,7 @@ graph TD
 
         <h4>Screening, Rankings &amp; Curated Selections</h4>
         <ul class="deflist">
+          <li><span class="term"><a href="#screener">stock_picker</a></span><span class="desc">The multi-turn stock screener. One tool owns an entire screening conversation: its own planner LLM, a locked-condition model, a capability registry of 98 filters, and a relaxation engine that only ever walks registry ladders. Takes a single field, <code>demand_description</code>, and expects the user's own words rather than a normalised paraphrase. A <em>combination</em> of criteria is always this tool, never <code>stock_ranks</code>.</span></li>
           <li><span class="term">stock_ranks</span><span class="desc">Ranking tables across categories: top gainer, loser, active, value and volume; growth, profitability and undervalued; technical signals, bandar tracker, event-driven and bullish signals.</span></li>
           <li><span class="term">stock_selection</span><span class="desc">Curated stock picks in three flavours: <code>investing</code> (fundamental and fair value), <code>trading</code> (technical and Fibonacci), or <code>all</code>.</span></li>
           <li><span class="term">mutual_fund_selection_v2</span><span class="desc">Mutual fund selection across three buckets — <code>stable</code> (risk analysis), <code>index</code> (buy-point), <code>stock</code> (equity-fund analysis) — or <code>all</code>.</span></li>
@@ -1592,6 +1766,282 @@ case "dark-launch":
         <li>"No behaviour change" is an assertion in CI, not a reviewer's judgement.</li>
         <li>Enabling is a configuration change, not a deployment.</li>
         <li>Prompt drift is visible as a diff before it reaches a model.</li>
+    </ul>
+`;
+break;
+
+case "screener-lock":
+  popupContent = `
+    <h2>The Three-Layer Lock</h2>
+    <p>A condition the user stated out loud is locked, and the lock is a <strong>flag test, never a language test</strong>. There is no <code>Locked</code> boolean on the domain type: <code>origin = user_explicit</code> <em>is</em> the lock. Nothing re-reads the sentence to decide.</p>
+    <div class="mermaid">
+graph TD
+    C["Condition<br/>origin = user_explicit"]
+    R{"toolpicker.RelaxationCandidates"}
+    EX["Excluded from the auto-relax set<br/>layer 1"]
+    P["Planner changed it anyway"]
+    A{"baseline.Authorize<br/>Span, or RelaxRequest.Target == CID"}
+    OK["Change kept<br/>explicit_relax_by_name"]
+    REV["Change reverted<br/>planner_violation, layer 2"]
+    AUD["observe R1 drift audit<br/>scores both halves, layer 3"]
+
+    C --> R
+    R --> EX
+    C --> P
+    P --> A
+    A -->|"authorized"| OK
+    A -->|"not authorized"| REV
+    OK --> AUD
+    REV --> AUD
+
+    classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+    classDef ext fill:#FBFBF9,stroke:#CFCDC4
+
+    class R,A hot
+    class OK,REV,EX ext
+    </div>
+    <p><strong>Layer 1 — exclusion.</strong> <code>toolpicker.RelaxationCandidates</code> leaves every <code>user_explicit</code> condition out of the auto-relax candidate set, so the relaxation engine cannot reach it at all.</p>
+    <p><strong>Layer 2 — authorization.</strong> <code>baseline.Authorize</code> compares the planner's condition list against the baseline, reverts any unauthorized change to a locked condition, and records a <code>planner_violation</code>. There are exactly two authorization signals: the condition's own <code>Span</code>, and a <code>RelaxRequest</code> whose <code>Target</code> matches the <code>CID</code>. Round two of the PM review deleted a third, <code>confirms_pending</code>.</p>
+    <p><strong>Layer 3 — the audit.</strong> The daily R1 drift audit in <code>observe</code> needs <em>both</em> halves of the evidence: the negative (<code>planner_violation</code>) and the positive (<code>explicit_relax_by_name</code>). Score only the negative and every legitimate user-requested loosen becomes a false P1. The engine writes both from one function, so neither can be wired up without the other.</p>
+    <p>Sacrifice order composes with the lock rather than duplicating it. Since <code>P2-TP-A032</code> each <code>Origin</code> carries a relaxation rank — <code>constraint_default</code> 0 &lt; <code>preset_default</code> 1 &lt; <code>inferred</code> 2 &lt; <code>user_explicit</code> 3 — and the lowest is given up first. A <strong>new</strong> <code>Origin</code> value falls to the default arm and is therefore held longest: an unclassified origin must never inherit "give this up first" by accident, and <code>TestEveryOriginHasADistinctRelaxationRank</code> fails until someone classifies it deliberately.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>The lock cannot be defeated by phrasing, because phrasing is never consulted.</li>
+        <li>A planner regression surfaces as a reverted change plus an audit row, not as a silently loosened filter.</li>
+        <li>The drift audit measures both directions, so it does not punish the behaviour it wants.</li>
+        <li>Adding an <code>Origin</code> fails a test until its sacrifice order is stated.</li>
+    </ul>
+`;
+break;
+
+case "screener-no-invented-numbers":
+  popupContent = `
+    <h2>Ladders, Never Invented Numbers</h2>
+    <p>Numbers in this tool come from exactly two places: the user types one, or the registry supplies a ladder step. Nothing else may produce one. <code>RelaxedParams</code> being non-nil <em>is</em> the relaxability gate for a condition, and every value in it must be a step on that filter's ladder — so relaxation walks a ladder it was handed rather than guessing a looser bound.</p>
+    <p>The rule used to have an exception, and the exception was <strong>deleted, not deferred</strong>. PM round-two answer E1 removed the whole propose-a-threshold design on the reasoning that a proposal saves the user nothing — both paths cost two turns — while forcing the system to invent the very number the rule forbids. Gone entirely: <code>suggestions</code>, <code>expected_hits</code>, <code>pending_written</code>, <code>PendingConfirmation</code> and its session slot, <code>confirms_pending</code>, <code>explicit_relax_suggested</code>, <code>explicit_relax_confirmed</code>, and the suggest-then-confirm state machine that tied them together.</p>
+    <p>Deleting it made the lock <em>stricter</em>. The system now never touches a locked condition at all — not even by proposing a value for one.</p>
+    <p>What replaced it carries two facts and no proposal: the near-miss report names which condition is blocking (<code>n_dropped</code>) and the value actually <strong>reachable</strong> on that metric. Both are read off a sensitivity matrix <code>execute</code> has already paid for, so the report costs nothing extra.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>No threshold on screen is ever a model's guess — it is the user's or the registry's.</li>
+        <li>One fewer state machine, one fewer session slot, and one fewer way to drift.</li>
+        <li>The near-miss report is derived from data already in hand, not from a second query.</li>
+        <li>The rule is checkable: a number with no ladder step behind it is a bug, not a judgement call.</li>
+    </ul>
+`;
+break;
+
+case "screener-content-is-routing":
+  popupContent = `
+    <h2>Content Is the Routing; the Label Only Lies</h2>
+    <p>The design principle, quoted from PRD section 6: <em>"Content is the routing; the label only lies."</em> When a field's content and the planner's own label disagree, the code trusts the content and logs the mismatch.</p>
+    <p>It shows up first at the tool boundary. The caller must pass the user's message <strong>close to verbatim</strong> in <code>demand_description</code>, because fuzzy Indonesian terms — <code>murah</code>, <code>bagus</code>, <code>bandar</code>, <code>likuid</code> — have to survive intact for the tool's own planner to resolve them against the lexicon. A caller that helpfully normalises the sentence destroys the signal before the only component that could use it.</p>
+    <p>The LLM-facing tool description carries two routing rules in bold, both written against observed misrouting. A <em>combination</em> of criteria is always this tool, never <code>stock_ranks</code> — that is the trap, because a single-criterion request genuinely does look like a ranking table. And criteria may arrive as Pine-Script-style code, a formula, or a checklist, not only as a sentence.</p>
+    <p>Inside the turn the same principle governs <code>turn_mode</code>. It is the only multi-turn signal the code trusts from the planner, and all it does is select which baseline this turn builds on. What actually changed is derived by diffing the full condition list against that baseline — never reported by the model.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>A mislabelled turn still produces the right screen, because the label is not load-bearing.</li>
+        <li>Fuzzy natural-language terms reach the one component that can resolve them.</li>
+        <li>The misrouting trap is documented where the router reads it, not in a wiki.</li>
+        <li>Label and content mismatches are logged, so prompt drift is measurable.</li>
+    </ul>
+`;
+break;
+
+case "screener-turn-modes":
+  popupContent = `
+    <h2>Four Turn Modes, One Diff</h2>
+    <p><code>TurnMode</code> has four values and one job: choose the condition list this turn builds on.</p>
+    <ul>
+        <li><code>continue</code> — build on the previous turn's list.</li>
+        <li><code>fresh</code> — start from an empty baseline.</li>
+        <li><code>next_batch</code> — the baseline is the stored list verbatim, and the model's own <code>conditions</code> field is <strong>ignored outright</strong>.</li>
+        <li><code>handback</code> — not a picking request at all.</li>
+    </ul>
+    <p>Everything downstream is derived. <code>baseline.Diff</code> compares the planner's full condition list against the selected baseline; the lock runs on that diff; constraint derivation runs deliberately <em>after</em> the lock, so a system-derived constraint can never be mistaken for something the user said.</p>
+    <p>Identity is two-level by design. <code>CID</code> (<code>c1</code>, <code>c2</code> and so on) is within-turn and model-supplied; <code>CondKey</code> is cross-turn and derived in code by <code>DeriveCondKey</code>. The model never gets to name a condition across turns.</p>
+    <p>Provenance is recorded, never inferred. Normalization merges an auto-added bound into the user's own condition object, so <code>SystemAddedKeys</code> exists to say which keys the system put there. The type's own comment is blunt about it: do not infer provenance from the value — a <code>minValue</code> of zero does not mean system-added, because a user can legitimately state a zero floor.</p>
+    <p>A <code>next_batch</code> turn is usually not a query at all. A lineage row-set cache with a short TTL (<code>STOCK_PICKER_RESULT_CACHE_TTL</code>, default five minutes) makes the next page a local slice rather than a re-query, and sessions live 24 hours.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>One enum carries the whole multi-turn contract; everything else is computed.</li>
+        <li>Paging is cheap, because the next page is a slice of a result already held.</li>
+        <li>Cross-turn identity is code-owned, so a model-renamed condition cannot orphan its history.</li>
+        <li>Provenance survives the merge that would otherwise erase it.</li>
+    </ul>
+`;
+break;
+
+case "screener-lexicon":
+  popupContent = `
+    <h2>The Lexicon &amp; the Registry</h2>
+    <p>"Murah" is not a number, and engineers are not the right people to decide what it means. The <code>lexicon</code> package owns the schema and the loader; the <strong>content belongs to the product manager</strong>, held as JSON and uploaded through <code>POST /stock_picker/lexicon/overwrite</code>. That endpoint always uses static auth, deliberately ignoring <code>DYNAMIC_AUTH</code>.</p>
+    <p>Two expansions run off it. A <strong>preset</strong> turns one fuzzy word into a set of conditions. A <strong>constraint</strong> adds an implicit bound a human would assume but nobody typed — a liquidity floor under a value screen, say. Both are tagged at birth: preset output carries <code>origin = preset_default</code>, constraint output <code>constraint_default</code>, and those origins are exactly what make them the first things relaxation sacrifices.</p>
+    <p>The ordering is deliberate. Preset expansion runs <em>before</em> the lock; constraint derivation runs <em>after</em> it. A preset is part of what the user asked for and must be diffed; a constraint is the system's own addition and must never enter the diff as if it were the user's.</p>
+    <p>Underneath sits the capability registry — <strong>98 filters across 11 groups</strong>, generated from the screener's own <code>get-all-indicator</code> response and refreshed hourly, with a hand-authored overlay supplying what the API does not carry: each filter's polarity and its relaxation ladder. The filter identifier <em>is</em> the API's <code>indicatorTag</code> verbatim, so there is no translation table to drift.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>The meaning of a vague word is a product decision, editable without a deploy.</li>
+        <li>Generated-plus-overlay keeps the registry honest about which half is vendor truth.</li>
+        <li>Origin tagging makes "give this up first" fall out of where a condition came from.</li>
+        <li>No translation table between the domain model and the API means no drift to debug.</li>
+    </ul>
+`;
+break;
+
+case "screener-relaxation":
+  popupContent = `
+    <h2>Relaxation &amp; the Near-Miss Exit</h2>
+    <p>A screen that returns nothing is a failure of the product, not of the user. <code>relax</code> runs three strategies in a fixed order and proposes nothing of its own.</p>
+    <p><strong>Single-point</strong> first: loosen one condition by one ladder step and recount. Then <strong>cumulative greedy</strong>: keep loosening, cheapest first, where cheapest is one comparator built from <code>Priority</code> — larger means more important, so the smallest is sacrificed first — composed with the origin's relaxation rank. Locked <code>user_explicit</code> conditions are not in the candidate set at any point, so neither strategy can reach them.</p>
+    <p>If nothing reachable remains, the <strong>near-miss exit</strong> ends the turn with two facts and no proposal: which condition is blocking, and the value actually reachable on that metric. Both come from the sensitivity matrix already computed, so the exit costs no extra call.</p>
+    <p>The guard beside it matters as much. A fresh screen that arrives with zero conditions to screen on exits as <code>clarify:no_conditions</code> — a clarification, explicitly <strong>not</strong> a <code>tool_error</code>. Asking the user a question is a normal outcome here, not a failure, and the logs keep the two apart.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>An empty result set becomes an explanation instead of a dead end.</li>
+        <li>Relaxation order is one comparator, so it is testable and stable.</li>
+        <li>Every loosened value is a ladder step, so the result stays defensible to a user.</li>
+        <li>"Ask a question" and "something broke" stay distinguishable in the logs.</li>
+    </ul>
+`;
+break;
+
+case "screener-measured-api":
+  popupContent = `
+    <h2>Six Facts the Techdoc Got Wrong</h2>
+    <p>Before <code>execute</code> was written, a standalone probe measured the Screener v2.3 filter API and captured every response. The measurement is treated as binding over the vendor documentation, and it contradicted that documentation on six counts:</p>
+    <ul>
+        <li>Transport is <strong>JSON</strong>. <code>application/x-www-form-urlencoded</code> is rejected outright.</li>
+        <li><code>get-all-indicator</code> is <strong>POST</strong>, not GET.</li>
+        <li>The envelope is <code>BaseResponse</code> carrying <code>data</code>, <code>errorCode</code> and <code>message</code>, so <strong>HTTP 200 is not success</strong> — a business error arrives as 200 with an <code>errorCode</code> other than <code>FS000000</code>.</li>
+        <li><strong>98 filters across 11 groups</strong> — not the PRD's 45, not the techdoc's 97.</li>
+        <li><strong>No server paging, no server sort, no count-only mode.</strong> One response carries every match; eight paging and sort parameter spellings were sent and silently ignored.</li>
+        <li>Responses are <strong>human-formatted display strings</strong> while requests take raw numbers.</li>
+    </ul>
+    <p>Two more facts were measured and appear in no document. No authentication is required — 2046 matches came back with no user id and no token. And the cost is an order of magnitude away from the PRD's claim: 611ms for a broad 2046-row, 223KB query at concurrency 1, and 2547ms for 2.1MB at concurrency 9. The PRD's sub-200ms count endpoint cannot exist, because point five says no count endpoint exists at all.</p>
+    <p><code>execute</code> is the only package in the tree permitted to speak to this API, so every one of these facts is handled in exactly one place.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>The integration was designed against measurements, not against prose.</li>
+        <li>Captured responses turn a vendor-side change into a failing test rather than a mystery.</li>
+        <li>One package owns the API, so a seventh surprise has exactly one place to land.</li>
+        <li>Latency budgets rest on a number someone actually observed.</li>
+    </ul>
+`;
+break;
+
+case "screener-one-query-matrix":
+  popupContent = `
+    <h2>One Loose Query, the Whole Matrix</h2>
+    <p>The expensive question a screener asks is "how many would match if I moved this one bound?" — once per condition, in each direction, plus the strict count. That is 2N+1 queries against an API with no count-only mode, where every count costs a full payload.</p>
+    <p>The measured API makes the obvious version unnecessary. One response carries <strong>every</strong> match, with one value column per filter requested. So issue a single <em>loose</em> query — the conditions with their bounds widened — and the entire 2N+1 sensitivity matrix can be recounted <strong>locally</strong> from that one response. No second call.</p>
+    <p>It is treated as an optimisation, not as doctrine. The local recount was verified exactly against the server once — 478 against 478 — then shipped behind an interface with a per-variant-call fallback and a boundary-condition suite. The team's own label for the evidence is <em>encouraging, not proven</em>, and the plan documents say so in those words.</p>
+    <p>The matrix is built <strong>lazily</strong>, so a turn that returns plenty of results never pays for it. Relaxation and the near-miss report are both readers of the matrix, which is why neither of them costs a round trip.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>Sensitivity analysis collapses from 2N+1 network calls to one.</li>
+        <li>The fallback keeps the per-variant path alive, so the optimisation can be switched off.</li>
+        <li>Laziness means the common, successful turn pays nothing for it.</li>
+        <li>The confidence level is recorded honestly rather than rounded up to "proven".</li>
+    </ul>
+`;
+break;
+
+case "screener-display-vs-raw":
+  popupContent = `
+    <h2>Display Strings In, Raw Numbers Out</h2>
+    <p>The screener API is asymmetric, and the asymmetry is a factor of 10<sup>12</sup>. Requests take <strong>raw</strong> numbers: a 50 trillion rupiah market-cap floor is sent as <code>50000000000000</code>. Responses come back as <strong>human-formatted display strings</strong> — <code>"204.44T"</code>, <code>"5,050"</code>, <code>"-65.99%"</code>.</p>
+    <p>Confusing the two is not a rounding error, it is a twelve-order-of-magnitude error, and it bit the measurement probe itself twice before the contract was written down.</p>
+    <p>So the rule is positional rather than clever: <code>execute</code> performs the conversion in <strong>exactly three places</strong> and nowhere else. Every other package in the tree works in raw numbers only and never sees a display string. A fourth conversion site anywhere is the bug.</p>
+    <p>The same instinct governs storage. The per-turn audit row embeds the planner output, the conditions, the sensitivity map, the relaxation steps, the near-miss report, the result rows, the disclosures and the reachable outcome <em>directly</em> — which is exactly why the root package's own documentation says a JSON tag change there is a storage-format change, not a refactor.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>A whole class of silent magnitude bug is confined to three reviewable lines.</li>
+        <li>Domain code never has to ask which representation it is holding.</li>
+        <li>The three-places rule is auditable by grep, not by discipline.</li>
+        <li>The storage contract is stated where someone editing a struct tag will read it.</li>
+    </ul>
+`;
+break;
+
+case "screener-import-dag":
+  popupContent = `
+    <h2>The Import DAG</h2>
+    <p>Three import cycles appeared independently while the feature was being built — <code>baseline</code> against <code>relax</code>, <code>toolpicker</code> against <code>lexicon</code>, <code>toolpicker</code> against <code>ragpick</code>. One rule resolved all three at once, and it is now the shape of the tree.</p>
+    <p>Every subpackage imports <code>toolpicker</code>, the root. The root holds <strong>types, constants and pure helpers only</strong> — no behaviour. No subpackage imports another except in the direction stated. And <strong>nothing imports <code>engine</code></strong>: <code>engine</code> is the single orchestrator, the only subpackage permitted to import every other, and the only thing the tool registry imports.</p>
+    <p>The rule buys properties that are hard to retrofit. <code>baseline</code> — the lock, the diff, normalization — has <strong>no</strong> database, LLM, clock or goroutine in any exported function, so the most security-sensitive logic in the feature is also the most trivially testable. <code>observe</code> is the only picker package that touches <code>db</code>. <code>serve</code> is the only place allowed to construct a payload. <code>execute</code> is the only package that speaks to the screener API.</p>
+    <p>The root's own cost is stated plainly: because the audit row embeds root types directly, <code>types.go</code> is a <strong>persisted wire contract</strong>, and a JSON tag change there is a storage-format change.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>Three cycles were closed by one rule instead of three workarounds.</li>
+        <li>Pure packages need no fixtures, so the lock is covered by ordinary unit tests.</li>
+        <li>Each capability has exactly one owner, so "where does this happen?" has one answer.</li>
+        <li>The orchestrator reads top to bottom, because nothing calls back into it.</li>
+    </ul>
+`;
+break;
+
+case "screener-payload-not-answer":
+  popupContent = `
+    <h2>A Payload, Not an Answer</h2>
+    <p><code>stock_picker</code> ends by handing back a structured payload — totals, condition views, the relaxation trace, disclosures, <code>data_as_of</code> and risk notes — and the <em>pipeline's</em> LLM writes the sentence the user reads.</p>
+    <p>That the tool <em>could</em> have written the answer is the interesting part. An <code>answer</code> package exists, F09, carrying an answer prompt and the compliance copy registries, and it has <strong>no production caller</strong>. <code>engine</code> does not import it at all. Calling it inside the tool would produce a finished answer as a tool <em>result</em>, which the pipeline LLM would then be asked to answer from: two models writing the same paragraph, the second paraphrasing the first.</p>
+    <p>Persistence is the last thing the turn does, not the first thing it forgets. Every exit path — a handback, a clarification, a near-miss, a successful screen — writes its row to <code>ai_stock_picker_turns</code> <strong>before</strong> the tool returns. The row embeds the planner output and the full derived state, so a turn can be reconstructed exactly.</p>
+    <p>Fourteen stages run in a fixed order per turn, and the schema the calling LLM sees is a single required string, <code>demand_description</code>. Everything above is derived from that one field.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>One voice answers the user; the tool contributes facts, not prose.</li>
+        <li>The payload is renderable by a non-LLM client too, because it is structured.</li>
+        <li>Persist-before-return means no completed turn is unexplainable after the fact.</li>
+        <li>A one-field schema gives the calling planner nothing to get wrong.</li>
+    </ul>
+`;
+break;
+
+case "screener-kill-switch":
+  popupContent = `
+    <h2>Runtime Kill Switch</h2>
+    <p>Two different mechanisms gate this tool and they are not interchangeable.</p>
+    <p>The <code>ENABLE_STOCK_PICKER</code> family is <strong>boot-time</strong>. <code>ENABLE_STOCK_PICKER</code> is unusual among the project's flags in that it gates <em>registration</em> rather than callability — off, the tool is not in the registry and the planner never sees its schema. <code>DISABLED_TOOLS</code> remains an independent kill switch on top of it. <code>ENABLE_STOCK_PICKER_SIMILAR</code>, <code>ENABLE_STOCK_PICKER_RISK_FLAGS</code> and <code>ENABLE_STOCK_PICKER_AUDIT_JOB</code> gate the branches: with the similar branch off the turn tail is byte-identical to its pre-F11 shape, and with risk flags off the resolver is a no-op and the risk notes stay empty.</p>
+    <p>The <strong>incident</strong> switch is something else entirely: a control-plane document in <code>ai_stock_picker_flags</code>, read by <code>observe</code> on <em>every</em> invocation and cached 30 seconds. Flipping it stops the tool within half a minute, with no redeploy and no restart. Collection bootstrap is deliberately <em>not</em> gated on <code>ENABLE_STOCK_PICKER</code>, so a flag flip on a deployment that has never run the tool still finds its collections.</p>
+    <p>Around it, <code>observe</code> is the single event API for the feature: it writes the audit row, scores the R1 through R7 guardrails daily, and raises four realtime rate alerts to DingTalk. The deployment status today: <code>ENABLE_STOCK_PICKER=true</code> is pinned in both the production and staging compose files, and <code>stock_picker</code> has been live in production since 2026-09-23.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>An incident is a flag flip measured in seconds, not a deploy measured in minutes.</li>
+        <li>Boot flags keep a dark path genuinely dark — no schema, no tool, no surface.</li>
+        <li>Bootstrapping outside the flag means enabling never meets a missing collection.</li>
+        <li>Guardrail scoring and alerting live with the event API that already sees every turn.</li>
+    </ul>
+`;
+break;
+
+case "screener-not-built":
+  popupContent = `
+    <h2>What Was Not Built</h2>
+    <p>Three capabilities have names, numbers and plan documents, and do not exist. Saying so is part of the design.</p>
+    <p><strong>F12, <code>ragpick</code>.</strong> The RAG-picking branch has no package. When the planner emits a <code>rag_request</code>, the branch is left <strong>nil</strong> rather than faked — the turn does not pretend to have run a retrieval it never ran.</p>
+    <p><strong>F11 Engine B.</strong> The similar-stock side branch ships Engine A only; Engine B, the RAG comparables engine, was deliberately not built. Engine A has five distinct exits and carries its lineage across <code>next_batch</code> turns, so paging a similarity result behaves like paging a screen.</p>
+    <p><strong>F09 <code>answer</code>.</strong> Built and tested, with no production caller, for the reason given under "A Payload, Not an Answer": the pipeline LLM writes the answer.</p>
+    <p>The same precision governs what <em>is</em> built. F13 resolves the <strong>17 IDX Notasi Khusus codes</strong> and is explicitly <em>not</em> an UMA resolver — an AST test fails the build on any identifier that claims otherwise. The feed is one whole-market fetch on a refresh schedule, held in memory with the last good value served on failure, so the answer path's <code>ResolveFlags</code> is a map read under a read lock with <strong>no reachable network call</strong>.</p>
+    <hr>
+    <p><strong>Benefits:</strong></p>
+    <ul>
+        <li>An unbuilt branch returns nil, so nothing downstream mistakes it for an empty result.</li>
+        <li>The gap between the plan set and the shipped tree is written down, not inferred.</li>
+        <li>A test, not a convention, stops the risk-flag resolver from drifting into UMA.</li>
+        <li>Risk annotation adds no latency and no new failure mode to the answer path.</li>
     </ul>
 `;
 break;
