@@ -401,7 +401,7 @@ graph TD
           the full condition list against a stored baseline — the model is never asked what it
           changed. Conditions the user stated out loud are locked by a flag rather than by re-reading
           the sentence, and the system has no way to invent a number: every loosened value is a step
-          on a registry ladder. Thirteen feature plans, F01 through F13; live in production since
+          on a registry ladder. Thirteen subsystems, one tool; live in production since
           2026-09-23.
         </p>
 
@@ -430,34 +430,34 @@ graph TD
 
     MODE{"turn_mode"}
 
-    subgraph BASE ["baseline F04 - pure: no DB, no LLM, no clock"]
+    subgraph BASE ["baseline - pure: no DB, no LLM, no clock"]
         BSEL["SelectBaseline<br/>fresh empty, continue last list, next_batch verbatim"]
         DIFF["Diff<br/>what changed is derived here, never reported by the model"]
         LOCK["Authorize - the lock<br/>origin = user_explicit, a flag test"]
         NORM["Normalize<br/>merge implicit bounds, snap to ladder steps, validate"]
     end
 
-    LEX["lexicon F07<br/>murah, bagus, likuid to thresholds<br/>preset and constraint expansion"]
-    REG["registry F01<br/>98 filters, 11 groups, polarity and ladders"]
+    LEX["lexicon<br/>murah, bagus, likuid to thresholds<br/>preset and constraint expansion"]
+    REG["registry<br/>98 filters, 11 groups, polarity and ladders"]
 
-    subgraph EXEC ["execute F05 - the only package that speaks to the screener"]
+    subgraph EXEC ["execute - the only package that speaks to the screener"]
         UNIV["Universe resolution"]
         Q["One loose query<br/>no server paging, no sort, no count-only mode"]
         MAT["Sensitivity matrix<br/>all 2N+1 counts recomputed from that one response"]
     end
 
-    RLX["relax F06<br/>single-point, then cumulative greedy<br/>walks registry ladders, invents no number"]
+    RLX["relax<br/>single-point, then cumulative greedy<br/>walks registry ladders, invents no number"]
     NM["Near-miss report<br/>which condition blocks, and the reachable value"]
-    SIM["similar F11<br/>side branch, Engine A only"]
-    RAGB["rag_request<br/>F12 not built, the branch stays nil"]
-    RISK["riskflags F13<br/>17 Notasi Khusus codes, map read under RLock"]
+    SIM["similar<br/>side branch, one engine only"]
+    RAGB["rag_request<br/>not built, the branch stays nil"]
+    RISK["riskflags<br/>17 Notasi Khusus codes, map read under RLock"]
 
-    subgraph SERVE ["serve F08 - the only payload builder"]
+    subgraph SERVE ["serve - the only payload builder"]
         DEDUP["Lineage dedup, then client-side pagination"]
         PAY["AssemblePayload<br/>totals, condition views, relax_trace<br/>disclosures, data_as_of, risk notes"]
     end
 
-    OBS["observe F10<br/>TurnRecord, R1-R7 guardrails, rate alerts"]
+    OBS["observe<br/>TurnRecord, guardrails, rate alerts"]
     OUT["Payload returned to the pipeline<br/>the pipeline LLM writes the answer"]
 
     subgraph SVC ["Backing services"]
@@ -545,7 +545,7 @@ graph TD
           <div class="feature-card">
             <h4><svg class="ic"><use href="#ic-activity"/></svg> The Measured API</h4>
             <ul>
-                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-measured-api')">Six Facts the Techdoc Got Wrong</button></li>
+                <li><button class="popup-trigger" type="button" onclick="showPopup('screener-measured-api')">Measured Before Integrating</button></li>
                 <li><button class="popup-trigger" type="button" onclick="showPopup('screener-one-query-matrix')">One Loose Query, the Whole Matrix</button></li>
                 <li><button class="popup-trigger" type="button" onclick="showPopup('screener-display-vs-raw')">Display Strings In, Raw Numbers Out</button></li>
             </ul>
@@ -1801,9 +1801,9 @@ graph TD
     class OK,REV,EX ext
     </div>
     <p><strong>Layer 1 — exclusion.</strong> <code>toolpicker.RelaxationCandidates</code> leaves every <code>user_explicit</code> condition out of the auto-relax candidate set, so the relaxation engine cannot reach it at all.</p>
-    <p><strong>Layer 2 — authorization.</strong> <code>baseline.Authorize</code> compares the planner's condition list against the baseline, reverts any unauthorized change to a locked condition, and records a <code>planner_violation</code>. There are exactly two authorization signals: the condition's own <code>Span</code>, and a <code>RelaxRequest</code> whose <code>Target</code> matches the <code>CID</code>. Round two of the PM review deleted a third, <code>confirms_pending</code>.</p>
-    <p><strong>Layer 3 — the audit.</strong> The daily R1 drift audit in <code>observe</code> needs <em>both</em> halves of the evidence: the negative (<code>planner_violation</code>) and the positive (<code>explicit_relax_by_name</code>). Score only the negative and every legitimate user-requested loosen becomes a false P1. The engine writes both from one function, so neither can be wired up without the other.</p>
-    <p>Sacrifice order composes with the lock rather than duplicating it. Since <code>P2-TP-A032</code> each <code>Origin</code> carries a relaxation rank — <code>constraint_default</code> 0 &lt; <code>preset_default</code> 1 &lt; <code>inferred</code> 2 &lt; <code>user_explicit</code> 3 — and the lowest is given up first. A <strong>new</strong> <code>Origin</code> value falls to the default arm and is therefore held longest: an unclassified origin must never inherit "give this up first" by accident, and <code>TestEveryOriginHasADistinctRelaxationRank</code> fails until someone classifies it deliberately.</p>
+    <p><strong>Layer 2 — authorization.</strong> <code>baseline.Authorize</code> compares the planner's condition list against the baseline, reverts any unauthorized change to a locked condition, and records a <code>planner_violation</code>. There are exactly two authorization signals, and deliberately no third: the condition's own <code>Span</code>, and a <code>RelaxRequest</code> whose <code>Target</code> matches the <code>CID</code>.</p>
+    <p><strong>Layer 3 — the audit.</strong> The daily drift audit in <code>observe</code> needs <em>both</em> halves of the evidence: the negative (<code>planner_violation</code>) and the positive (<code>explicit_relax_by_name</code>). Score only the negative and every legitimate user-requested loosen becomes a false P1. The engine writes both from one function, so neither can be wired up without the other.</p>
+    <p>Sacrifice order composes with the lock rather than duplicating it. Each <code>Origin</code> also carries a relaxation rank — <code>constraint_default</code> 0 &lt; <code>preset_default</code> 1 &lt; <code>inferred</code> 2 &lt; <code>user_explicit</code> 3 — and the lowest is given up first. A <strong>new</strong> <code>Origin</code> value falls to the default arm and is therefore held longest: an unclassified origin must never inherit "give this up first" by accident, and <code>TestEveryOriginHasADistinctRelaxationRank</code> fails until someone classifies it deliberately.</p>
     <hr>
     <p><strong>Benefits:</strong></p>
     <ul>
@@ -1819,7 +1819,7 @@ case "screener-no-invented-numbers":
   popupContent = `
     <h2>Ladders, Never Invented Numbers</h2>
     <p>Numbers in this tool come from exactly two places: the user types one, or the registry supplies a ladder step. Nothing else may produce one. <code>RelaxedParams</code> being non-nil <em>is</em> the relaxability gate for a condition, and every value in it must be a step on that filter's ladder — so relaxation walks a ladder it was handed rather than guessing a looser bound.</p>
-    <p>The rule used to have an exception, and the exception was <strong>deleted, not deferred</strong>. PM round-two answer E1 removed the whole propose-a-threshold design on the reasoning that a proposal saves the user nothing — both paths cost two turns — while forcing the system to invent the very number the rule forbids. Gone entirely: <code>suggestions</code>, <code>expected_hits</code>, <code>pending_written</code>, <code>PendingConfirmation</code> and its session slot, <code>confirms_pending</code>, <code>explicit_relax_suggested</code>, <code>explicit_relax_confirmed</code>, and the suggest-then-confirm state machine that tied them together.</p>
+    <p>The rule used to have an exception, and the exception was <strong>deleted, not deferred</strong>. An earlier design let the system propose a looser threshold and ask the user to confirm it; the whole mechanism was removed on the reasoning that a proposal saves the user nothing — both paths cost two turns — while forcing the system to invent the very number the rule forbids. Gone entirely: <code>suggestions</code>, <code>expected_hits</code>, <code>pending_written</code>, <code>PendingConfirmation</code> and its session slot, <code>confirms_pending</code>, <code>explicit_relax_suggested</code>, <code>explicit_relax_confirmed</code>, and the suggest-then-confirm state machine that tied them together.</p>
     <p>Deleting it made the lock <em>stricter</em>. The system now never touches a locked condition at all — not even by proposing a value for one.</p>
     <p>What replaced it carries two facts and no proposal: the near-miss report names which condition is blocking (<code>n_dropped</code>) and the value actually <strong>reachable</strong> on that metric. Both are read off a sensitivity matrix <code>execute</code> has already paid for, so the report costs nothing extra.</p>
     <hr>
@@ -1836,7 +1836,7 @@ break;
 case "screener-content-is-routing":
   popupContent = `
     <h2>Content Is the Routing; the Label Only Lies</h2>
-    <p>The design principle, quoted from PRD section 6: <em>"Content is the routing; the label only lies."</em> When a field's content and the planner's own label disagree, the code trusts the content and logs the mismatch.</p>
+    <p>One design principle runs through the whole tool: <strong>content is the routing; the label only lies.</strong> When a field's content and the planner's own label disagree, the code trusts the content and logs the mismatch.</p>
     <p>It shows up first at the tool boundary. The caller must pass the user's message <strong>close to verbatim</strong> in <code>demand_description</code>, because fuzzy Indonesian terms — <code>murah</code>, <code>bagus</code>, <code>bandar</code>, <code>likuid</code> — have to survive intact for the tool's own planner to resolve them against the lexicon. A caller that helpfully normalises the sentence destroys the signal before the only component that could use it.</p>
     <p>The LLM-facing tool description carries two routing rules in bold, both written against observed misrouting. A <em>combination</em> of criteria is always this tool, never <code>stock_ranks</code> — that is the trap, because a single-criterion request genuinely does look like a ranking table. And criteria may arrive as Pine-Script-style code, a formula, or a checklist, not only as a sentence.</p>
     <p>Inside the turn the same principle governs <code>turn_mode</code>. It is the only multi-turn signal the code trusts from the planner, and all it does is select which baseline this turn builds on. What actually changed is derived by diffing the full condition list against that baseline — never reported by the model.</p>
@@ -1914,25 +1914,25 @@ break;
 
 case "screener-measured-api":
   popupContent = `
-    <h2>Six Facts the Techdoc Got Wrong</h2>
-    <p>Before <code>execute</code> was written, a standalone probe measured the Screener v2.3 filter API and captured every response. The measurement is treated as binding over the vendor documentation, and it contradicted that documentation on six counts:</p>
+    <h2>Measured Before Integrating</h2>
+    <p>The screener runs on top of a separate filter API. Before a line of integration code was written, a standalone probe exercised that API end to end and captured every response to disk. The integration was then designed against those captures, and six of its properties are load-bearing enough that the client is built around them:</p>
     <ul>
         <li>Transport is <strong>JSON</strong>. <code>application/x-www-form-urlencoded</code> is rejected outright.</li>
-        <li><code>get-all-indicator</code> is <strong>POST</strong>, not GET.</li>
-        <li>The envelope is <code>BaseResponse</code> carrying <code>data</code>, <code>errorCode</code> and <code>message</code>, so <strong>HTTP 200 is not success</strong> — a business error arrives as 200 with an <code>errorCode</code> other than <code>FS000000</code>.</li>
-        <li><strong>98 filters across 11 groups</strong> — not the PRD's 45, not the techdoc's 97.</li>
-        <li><strong>No server paging, no server sort, no count-only mode.</strong> One response carries every match; eight paging and sort parameter spellings were sent and silently ignored.</li>
+        <li>The indicator catalogue is fetched with <strong>POST</strong>, not GET.</li>
+        <li>The envelope carries <code>data</code>, <code>errorCode</code> and <code>message</code>, so <strong>HTTP 200 is not success</strong> — a business error arrives as 200 with an <code>errorCode</code> other than <code>FS000000</code>. The client reads the body, never the status line.</li>
+        <li>The catalogue is <strong>98 filters across 11 groups</strong>, and that response is exactly what the capability registry is generated from.</li>
+        <li><strong>No server paging, no server sort, no count-only mode.</strong> Eight paging and sort parameter spellings were sent and silently ignored; a single response simply carries every match.</li>
         <li>Responses are <strong>human-formatted display strings</strong> while requests take raw numbers.</li>
     </ul>
-    <p>Two more facts were measured and appear in no document. No authentication is required — 2046 matches came back with no user id and no token. And the cost is an order of magnitude away from the PRD's claim: 611ms for a broad 2046-row, 223KB query at concurrency 1, and 2547ms for 2.1MB at concurrency 9. The PRD's sub-200ms count endpoint cannot exist, because point five says no count endpoint exists at all.</p>
-    <p><code>execute</code> is the only package in the tree permitted to speak to this API, so every one of these facts is handled in exactly one place.</p>
+    <p>Two further measurements shaped the design. No authentication is required — 2046 matches came back with no user id and no token. And a broad query is expensive enough to budget for: 611ms for 2046 rows and 223KB at concurrency 1, rising to 2547ms and 2.1MB at concurrency 9. That cost is precisely why the sensitivity matrix is recomputed locally from one response instead of asking the API the same question 2N+1 times.</p>
+    <p><code>execute</code> is the only package in the tree permitted to speak to this API, so every one of these six properties is handled in exactly one place.</p>
     <hr>
     <p><strong>Benefits:</strong></p>
     <ul>
-        <li>The integration was designed against measurements, not against prose.</li>
-        <li>Captured responses turn a vendor-side change into a failing test rather than a mystery.</li>
+        <li>The integration was designed against captured responses rather than assumptions.</li>
+        <li>Those captures double as fixtures, so a change on the far side surfaces as a failing test rather than a production mystery.</li>
         <li>One package owns the API, so a seventh surprise has exactly one place to land.</li>
-        <li>Latency budgets rest on a number someone actually observed.</li>
+        <li>Latency budgets rest on numbers someone actually observed.</li>
     </ul>
 `;
 break;
@@ -1942,7 +1942,7 @@ case "screener-one-query-matrix":
     <h2>One Loose Query, the Whole Matrix</h2>
     <p>The expensive question a screener asks is "how many would match if I moved this one bound?" — once per condition, in each direction, plus the strict count. That is 2N+1 queries against an API with no count-only mode, where every count costs a full payload.</p>
     <p>The measured API makes the obvious version unnecessary. One response carries <strong>every</strong> match, with one value column per filter requested. So issue a single <em>loose</em> query — the conditions with their bounds widened — and the entire 2N+1 sensitivity matrix can be recounted <strong>locally</strong> from that one response. No second call.</p>
-    <p>It is treated as an optimisation, not as doctrine. The local recount was verified exactly against the server once — 478 against 478 — then shipped behind an interface with a per-variant-call fallback and a boundary-condition suite. The team's own label for the evidence is <em>encouraging, not proven</em>, and the plan documents say so in those words.</p>
+    <p>It is treated as an optimisation, not as doctrine. The local recount was verified exactly against the server once — 478 against 478 — then shipped behind an interface with a per-variant-call fallback and a boundary-condition suite. The evidence is filed as <em>encouraging, not proven</em> — one exact match is a good sign, not a proof, and the fallback exists precisely because of that distinction.</p>
     <p>The matrix is built <strong>lazily</strong>, so a turn that returns plenty of results never pays for it. Relaxation and the near-miss report are both readers of the matrix, which is why neither of them costs a round trip.</p>
     <hr>
     <p><strong>Benefits:</strong></p>
@@ -1995,7 +1995,7 @@ case "screener-payload-not-answer":
   popupContent = `
     <h2>A Payload, Not an Answer</h2>
     <p><code>stock_picker</code> ends by handing back a structured payload — totals, condition views, the relaxation trace, disclosures, <code>data_as_of</code> and risk notes — and the <em>pipeline's</em> LLM writes the sentence the user reads.</p>
-    <p>That the tool <em>could</em> have written the answer is the interesting part. An <code>answer</code> package exists, F09, carrying an answer prompt and the compliance copy registries, and it has <strong>no production caller</strong>. <code>engine</code> does not import it at all. Calling it inside the tool would produce a finished answer as a tool <em>result</em>, which the pipeline LLM would then be asked to answer from: two models writing the same paragraph, the second paraphrasing the first.</p>
+    <p>That the tool <em>could</em> have written the answer is the interesting part. An <code>answer</code> package exists, carrying an answer prompt and the compliance copy registries, and it has <strong>no production caller</strong>. <code>engine</code> does not import it at all. Calling it inside the tool would produce a finished answer as a tool <em>result</em>, which the pipeline LLM would then be asked to answer from: two models writing the same paragraph, the second paraphrasing the first.</p>
     <p>Persistence is the last thing the turn does, not the first thing it forgets. Every exit path — a handback, a clarification, a near-miss, a successful screen — writes its row to <code>ai_stock_picker_turns</code> <strong>before</strong> the tool returns. The row embeds the planner output and the full derived state, so a turn can be reconstructed exactly.</p>
     <p>Fourteen stages run in a fixed order per turn, and the schema the calling LLM sees is a single required string, <code>demand_description</code>. Everything above is derived from that one field.</p>
     <hr>
@@ -2013,9 +2013,9 @@ case "screener-kill-switch":
   popupContent = `
     <h2>Runtime Kill Switch</h2>
     <p>Two different mechanisms gate this tool and they are not interchangeable.</p>
-    <p>The <code>ENABLE_STOCK_PICKER</code> family is <strong>boot-time</strong>. <code>ENABLE_STOCK_PICKER</code> is unusual among the project's flags in that it gates <em>registration</em> rather than callability — off, the tool is not in the registry and the planner never sees its schema. <code>DISABLED_TOOLS</code> remains an independent kill switch on top of it. <code>ENABLE_STOCK_PICKER_SIMILAR</code>, <code>ENABLE_STOCK_PICKER_RISK_FLAGS</code> and <code>ENABLE_STOCK_PICKER_AUDIT_JOB</code> gate the branches: with the similar branch off the turn tail is byte-identical to its pre-F11 shape, and with risk flags off the resolver is a no-op and the risk notes stay empty.</p>
+    <p>The <code>ENABLE_STOCK_PICKER</code> family is <strong>boot-time</strong>. <code>ENABLE_STOCK_PICKER</code> is unusual among the project's flags in that it gates <em>registration</em> rather than callability — off, the tool is not in the registry and the planner never sees its schema. <code>DISABLED_TOOLS</code> remains an independent kill switch on top of it. <code>ENABLE_STOCK_PICKER_SIMILAR</code>, <code>ENABLE_STOCK_PICKER_RISK_FLAGS</code> and <code>ENABLE_STOCK_PICKER_AUDIT_JOB</code> gate the branches: with the similar branch off the turn tail is byte-identical to its shape before that branch existed, and with risk flags off the resolver is a no-op and the risk notes stay empty.</p>
     <p>The <strong>incident</strong> switch is something else entirely: a control-plane document in <code>ai_stock_picker_flags</code>, read by <code>observe</code> on <em>every</em> invocation and cached 30 seconds. Flipping it stops the tool within half a minute, with no redeploy and no restart. Collection bootstrap is deliberately <em>not</em> gated on <code>ENABLE_STOCK_PICKER</code>, so a flag flip on a deployment that has never run the tool still finds its collections.</p>
-    <p>Around it, <code>observe</code> is the single event API for the feature: it writes the audit row, scores the R1 through R7 guardrails daily, and raises four realtime rate alerts to DingTalk. The deployment status today: <code>ENABLE_STOCK_PICKER=true</code> is pinned in both the production and staging compose files, and <code>stock_picker</code> has been live in production since 2026-09-23.</p>
+    <p>Around it, <code>observe</code> is the single event API for the feature: it writes the audit row, scores seven guardrails daily, and raises four realtime rate alerts to DingTalk. The deployment status today: <code>ENABLE_STOCK_PICKER=true</code> is pinned in both the production and staging compose files, and <code>stock_picker</code> has been live in production since 2026-09-23.</p>
     <hr>
     <p><strong>Benefits:</strong></p>
     <ul>
@@ -2030,11 +2030,11 @@ break;
 case "screener-not-built":
   popupContent = `
     <h2>What Was Not Built</h2>
-    <p>Three capabilities have names, numbers and plan documents, and do not exist. Saying so is part of the design.</p>
-    <p><strong>F12, <code>ragpick</code>.</strong> The RAG-picking branch has no package. When the planner emits a <code>rag_request</code>, the branch is left <strong>nil</strong> rather than faked — the turn does not pretend to have run a retrieval it never ran.</p>
-    <p><strong>F11 Engine B.</strong> The similar-stock side branch ships Engine A only; Engine B, the RAG comparables engine, was deliberately not built. Engine A has five distinct exits and carries its lineage across <code>next_batch</code> turns, so paging a similarity result behaves like paging a screen.</p>
-    <p><strong>F09 <code>answer</code>.</strong> Built and tested, with no production caller, for the reason given under "A Payload, Not an Answer": the pipeline LLM writes the answer.</p>
-    <p>The same precision governs what <em>is</em> built. F13 resolves the <strong>17 IDX Notasi Khusus codes</strong> and is explicitly <em>not</em> an UMA resolver — an AST test fails the build on any identifier that claims otherwise. The feed is one whole-market fetch on a refresh schedule, held in memory with the last good value served on failure, so the answer path's <code>ResolveFlags</code> is a map read under a read lock with <strong>no reachable network call</strong>.</p>
+    <p>Three capabilities were designed in full and deliberately not built. Saying so out loud is part of the design.</p>
+    <p><strong>The RAG-picking branch.</strong> It has no package. When the planner emits a <code>rag_request</code>, the branch is left <strong>nil</strong> rather than faked — the turn does not pretend to have run a retrieval it never ran.</p>
+    <p><strong>The second similarity engine.</strong> The similar-stock side branch ships one engine; a second, retrieval-based comparables engine was designed and deliberately not built. The engine that did ship has five distinct exits and carries its lineage across <code>next_batch</code> turns, so paging a similarity result behaves like paging a screen.</p>
+    <p><strong>The <code>answer</code> package.</strong> Built and tested, with no production caller, for the reason given under "A Payload, Not an Answer": the pipeline LLM writes the answer.</p>
+    <p>The same precision governs what <em>is</em> built. The risk-flag resolver handles the <strong>17 IDX Notasi Khusus codes</strong> and is explicitly <em>not</em> an UMA resolver — an AST test fails the build on any identifier that claims otherwise. The feed is one whole-market fetch on a refresh schedule, held in memory with the last good value served on failure, so the answer path's <code>ResolveFlags</code> is a map read under a read lock with <strong>no reachable network call</strong>.</p>
     <hr>
     <p><strong>Benefits:</strong></p>
     <ul>
