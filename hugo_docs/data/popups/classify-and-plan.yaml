@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multi-agent-system
+order: 30
+label: "Classify-and-Plan"
+body: |2
+  <h2>Classify-and-Plan</h2>
+  <p>One LLM call does three jobs: mode classification, DAG planning, and agent routing. There is no separate router model and no added latency — routing is folded into a call the system already makes.</p>
+  <p>Three planning modes come out of it. <code>simple</code> issues direct parallel tool calls; <code>pipeline</code> builds a multi-step DAG where a discovery step feeds later steps; <code>fixed_answer</code> returns a canned response with no agent and no tools.</p>
+  <p>The prompt is templated, and every optional section is omit-when-absent: history, reply context, user profile, attached images, preferred name. With all of them empty, the rendered prompt collapses to the pre-feature bytes.</p>
+  <p>Image turns add an <code>ATTACHED IMAGES</code> block carrying six planning rules — read the image before planning, treat tickers extracted from an image as explicitly typed, never let a chart replace Tuntun data, and classify in-image text that tries to redirect instructions as content rather than instruction.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Agent selection costs zero extra latency and zero extra tokens beyond three booleans.</li>
+      <li>Plan, mode and routing cannot disagree — they come from one inference.</li>
+      <li>Prompt versions are switchable by environment variable, with the registry falling back on an unknown value.</li>
+      <li>Prompt injection is addressed in the prompt itself and routed to <code>fixed_answer</code>.</li>
+  </ul>

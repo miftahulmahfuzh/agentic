@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multi-agent-system
+order: 40
+label: "User Short-Term Memory"
+body: |2
+  <h2>User Short-Term Memory</h2>
+  <p>One document per user, holding six categories: goals, blockers, topics, followed stocks, recommended stocks, and context notes. Every item except context notes carries a mention history — the source of truth — from which a 30-day mention frequency, a last-mention time, and an expiry flag are derived.</p>
+  <p><strong>Written by two async editors, read by exactly one consumer.</strong> A query-driven editor runs after the turn is understood; an answer-driven editor extracts stocks the AI itself recommended, and uses a field-scoped AQL upsert so the two concurrent writers cannot clobber each other without locks. Neither editor ever blocks a request, and every failure path returns "no update".</p>
+  <p>The single reader is the customer service manager. It never sees the raw document: <code>BuildReaderView</code> recomputes statistics against <em>now</em> on a copy, so reads never mutate; drops expired items and resolved or expired blockers; strips all statistics and mention history; and ranks each category by 30-day frequency then recency. Worth stating plainly — with <code>ENABLE_CS_MANAGER=false</code>, memory is written but never read.</p>
+  <p><strong>A 65-second endpoint on a chat path.</strong> The user-lifecycle status endpoint really does take around 65 seconds, with a 90-second timeout. It is nonetheless consumed on the request path, because it is never called inline: the value is served stale-while-revalidate from ArangoDB. A miss returns empty immediately and backfills in the background; a stale hit serves the stale value and refreshes behind it. Refreshes are deduplicated by a package-global <strong>single-flight refresh guard</strong> — it deduplicates concurrent <em>refreshes of one cached value</em>, so two subsystems cannot both fire the 65-second call — and run panic-guarded on a detached context with a dial timeout matched to the budget.</p>
+  <p>The governing rule is deliberate: on an ArangoDB read error, do <em>not</em> refresh. There is no point launching a 65-second call whose result could not be persisted anyway. An absent status renders as an empty string, so the prompt section vanishes rather than carrying a placeholder.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Memory quality improves without ever adding latency to a turn.</li>
+      <li>The reader gets a ranked, decayed projection instead of raw storage.</li>
+      <li>A very slow upstream dependency is consumed safely on a live chat path.</li>
+      <li>Two concurrent writers, one document, no locks.</li>
+  </ul>

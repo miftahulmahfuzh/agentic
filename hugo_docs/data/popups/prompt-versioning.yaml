@@ -1,0 +1,21 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  system-observability
+order: 50
+label: "Prompt Versioning &amp; Golden Tests"
+body: |2
+  <h2>Prompt Versioning &amp; Golden Tests</h2>
+  <p>Prompts are selected at runtime by version string, not edited in place. Four independent knobs exist in <code>config/config.go</code>: <code>PROMPT_VERSION</code> (default <code>v1</code>) for the final answer prompt, <code>CLASSIFY_AND_PLAN_PROMPT_VERSION</code> (default <code>v2</code>) for the planner, <code>SUGGESTION_QUESTIONS_PROMPT_VERSION</code> (default <code>v1</code>), and <code>WEB_SEARCH_PROMPT_VERSION</code> (default <code>v2</code>). Each indexes a template map at call time, so rolling a prompt back is an environment change rather than a deploy of different code. All four are echoed in the startup configuration summary.</p>
+
+  <p>The versions are pinned by golden fixtures. <code>core/testdata/flagoff_golden/</code> holds the rendered final-answer prompt for <code>v1</code> through <code>v7</code> plus the comparison prompt, and <code>tools/tooltypes/testdata/flagoff_golden/</code> holds <code>classify_and_plan_v1</code> and <code>v2</code>. The tests render each version and assert byte-for-byte equality with its fixture.</p>
+
+  <p>The point is not prompt quality — it is proving a feature flag is inert. With <code>ENABLE_IMAGE_PROCESSING</code> off, <code>TestFinalPromptRender_FlagOffMatchesPinnedBaseline</code> and <code>TestClassifyAndPlanRender_FlagOffMatchesPinnedBaseline</code> demonstrate that the prompt the model receives is byte-identical to the pre-feature prompt. Separate <code>..._FlagOnMatchesPinnedBaseline</code> and <code>..._ImagesSectionAppearsWhenSet</code> fixtures pin the flag-on rendering, so the on-path is guarded too rather than left unasserted.</p>
+
+  <p>Goldens regenerate only under an explicit flag: <code>go test ./core/ -run FlagOff -update-golden</code>. That matters because an earlier version of these tests diffed against <code>git show HEAD:</code> and therefore silently blessed any regression that had already been committed. Requiring the flag forces a prompt change to land as a reviewable diff in the fixture file.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Accidental whitespace or ordering drift in a prompt fails CI instead of quietly changing model behaviour.</li>
+      <li>A dark feature is provably invisible to the model while it is off.</li>
+      <li>Intentional prompt changes are reviewed as a diff, by a human, in the pull request.</li>
+  </ul>

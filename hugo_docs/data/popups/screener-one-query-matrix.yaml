@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  the-measured-api
+order: 20
+label: "One Loose Query, the Whole Matrix"
+body: |2
+  <h2>One Loose Query, the Whole Matrix</h2>
+  <p>The expensive question a screener asks is "how many would match if I moved this one bound?" — once per condition, in each direction, plus the strict count. That is 2N+1 queries against an API with no count-only mode, where every count costs a full payload.</p>
+  <p>The measured API makes the obvious version unnecessary. One response carries <strong>every</strong> match, with one value column per filter requested. So issue a single <em>loose</em> query — the conditions with their bounds widened — and the entire 2N+1 sensitivity matrix can be recounted <strong>locally</strong> from that one response. No second call.</p>
+  <p>It is treated as an optimisation, not as doctrine. The local recount was verified exactly against the server once — 478 against 478 — then shipped behind an interface with a per-variant-call fallback and a boundary-condition suite. The evidence is filed as <em>encouraging, not proven</em> — one exact match is a good sign, not a proof, and the fallback exists precisely because of that distinction.</p>
+  <p>The matrix is built <strong>lazily</strong>, so a turn that returns plenty of results never pays for it. Relaxation and the near-miss report are both readers of the matrix, which is why neither of them costs a round trip.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Sensitivity analysis collapses from 2N+1 network calls to one.</li>
+      <li>The fallback keeps the per-variant path alive, so the optimisation can be switched off.</li>
+      <li>Laziness means the common, successful turn pays nothing for it.</li>
+      <li>The confidence level is recorded honestly rather than rounded up to "proven".</li>
+  </ul>

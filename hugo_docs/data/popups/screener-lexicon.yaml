@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  planning-a-turn
+order: 20
+label: "The Lexicon &amp; the Registry"
+body: |2
+  <h2>The Lexicon &amp; the Registry</h2>
+  <p>"Murah" is not a number, and engineers are not the right people to decide what it means. The <code>lexicon</code> package owns the schema and the loader; the <strong>content belongs to the product manager</strong>, held as JSON and uploaded through <code>POST /stock_picker/lexicon/overwrite</code>. That endpoint always uses static auth, deliberately ignoring <code>DYNAMIC_AUTH</code>.</p>
+  <p>Two expansions run off it. A <strong>preset</strong> turns one fuzzy word into a set of conditions. A <strong>constraint</strong> adds an implicit bound a human would assume but nobody typed — a liquidity floor under a value screen, say. Both are tagged at birth: preset output carries <code>origin = preset_default</code>, constraint output <code>constraint_default</code>, and those origins are exactly what make them the first things relaxation sacrifices.</p>
+  <p>The ordering is deliberate. Preset expansion runs <em>before</em> the lock; constraint derivation runs <em>after</em> it. A preset is part of what the user asked for and must be diffed; a constraint is the system's own addition and must never enter the diff as if it were the user's.</p>
+  <p>Underneath sits the capability registry — <strong>98 filters across 11 groups</strong>, generated from the screener's own <code>get-all-indicator</code> response and refreshed hourly, with a hand-authored overlay supplying what the API does not carry: each filter's polarity and its relaxation ladder. The filter identifier <em>is</em> the API's <code>indicatorTag</code> verbatim, so there is no translation table to drift.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>The meaning of a vague word is a product decision, editable without a deploy.</li>
+      <li>Generated-plus-overlay keeps the registry honest about which half is vendor truth.</li>
+      <li>Origin tagging makes "give this up first" fall out of where a condition came from.</li>
+      <li>No translation table between the domain model and the API means no drift to debug.</li>
+  </ul>

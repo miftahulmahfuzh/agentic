@@ -1,0 +1,18 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multi-agent-system
+order: 60
+label: "Seam-Marker Prompt Composition"
+body: |2
+  <h2>Seam-Marker Prompt Composition</h2>
+  <p>Persona files are plain English. They keep literal tokens — <code>&#123;&#123;AI Answer&#125;&#125;</code>, <code>&#123;&#123;User Short Term Memory&#125;&#125;</code>, <code>&#123;&#123;User Profile&#125;&#125;</code> — whose embedded spaces make them invalid Go template fields, and they delimit optional spans with HTML comments such as <code>&lt;!-- USTM_START --&gt;</code> and <code>&lt;!-- USER_PROFILE_START --&gt;</code>.</p>
+  <p>Rendering is therefore <strong>not</strong> <code>text/template</code>. The builder does line-based span stripping followed by a <code>strings.Replacer</code> pass. Leftover tokens with no value to substitute are neutralised into ordinary section references — "the AI Answer section below" — so no raw token and no delimiter comment ever reaches the model, and a blank-line collapse tidies what stripping leaves behind.</p>
+  <p>The point is authorship. A persona is a character sheet a non-engineer can edit: no template syntax to break, no build step, and a missing value removes a whole section cleanly rather than leaving an empty header.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Prompt authors edit readable English, not template expressions.</li>
+      <li>A malformed token degrades to prose instead of failing the render.</li>
+      <li>Optional sections disappear entirely, keeping token counts honest.</li>
+      <li>The same seam markers make the flag-off render provably identical to pre-feature.</li>
+  </ul>

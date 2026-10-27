@@ -1,0 +1,26 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  the-measured-api
+order: 10
+label: "Measured Before Integrating"
+body: |2
+  <h2>Measured Before Integrating</h2>
+  <p>The screener runs on top of a separate filter API. Before a line of integration code was written, a standalone probe exercised that API end to end and captured every response to disk. The integration was then designed against those captures, and six of its properties are load-bearing enough that the client is built around them:</p>
+  <ul>
+      <li>Transport is <strong>JSON</strong>. <code>application/x-www-form-urlencoded</code> is rejected outright.</li>
+      <li>The indicator catalogue is fetched with <strong>POST</strong>, not GET.</li>
+      <li>The envelope carries <code>data</code>, <code>errorCode</code> and <code>message</code>, so <strong>HTTP 200 is not success</strong> — a business error arrives as 200 with an <code>errorCode</code> other than <code>FS000000</code>. The client reads the body, never the status line.</li>
+      <li>The catalogue is <strong>98 filters across 11 groups</strong>, and that response is exactly what the capability registry is generated from.</li>
+      <li><strong>No server paging, no server sort, no count-only mode.</strong> Eight paging and sort parameter spellings were sent and silently ignored; a single response simply carries every match.</li>
+      <li>Responses are <strong>human-formatted display strings</strong> while requests take raw numbers.</li>
+  </ul>
+  <p>Two further measurements shaped the design. No authentication is required — 2046 matches came back with no user id and no token. And a broad query is expensive enough to budget for: 611ms for 2046 rows and 223KB at concurrency 1, rising to 2547ms and 2.1MB at concurrency 9. That cost is precisely why the sensitivity matrix is recomputed locally from one response instead of asking the API the same question 2N+1 times.</p>
+  <p><code>execute</code> is the only package in the tree permitted to speak to this API, so every one of these six properties is handled in exactly one place.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>The integration was designed against captured responses rather than assumptions.</li>
+      <li>Those captures double as fixtures, so a change on the far side surfaces as a failing test rather than a production mystery.</li>
+      <li>One package owns the API, so a seventh surprise has exactly one place to land.</li>
+      <li>Latency budgets rest on numbers someone actually observed.</li>
+  </ul>

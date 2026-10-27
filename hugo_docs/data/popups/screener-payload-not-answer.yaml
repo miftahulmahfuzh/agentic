@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  shape-of-the-tool
+order: 20
+label: "A Payload, Not an Answer"
+body: |2
+  <h2>A Payload, Not an Answer</h2>
+  <p><code>stock_picker</code> ends by handing back a structured payload — totals, condition views, the relaxation trace, disclosures, <code>data_as_of</code> and risk notes — and the <em>pipeline's</em> LLM writes the sentence the user reads.</p>
+  <p>That the tool <em>could</em> have written the answer is the interesting part. An <code>answer</code> package exists, carrying an answer prompt and the compliance copy registries, and it has <strong>no production caller</strong>. <code>engine</code> does not import it at all. Calling it inside the tool would produce a finished answer as a tool <em>result</em>, which the pipeline LLM would then be asked to answer from: two models writing the same paragraph, the second paraphrasing the first.</p>
+  <p>Persistence is the last thing the turn does, not the first thing it forgets. Every exit path — a handback, a clarification, a near-miss, a successful screen — writes its row to <code>ai_stock_picker_turns</code> <strong>before</strong> the tool returns. The row embeds the planner output and the full derived state, so a turn can be reconstructed exactly.</p>
+  <p>Fourteen stages run in a fixed order per turn, and the schema the calling LLM sees is a single required string, <code>demand_description</code>. Everything above is derived from that one field.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>One voice answers the user; the tool contributes facts, not prose.</li>
+      <li>The payload is renderable by a non-LLM client too, because it is structured.</li>
+      <li>Persist-before-return means no completed turn is unexplainable after the fact.</li>
+      <li>A one-field schema gives the calling planner nothing to get wrong.</li>
+  </ul>

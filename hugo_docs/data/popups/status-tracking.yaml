@@ -1,0 +1,46 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  system-observability
+order: 30
+label: "Real-Time Status Tracking"
+body: |2
+                  <h2>Real-Time Status Tracking</h2>
+                  <p><code>GET /chat/status/:request_id</code> and <code>GET /v2/chat/status/:request_id</code> expose where a request sits in the pipeline. Both are behind <code>RequireAuth</code> plus an ownership check. They are polled, not pushed: the bundled frontend's turn controller polls every 600 ms while a turn is live.</p>
+
+                  <div class="mermaid">
+  graph TD
+      Submit["POST /chat/submit"] --> Queued["submitted"]
+      Queued --> FastLane["fastlane_processing"]
+      Queued --> Choosing["choosing_tools"]
+      Choosing --> Calling["calling_tools"]
+      Calling --> Formulating["formulating_final_answer"]
+      Formulating --> Ready["ready_to_stream"]
+      Formulating --> CSGen["cs_manager_generating<br/>v2 only"]
+      Ready --> Completed["completed"]
+      CSGen --> Completed
+      FastLane --> Completed
+      Choosing --> Errored["errored"]
+      Calling --> Errored
+      Ready --> Cancelled["cancelled"]
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+      class Queued,FastLane hot
+      class Completed,Cancelled,Errored ext
+                  </div>
+
+                  <p><strong>One wire divergence worth knowing.</strong> The Go constant is <code>StateQueued</code> but its serialised value is <code>"submitted"</code>, not <code>"queued"</code>. Clients must match on <code>"submitted"</code>. It is also the fallback: <code>stageToState</code> maps any unrecognised stage string to <code>submitted</code>.</p>
+
+                  <p><strong>The full set of <code>RequestState</code> values</strong> (<code>types/enums.go</code>): <code>submitted</code>, <code>choosing_tools</code>, <code>calling_tools</code>, <code>formulating_final_answer</code>, <code>ready_to_stream</code>, <code>fastlane_processing</code>, <code>cs_manager_generating</code>, <code>completed</code>, <code>cancelled</code>, <code>errored</code>. <code>IsTerminal()</code> is true only for the last three. Two further constants exist but are not status-endpoint values in practice: <code>not_selected</code> is an SSE info signal, and <code>task_execution</code> is declared and read but never assigned outside tests.</p>
+
+                  <p><strong>What the progress object actually contains.</strong> <code>ProgressInfo</code> reports <code>stage</code>, <code>stage_start_time</code>, <code>completion_ratio</code>, and the name lists <code>tools_selected</code> and <code>tools_completed</code>. The ratio advances <strong>per pipeline step</strong> — it is computed as <code>(stepNum - 1) / totalSteps</code> — not per individual tool, so a step running several tools moves the bar once. <code>estimated_eta_seconds</code> is declared on the struct and copied defensively, but nothing in the codebase ever sets it, so it is omitted from responses. <code>selected_agents</code> is present on <code>/v2</code> only.</p>
+
+                  <p><strong>Resolution order</strong> is in-memory active requests, then bowl progress when <code>USE_BOWL=true</code> (this is what makes a status poll survive a dropped SSE connection), then ArangoDB with <code>is_from_database: true</code> and a <code>completion_ratio</code> of 1.0. Two races are handled by retry: a 2 s wait at 100 ms intervals for async logging to land, and a 3 s re-check at 200 ms when the database says <code>cancelled</code>. Exhausting all three sources returns 404 <code>NOT_FOUND</code>.</p>
+
+                  <p>The v1 path deliberately pins the legacy shape: <code>cs_manager_generating</code> is rewritten to <code>formulating_final_answer</code> and <code>progress.selected_agents</code> is stripped. The progress struct is copied before this rewrite because the bowl path returns a live shared pointer.</p>
+                  <hr>
+                  <p><strong>Benefits:</strong></p>
+                  <ul>
+                      <li>Existing v1 clients see no new states even as the dual-agent path ships behind its flag.</li>
+                      <li>A client that loses its stream can recover state from the bowl instead of restarting the turn.</li>
+                  </ul>

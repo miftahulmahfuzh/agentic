@@ -1,0 +1,24 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multimodal-processing
+order: 40
+label: "Attachment Cache Fingerprinting"
+body: |2
+  <h2>Attachment Cache Fingerprinting</h2>
+  <p>The cache key was question text plus language. That is a correctness hole the moment images exist: "what does this chart say?" <em>with</em> an image would hit the entry cached for the same sentence <em>without</em> one, and return an image-blind answer.</p>
+  <p>The fix is a fingerprint over content, not ids. SHA-256 across each blob, <strong>length-prefixed and in order</strong>, truncated to sixteen hex characters and appended as <code>:img_&lt;fp&gt;</code> after the language suffix. Length-prefixing keeps two different splits of the same bytes distinct; ordering makes a swapped pair a different key. Hashing content rather than the minted id means the same screenshot legitimately shares an entry.</p>
+  <p><strong>Three independent bypass guards</strong> then keep image turns off the cache entirely:</p>
+  <ul>
+      <li><strong>Routing</strong> — an image-bearing turn skips the cache fast-lane and goes straight to the queue.</li>
+      <li><strong>Read</strong> — the cached-request handler returns early before obtaining a Redis client, so no round trip is issued at all. This covers both entry points and any future third caller.</li>
+      <li><strong>Write</strong> — one <code>ShouldCache</code> field gates both the Redis write and the cache-populated notification, which also closes the promotion path: a key that was never notified can never be matched.</li>
+  </ul>
+  <p>Three reasons are recorded for the bypass. A cache hit rebuilds the log row inside the fast lane without image ids, so replaying would silently drop them from history. An image-only turn has an empty question, collapsing the key until the digest is the sole discriminator. And a 64-bit digest is realistically never hit twice, so the entry is pure Redis bloat.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>An image turn can never be answered from a text-only cache entry.</li>
+      <li>Both key segments stay independently greppable.</li>
+      <li>With the flag off, keys are byte-identical to pre-feature — nothing already cached is invalidated.</li>
+      <li>Guards are independent, so no single missed branch re-opens the hole.</li>
+  </ul>

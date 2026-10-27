@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multimodal-processing
+order: 50
+label: "Dark-Launch Flag Discipline"
+body: |2
+  <h2>Dark-Launch Flag Discipline</h2>
+  <p><code>ENABLE_IMAGE_PROCESSING</code> defaults to <code>false</code>, and the off-path contract is written down verbatim next to the flag: parts read past and discarded, no cache fingerprint, prompts text-only, no <code>file_assets</code> documents, image ids absent everywhere, download endpoint 404.</p>
+  <p>The interesting part is that the contract is <strong>mechanically proven, not claimed</strong>. Building a multimodal message with no attachments is byte-for-byte identical to the plain text-parts constructor. Building search contents with no images is exactly the plain text query. And twelve pinned prompt goldens are checked in and asserted, so a prompt change surfaces as a reviewable diff — regenerating them requires an explicit flag.</p>
+  <p>Earlier guards compared the render against <code>HEAD</code>, which silently accepted any regression the moment it was committed. Checked-in goldens do not.</p>
+  <p>The same discipline runs through the multi-agent work: <code>ENABLE_CS_MANAGER=false</code> pins routing to the single agent, removes the routing section from the planning prompt, skips profile assembly, and collapses dispatch to the legacy single call. Every optional prompt section — routing, profile, memory, reply context, images, preferred name — disappears entirely when absent rather than rendering an empty placeholder.</p>
+  <p>The download route exists while dark and returns 404, so flipping the flag needs no redeploy and a dark deployment reveals nothing about what is coming.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Features ship to production disabled, with the disabled path under test.</li>
+      <li>"No behaviour change" is an assertion in CI, not a reviewer's judgement.</li>
+      <li>Enabling is a configuration change, not a deployment.</li>
+      <li>Prompt drift is visible as a diff before it reaches a model.</li>
+  </ul>

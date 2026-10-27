@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  the-measured-api
+order: 30
+label: "Display Strings In, Raw Numbers Out"
+body: |2
+  <h2>Display Strings In, Raw Numbers Out</h2>
+  <p>The screener API is asymmetric, and the asymmetry is a factor of 10<sup>12</sup>. Requests take <strong>raw</strong> numbers: a 50 trillion rupiah market-cap floor is sent as <code>50000000000000</code>. Responses come back as <strong>human-formatted display strings</strong> — <code>"204.44T"</code>, <code>"5,050"</code>, <code>"-65.99%"</code>.</p>
+  <p>Confusing the two is not a rounding error, it is a twelve-order-of-magnitude error, and it bit the measurement probe itself twice before the contract was written down.</p>
+  <p>So the rule is positional rather than clever: <code>execute</code> performs the conversion in <strong>exactly three places</strong> and nowhere else. Every other package in the tree works in raw numbers only and never sees a display string. A fourth conversion site anywhere is the bug.</p>
+  <p>The same instinct governs storage. The per-turn audit row embeds the planner output, the conditions, the sensitivity map, the relaxation steps, the near-miss report, the result rows, the disclosures and the reachable outcome <em>directly</em> — which is exactly why the root package's own documentation says a JSON tag change there is a storage-format change, not a refactor.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>A whole class of silent magnitude bug is confined to three reviewable lines.</li>
+      <li>Domain code never has to ask which representation it is holding.</li>
+      <li>The three-places rule is auditable by grep, not by discipline.</li>
+      <li>The storage contract is stated where someone editing a struct tag will read it.</li>
+  </ul>

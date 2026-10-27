@@ -1,0 +1,48 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multi-agent-system
+order: 20
+label: "Server-Owned Routing"
+body: |2
+      <h2>Server-Owned Routing</h2>
+      <p>The LLM does not choose the agent. It emits three <em>understanding</em> booleans; the server owns the truth table and re-derives <code>selected_agents</code> unconditionally. The planning prompt is written to match, and says so out loud: "You do NOT decide which agent(s) respond."</p>
+      <div class="mermaid">
+  graph TD
+      IN["routing booleans from classify_and_plan"]
+      P{"need_professional_analysis"}
+      Q{"need_personalization OR marketing_opportunity"}
+      A1["customer_service_manager only"]
+      A2["tuntun_ai then customer_service_manager"]
+      A3["tuntun_ai only"]
+
+      IN --> P
+      P -->|"false"| A1
+      P -->|"true"| Q
+      Q -->|"true"| A2
+      Q -->|"false"| A3
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+
+      class P,Q hot
+      class A1,A2,A3 ext
+      </div>
+      <p>Ordering is a contract. When both run, <code>tuntun_ai</code> is first, because the customer service manager reviews and follows up on its output.</p>
+      <p><strong>EnforceRoutingRules runs six ordered steps</strong> after the plan JSON is parsed:</p>
+      <ul>
+          <li><strong>1. Flag gate:</strong> <code>ENABLE_CS_MANAGER=false</code> ignores routing entirely and pins <code>[tuntun_ai]</code>. The stated invariant is byte-for-byte pre-feature behaviour.</li>
+          <li><strong>2. fixed_answer:</strong> a canned response means no agent answers; routing is set nil.</li>
+          <li><strong>3. Missing block:</strong> if the model omitted <code>routing</code>, warn and default to professional-only.</li>
+          <li><strong>4. Marketing guard:</strong> no assembled profile or an empty <code>marketing_target</code> forces <code>marketing_opportunity=false</code>. The model's optimism cannot invent a target.</li>
+          <li><strong>5. reply_to override:</strong> an explicit reply to a <code>customer_service_manager</code> message pins that agent and skips the table.</li>
+          <li><strong>6. Re-derivation:</strong> always recompute from the booleans — never trust the model's own <code>selected_agents</code>.</li>
+      </ul>
+      <p><code>marketing_opportunity</code> deliberately carries no <code>omitempty</code>, so a <code>false</code> prediction is faithfully recorded next to the profile the model actually saw. Routing decisions are scoreable after the fact.</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>Routing is deterministic and unit-testable; the truth table is one function.</li>
+          <li>A prompt regression cannot change who answers.</li>
+          <li>Turning the feature off collapses to the exact legacy path.</li>
+          <li>Prediction audit is built into the persistence shape, not bolted on later.</li>
+      </ul>

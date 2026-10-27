@@ -1,0 +1,23 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  performance-architecture
+order: 60
+label: "Stateful Conversations"
+body: |2
+      <h2>Stateful Conversations</h2>
+      <p>History is fetched once per turn, at submit time, not during preparation. <code>helpers.FetchAndFormatHistory</code> (<code>chatbot/helpers/history.go</code>) takes the last <code>HISTORY_ITEMS</code> turns — default 1, set to 3 in the development <code>.env</code> — via <code>arangoStore.GetConversationHistory(ctx, conversationID, limit)</code>. When the caller supplies <code>prev_context</code> on the request, that is used instead and the database is not touched at all.</p>
+      <p>It is called from <code>helpers.GenerateCacheKeyWithHistory</code>, so a single call produces both things the turn needs: the formatted transcript and the list of previous question strings that feed the cache key. The result travels on <code>types.CacheKeyData</code> for the rest of the request's life — into <code>PreparedRequestData.FormattedHistory</code>, into the planner's <code>PlanOnly</code> call, and into the final synthesis prompt.</p>
+      <p>The default rendering is one line pair per turn:</p>
+      <pre><code>Human: What is the market cap of BBCA?
+  Assistant: BBCA's market capitalisation is ...
+  Human: What about BBRI?
+  Assistant: ...</code></pre>
+      <p>Turns that were answered by both agents render with role labels instead — <code>Tuntun AI:</code> and <code>CS Manager:</code> — so the customer-service agent can recognise its own prior turns. That branch only fires when the split output fields are non-empty, which happens under <code>ENABLE_CS_MANAGER</code>; older rows take the legacy path and render byte-for-byte as before. Either way the extracted question list is unchanged, so the cache key is unaffected by the transcript format.</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>Follow-up questions ("what about BBRI?") resolve against the previous turn.</li>
+          <li>One fetch serves both the prompt and the cache key — no second read, and no chance of the two disagreeing.</li>
+          <li><code>prev_context</code> lets a caller supply history directly and skip the database round trip.</li>
+          <li>Failures degrade to empty history rather than failing the turn.</li>
+      </ul>

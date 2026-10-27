@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  planning-a-turn
+order: 30
+label: "Relaxation &amp; the Near-Miss Exit"
+body: |2
+  <h2>Relaxation &amp; the Near-Miss Exit</h2>
+  <p>A screen that returns nothing is a failure of the product, not of the user. <code>relax</code> runs three strategies in a fixed order and proposes nothing of its own.</p>
+  <p><strong>Single-point</strong> first: loosen one condition by one ladder step and recount. Then <strong>cumulative greedy</strong>: keep loosening, cheapest first, where cheapest is one comparator built from <code>Priority</code> — larger means more important, so the smallest is sacrificed first — composed with the origin's relaxation rank. Locked <code>user_explicit</code> conditions are not in the candidate set at any point, so neither strategy can reach them.</p>
+  <p>If nothing reachable remains, the <strong>near-miss exit</strong> ends the turn with two facts and no proposal: which condition is blocking, and the value actually reachable on that metric. Both come from the sensitivity matrix already computed, so the exit costs no extra call.</p>
+  <p>The guard beside it matters as much. A fresh screen that arrives with zero conditions to screen on exits as <code>clarify:no_conditions</code> — a clarification, explicitly <strong>not</strong> a <code>tool_error</code>. Asking the user a question is a normal outcome here, not a failure, and the logs keep the two apart.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>An empty result set becomes an explanation instead of a dead end.</li>
+      <li>Relaxation order is one comparator, so it is testable and stable.</li>
+      <li>Every loosened value is a ladder step, so the result stays defensible to a user.</li>
+      <li>"Ask a question" and "something broke" stay distinguishable in the logs.</li>
+  </ul>

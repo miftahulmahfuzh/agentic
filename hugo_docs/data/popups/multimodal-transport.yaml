@@ -1,0 +1,27 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multimodal-processing
+order: 30
+label: "Dual Multimodal Transport"
+body: |2
+  <h2>Dual Multimodal Transport</h2>
+  <p>Two wire formats, because two clients are in play.</p>
+  <p><strong>Data URIs, for the langchaingo path.</strong> The application reaches Gemini through an OpenAI-compatible client, and langchaingo marshals <code>llms.BinaryContent</code> into a shape no OpenAI-compatible endpoint understands. Only <code>llms.ImageURLContent</code> carrying a base64 <code>data:</code> URI serialises to the accepted <code>image_url</code> form. A test asserts the emitted JSON, so this cannot be "simplified" back into a broken state.</p>
+  <p><strong>Native inline data, for <code>web_search</code>.</strong> That tool sits on the native SDK, so it emits real <code>inline_data</code> parts with raw bytes and no base64 inflation.</p>
+  <p><strong>Five multimodal call sites:</strong></p>
+  <ul>
+      <li>The <strong>planner</strong> — images on the human message only, since provider support for images in a system message is inconsistent.</li>
+      <li>The <strong>simple-mode streamer</strong> — switches to a content-generation call with a streaming callback, because the string-only streaming API cannot carry parts. The text-only path stays untouched.</li>
+      <li><strong>compare_stocks</strong> synthesis — every construction of the message pair goes through one helper, so the degraded-data path cannot silently drop image parts.</li>
+      <li><strong>web_search</strong> grounding — native inline data, with a conditional system-prompt block appended only for image turns.</li>
+      <li>The <strong>customer service manager</strong> — added after the agent answered "I don't have the image in front of me" to the most common conversational image question.</li>
+  </ul>
+  <p><strong>Pixels never go into prompts.</strong> A text summary carries only the count, the ids, and the ordering, so a prompt can say "the second chart" and the model can resolve it. Embedding base64 in a text section would roughly double the per-image token cost. Every site reaches the attachments through the one canonical gate; four duplicated copies of that flag-check were deliberately collapsed into it.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>One documented wire format per client, asserted by tests rather than by comment.</li>
+      <li>Token cost stays linear in images, not doubled by base64 in text.</li>
+      <li>A single gate means the flag flip lands everywhere at once.</li>
+      <li>Text-only turns keep their original, cheaper code path.</li>
+  </ul>

@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  resource-management
+order: 50
+label: "Service Discovery with Self-Healing Cache"
+body: |2
+  <h2>Service Discovery with Self-Healing Cache</h2>
+  <p>Most backend endpoints are configured as service URLs rather than hosts: 34 of the <code>BE_*</code> settings use the form <code>consul://service-name/path</code> (auth, feed-static-service, feedhistoryservice, value-investing-web, sector-concept-web, funds-service, and others). <code>toolutils.ResolveServiceURL</code> turns that into an <code>http://host:port/path</code> before any HTTP client sees it, because <code>http.Client</code> cannot dial a <code>consul://</code> scheme. A non-<code>consul</code> URL is returned untouched, so mixed configuration works.</p>
+  <p><strong>Retries.</strong> Consul is intermittently unreliable, and a service being redeployed produces a momentary window with no healthy instances. Neither should fail a user's request. The health query runs inside <code>utils.RetryWithDelay</code>, bounded by <code>CONSUL_RESOLVE_MAX_ATTEMPTS</code> (default 3) with <code>CONSUL_RESOLVE_RETRY_DELAY</code> between attempts (default 1s). Both a query error and an empty healthy-instance list are retryable. Exhausting the attempts emits a single caller-agnostic log line tagged <code>event=consul_resolution_failed</code>, so every failed resolution is findable regardless of which tool triggered it.</p>
+  <p><strong>Cache.</strong> A process-local map holds the chosen <code>host:port</code> per service until <code>CONSUL_RESOLVE_CACHE_TTL</code> expires (default 1h). Only the host and port are cached, keyed by service name — never the full URL — so one entry serves every path on that service. Setting the TTL to zero or below disables caching entirely. Live resolutions log at INFO with <code>event=consul_resolved_live</code>, which makes cache effectiveness directly measurable: more than one per service per TTL means the cache is not doing its job.</p>
+  <p><strong>Self-healing.</strong> A cached address can go stale — the instance dies, Consul knows, this process does not. <code>InvalidateService</code> evicts the entry for a service, and callers invoke it on failure. The auth client is the live example: on a transient <code>ErrAuthUnavailable</code> it evicts the entry before its next retry, so the retry re-resolves against Consul instead of hammering a dead address.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Backend instances can move without a config change or a redeploy.</li>
+      <li>A redeploy window on a dependency does not surface as a user-visible failure.</li>
+      <li>Consul is queried at most once per service per TTL instead of once per tool call.</li>
+      <li>A dead cached address is corrected by the first request that trips over it.</li>
+  </ul>

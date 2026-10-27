@@ -1,0 +1,23 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  performance-architecture
+order: 50
+label: "FIFO Queue &amp; Processing Semaphore"
+body: |2
+  <h2>FIFO Queue &amp; Processing Semaphore</h2>
+  <p>Admission control is deliberately plain. <code>queue.Manager</code> is a slice-backed FIFO with two index maps for O(1) lookup and removal. <code>EnqueueNewRequest</code> rejects with <code>ErrQueueFull</code> at <code>QUEUE_SIZE</code> (default 100), then does a non-blocking wakeup send onto a signal channel — the channel carries a nudge, not the payload. <code>DequeueRequest</code> takes index 0. That is the entire scheduling policy: <strong>fairness is plain arrival order</strong>.</p>
+  <p>Concurrency is capped by two semaphores at different stages:</p>
+  <ul>
+      <li><code>processingSemaphore</code>, sized <code>MAX_CONCURRENT_REQUESTS</code> (default <strong>50</strong>), acquired in <code>processRequest</code> and released when the task hands off. The normal worker pool is also sized to the same number, so the semaphore is the real ceiling on in-flight processing.</li>
+      <li><code>llmStreamSemaphore</code>, sized <code>MAX_CONCURRENT_LLM_STREAMS</code> (default <strong>5</strong>), held by <code>runBoundedStream</code> for the <em>whole</em> stream. The preparer stage hands a stream off and moves on, so without this leash a burst of prepared requests would spawn unbounded concurrent streams and push the provider into 429s, which trips the circuit breaker.</li>
+  </ul>
+  <p>The development <code>.env</code> raises two of these: <code>QUEUE_SIZE=1000</code> and <code>MAX_CONCURRENT_LLM_STREAMS=30</code>. <code>MAX_CONCURRENT_REQUESTS</code> is left at its default of 50. Two channels bypass the queue entirely — the cache fast-lane workers, which never take <code>processingSemaphore</code>, and the priority workers that serve cache-promoted requests.</p>
+  <p>A janitor runs every <code>JANITOR_INTERVAL</code> (2 m) and reaps three classes of stuck request: cancelled but never picked up (1 s), queued past <code>QUEUE_TIMEOUT</code> (1 h), and processing past <code>PROCESSING_TIMEOUT</code> (10 m).</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>One queue, one policy. No priority classes, no scan-and-select, nothing to reason about beyond arrival order.</li>
+      <li>Separating the processing cap from the LLM-stream cap lets planning proceed at width 50 while only 5 streams talk to the provider.</li>
+      <li>Rejecting at <code>QUEUE_SIZE</code> gives the client a fast 503 instead of an unbounded wait.</li>
+      <li>The janitor bounds the blast radius of anything that gets stuck, without any per-request timer.</li>
+  </ul>

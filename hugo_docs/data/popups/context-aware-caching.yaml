@@ -1,0 +1,19 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  data-handling-integrity
+order: 10
+label: "Context-Aware Caching"
+body: |2
+  <h2>Context-Aware Caching</h2>
+  <p>Finished answers are cached in Redis under a key built once per turn by <code>GenerateCacheKeyWithHistory</code> — the only place in the system that mints one. The key is the normalised question text plus recent history, a language suffix, and nothing else: <code>ai_chatbot_conv:&lt;simplified&gt;:&lt;lang&gt;</code>. Conversation id is deliberately excluded, so the same question from two users shares one entry. TTL is 24 hours.</p>
+  <p>Sharing entries is only safe if live data never enters one. Two env lists mark the tools that make a turn uncacheable: <code>TIMEBOUND_TOOLS</code> (deployed as <code>realtime_market,get_current_time</code>) and <code>USERBOUND_TOOLS</code> (the per-user memory, portfolio and watchlist tools). After planning, the preparer runs <code>checkTimeboundToolsInPlanJSON</code> over the generated plan and sets <code>TimeboundToolsCalled</code>. It also sets <code>ShouldCache</code>, via <code>shouldCacheTurn</code>.</p>
+  <p>The write gate ANDs both. <code>RedisResponseCache.ShouldCache</code> stores only when <code>data.ShouldCache</code> is true, a Redis client exists, <code>TimeboundToolsCalled</code> is false, and the response is non-empty. A skip logs each of the four conditions, so "why was this not cached" is one log line rather than an investigation.</p>
+  <p>Image turns are excluded by the same field plus two independent guards. Routing skips the cache fast-lane entirely for a turn carrying attachments; the fast-lane read returns before it would obtain a Redis client, so no round trip is issued at all; and <code>ShouldCache</code> being false closes both the Redis write and the cache-populated notification that the promotion path keys on. The cache key also carries a content fingerprint of the attachments, so an image question can never collide with the same sentence asked without one.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Live market data is never served from a stale entry, and freshness is configuration, not code.</li>
+      <li>One key generator means the read side and the write side cannot disagree about what a turn is.</li>
+      <li>Excluding conversation id makes the cache genuinely cross-user rather than per-thread.</li>
+      <li>Three independent image guards: any one of them alone is sufficient.</li>
+  </ul>

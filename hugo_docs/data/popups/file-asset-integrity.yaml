@@ -1,0 +1,50 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  data-handling-integrity
+order: 40
+label: "File Asset Integrity"
+body: |2
+      <h2>File Asset Integrity</h2>
+      <p>Uploaded bytes are treated as hostile. Neither the client's declared <code>Content-Type</code> nor the filename extension is ever trusted or persisted: <code>SniffMIME</code> reads the leading bytes, probing for the ISO-BMFF <code>ftyp</code> box and its ten HEIF brands first — the standard library reports <code>application/octet-stream</code> for all of them, so iPhone uploads would otherwise be unclassifiable — then falling back to the stdlib sniffer. Other ISO-BMFF brands such as MP4 deliberately fall through, so a video cannot present itself as an image. The allow-list <strong>fails closed</strong>: an empty list rejects everything, because a misparsed <code>IMAGE_ALLOWED_MIME_TYPES</code> must not silently become "accept anything". A PNG-named file with an executable header is a clean 400.</p>
+      <p>Ids are minted from <code>crypto/rand</code>: a kind prefix plus six random bytes as twelve lowercase hex characters, so <code>img_</code> ids are unguessable and ownership checking is not the only defence. A separate grammar check, not a prefix check, guards anything that touches a store, so a traversal-shaped id is rejected by construction rather than by a lookup happening to fail.</p>
+      <div class="mermaid">
+  graph TD
+      U["Uploaded part<br/>declared MIME and extension ignored"]
+      SNF["SniffMIME<br/>HEIF ftyp brands, then stdlib sniffer"]
+      AL{"Sniffed type in allow-list?"}
+      REJ["400 — no disk write, no document"]
+      ID["NewFileID<br/>img_ plus 12 crypto-random hex"]
+      ASYNC["PersistAsync<br/>detached goroutine, own 30s context"]
+      TMP["CreateTemp in destination dir<br/>write, chmod 0600, close"]
+      REN["Rename into place<br/>root/kind/yyyy/mm/dd/id.ext, dirs 0700"]
+      META["SaveFileAsset<br/>insert, never upsert"]
+      OK["Retrievable, owner-checked"]
+      RB["Blob removed<br/>rollback, no orphan bytes"]
+
+      U --> SNF
+      SNF --> AL
+      AL -->|"no"| REJ
+      AL -->|"yes"| ID
+      ID --> ASYNC
+      ASYNC --> TMP
+      TMP --> REN
+      REN --> META
+      META -->|"ok"| OK
+      META -->|"write fails"| RB
+
+      class SNF,AL,META,RB hot
+      class OK,REJ ext
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+      </div>
+      <p>Blobs live at <code>&lt;root&gt;/&lt;kind&gt;/&lt;yyyy&gt;/&lt;mm&gt;/&lt;dd&gt;/&lt;id&gt;.&lt;ext&gt;</code>, UTC date-sharded so no directory grows unmanageable and a future retention sweep is a directory operation. Directories are <code>0700</code>, files <code>0600</code>. Writes go to a temporary file in the destination directory and are renamed into place, with cleanup on every error path, so a crash mid-write cannot leave a truncated blob under an id that metadata already references. The extension comes from an explicit MIME table rather than the standard library's, whose ordering varies by platform and would make storage paths non-reproducible.</p>
+      <p>Ordering is bytes first, metadata second. If the metadata write fails, <code>Persist</code> removes the blob it just wrote — a file with no document pointing at it is an uncollectable leak, so it is never allowed to exist. Persistence runs in <code>PersistAsync</code>, a detached goroutine that deliberately does not inherit the request context: the endpoint answers 202 immediately, which cancels that context, so the goroutine builds its own 30 second timeout instead. Failures are logged, not returned; a disk problem degrades to "the answer still streams, the image just is not downloadable later".</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>Format enforcement rests on actual bytes, so extension and header spoofing both fail.</li>
+          <li>HEIC is accepted rather than rejected as octet-stream, which is what most phone uploads are.</li>
+          <li>No half-written blobs and no orphaned blobs, under crash or under database failure.</li>
+          <li>Storage never sits on the answer's critical path, and a wedged disk cannot leak goroutines.</li>
+      </ul>

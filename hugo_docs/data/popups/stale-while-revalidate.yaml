@@ -1,0 +1,25 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  resource-management
+order: 40
+label: "Stale-While-Revalidate Reads"
+body: |2
+  <h2>Stale-While-Revalidate Reads</h2>
+  <p>The user-lifecycle-status endpoint takes roughly 65 seconds to answer. Its configured budget, <code>BE_USER_LIFECYCLE_STATUS_TIMEOUT</code>, is 90 s. It nonetheless feeds a chat turn, because the lifecycle tag is evidence for memory editing and for the marketing funnel. <code>lifecyclecache.Cache.Fetch</code> resolves this by never calling it inline.</p>
+  <p>Every read is a single ArangoDB point read against the <code>user_lifecycle_status</code> collection:</p>
+  <ul>
+      <li><strong>Fresh hit</strong> — serve the stored value.</li>
+      <li><strong>Stale hit</strong> (older than <code>USER_LIFECYCLE_STATUS_TTL</code>, 24h) — serve the stale value anyway, and spawn a background refresh.</li>
+      <li><strong>Miss</strong> — return empty immediately, spawn a refresh to backfill. The prompt section simply vanishes rather than carrying a placeholder.</li>
+      <li><strong>Arango read error</strong> — return empty and deliberately <em>do not</em> refresh. There is no point launching a 65 s call whose result could not be persisted.</li>
+  </ul>
+  <p><strong>Refresh discipline.</strong> <code>refreshAsync</code> is single-flighted per user through a package-global <code>sync.Map</code>, shared by every <code>Cache</code> instance, so the memory editor and the profile assembler cannot both fire the slow call for the same user. To be precise about what that deduplicates: it collapses concurrent <em>refreshes of one cached value</em>, not user requests — the requests themselves were already served from the cache and never waited. The goroutine is panic-guarded, detached onto <code>context.Background()</code> so it outlives the triggering request, and builds a cloned transport with <code>DialContext</code> set to the same budget, so an unreachable backend fails at the configured 90 s rather than at the default transport's dial timeout. The raw response body is persisted verbatim, so backend schema drift needs no migration.</p>
+  <p><strong>The same shape guards authentication.</strong> When <code>CACHE_VALID_CREDENTIALS</code> is on, a successfully validated dynamic-auth credential is stored in Redis under two windows: <code>VALID_CREDENTIAL_TTL</code> (1h) is the freshness boundary, <code>VALID_CREDENTIAL_STALE_TTL</code> (24h) is the actual key TTL. Inside the fresh window the auth service is not contacted at all. Past it, the credential is revalidated — and the outcome matters: a definitive rejection evicts the entry and rejects the request, but if the auth service is merely <em>unavailable</em> the stale credential is served within the grace window. A Redis failure fails open to remote validation. An auth outage therefore degrades to "recently seen users keep working" instead of locking everyone out.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>A 65-second dependency sits on a chat path without adding measurable latency.</li>
+      <li>Concurrent consumers of one user's lifecycle value trigger exactly one refresh.</li>
+      <li>Nothing is refreshed that could not be stored, so a database outage does not become a stampede on the backend.</li>
+      <li>An auth-service outage does not log out active users.</li>
+  </ul>

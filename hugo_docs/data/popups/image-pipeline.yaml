@@ -1,0 +1,50 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multimodal-processing
+order: 10
+label: "Image Upload Pipeline"
+body: |2
+      <h2>Image Upload Pipeline</h2>
+      <p>Images arrive as multipart parts on <code>POST /v2/chat/submit</code>, alongside a JSON <code>payload</code> part. A body cap is applied <em>before</em> the multipart parse, sized as files-per-query times per-file limit plus a megabyte of headroom. Each part is read behind a bounded reader, so an oversize upload is detected without ever being buffered whole.</p>
+      <div class="mermaid">
+  graph TD
+      UP["POST /v2/chat/submit<br/>multipart form-data"]
+      CAP["Body cap applied<br/>BEFORE multipart parse"]
+      VAL["Validate + sniff + mint id<br/>no disk, no DB"]
+      CTX["requestcontext.WithImageAttachments<br/>single injection point"]
+      GATE["core.ImageAttachmentsFromContext<br/>canonical read gate"]
+      LLM["Five multimodal call sites"]
+      ASYNC["PersistAsync<br/>detached, own 30s timeout"]
+      BLOB["Blob store<br/>temp file then rename"]
+      META["Arango file_assets<br/>unique hash index on file_id"]
+      RB["Blob removed<br/>no orphan can exist"]
+      DL["GET /files/image/:image_file_id<br/>owner-enforced raw bytes"]
+
+      UP --> CAP
+      CAP --> VAL
+      VAL --> CTX
+      VAL --> ASYNC
+      CTX --> GATE
+      GATE --> LLM
+      ASYNC --> BLOB
+      BLOB --> META
+      META -.->|"metadata write fails"| RB
+      META --> DL
+
+      classDef hot fill:#ECF2EF,stroke:#2E6F5E,stroke-width:2px
+      classDef ext fill:#FBFBF9,stroke:#CFCDC4
+
+      class VAL,CTX,GATE hot
+      class BLOB,META,DL ext
+      </div>
+      <p><strong>Validation never trusts the client.</strong> Not the declared <code>Content-Type</code>, not the filename extension — only sniffed bytes. HEIC is probed explicitly by ISO-BMFF <code>ftyp</code> brand across ten brands, because the standard library reports <code>application/octet-stream</code> for all of them and iOS uploads would otherwise be rejected. Other ISO-BMFF brands deliberately fall through, so a video cannot pass as an image. An empty allow-list rejects everything: a misparsed configuration fails closed, never open.</p>
+      <p>Limits are three files per query, 20 MB each, <code>image/jpeg</code>, <code>image/png</code>, <code>image/heic</code>. IDs are <code>img_</code> plus twelve hex characters from <code>crypto/rand</code>, so ownership is not the only defence.</p>
+      <p><strong>Persistence never gates answering.</strong> The synchronous step does no I/O at all. Persistence is detached and builds its own 30-second context, because the 202 response cancels the request context. Failures are logged, never returned — a disk problem degrades to "the answer still streams, the image just is not downloadable later".</p>
+      <hr>
+      <p><strong>Benefits:</strong></p>
+      <ul>
+          <li>Oversize and malformed uploads are rejected without buffering or touching disk.</li>
+          <li>Storage failures cannot fail a turn.</li>
+          <li>Blob-then-metadata ordering with rollback makes orphan blobs unrepresentable.</li>
+          <li>Persisted ids are read from the same context the model read, so history cannot claim an image the model never saw.</li>
+      </ul>

@@ -1,0 +1,20 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  multimodal-processing
+order: 20
+label: "Kind-Agnostic File Assets"
+body: |2
+  <h2>Kind-Agnostic File Assets</h2>
+  <p>Everything below the ingestion handler is kind-generic. The blob store, the metadata store, the download handler, and the id grammar know nothing about images. All kind-specific knowledge lives in two maps: id prefixes, and the validator policy handed to the service.</p>
+  <p>On-disk layout is <code>&lt;root&gt;/&lt;kind&gt;/&lt;yyyy&gt;/&lt;mm&gt;/&lt;dd&gt;/&lt;id&gt;.&lt;ext&gt;</code>, UTC-sharded so directories stay small and a future TTL sweep is a directory operation. Directories are <code>0700</code>, files <code>0600</code>. Writes go to a temp file in the destination directory and are renamed into place, with cleanup on every error path, so a crash mid-write cannot leave a truncated blob under an id that metadata already references.</p>
+  <p>Metadata lives in an Arango <code>file_assets</code> collection with a <strong>unique hash index on <code>file_id</code></strong> — the backstop behind random id minting — plus persistent indexes for per-request resolution and per-owner sweeps. Writes use a create, not an upsert: a duplicate id must be a loud error, because silently overwriting would hand one user's id to another user's bytes.</p>
+  <p>Two id checks exist and they are not interchangeable. One classifies by prefix only and is documented as accepting <code>img_../../etc/passwd</code>; the other enforces the full grammar. Anything that touches a store or a path must use the second.</p>
+  <p><strong>Voice is scaffolding only.</strong> The kinds and id prefixes exist, storage collapses the streaming variant onto <code>voice</code>, audio extensions are already mapped, and the download handler is per-kind gated. But both voice kinds are hardcoded disabled, there is no voice configuration flag, no <code>/voice/stream</code> socket, no voice route, no registered voice validator, and no speech-to-text. Voice does not ship today; what shipped is the shape it will land into.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>Adding a modality is a kind plus a policy entry, not a new subsystem.</li>
+      <li>Atomic writes and restrictive permissions by default.</li>
+      <li>Traversal-shaped ids are rejected before any store call.</li>
+      <li>Dark kinds return 404 without revealing that they exist.</li>
+  </ul>

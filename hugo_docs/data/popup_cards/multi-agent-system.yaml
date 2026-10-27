@@ -1,0 +1,6 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+section: agents
+heading: "Multi-Agent System"
+icon:    ic-architecture
+order:   10

@@ -1,0 +1,26 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  planning-a-turn
+order: 10
+label: "Four Turn Modes, One Diff"
+body: |2
+  <h2>Four Turn Modes, One Diff</h2>
+  <p><code>TurnMode</code> has four values and one job: choose the condition list this turn builds on.</p>
+  <ul>
+      <li><code>continue</code> — build on the previous turn's list.</li>
+      <li><code>fresh</code> — start from an empty baseline.</li>
+      <li><code>next_batch</code> — the baseline is the stored list verbatim, and the model's own <code>conditions</code> field is <strong>ignored outright</strong>.</li>
+      <li><code>handback</code> — not a picking request at all.</li>
+  </ul>
+  <p>Everything downstream is derived. <code>baseline.Diff</code> compares the planner's full condition list against the selected baseline; the lock runs on that diff; constraint derivation runs deliberately <em>after</em> the lock, so a system-derived constraint can never be mistaken for something the user said.</p>
+  <p>Identity is two-level by design. <code>CID</code> (<code>c1</code>, <code>c2</code> and so on) is within-turn and model-supplied; <code>CondKey</code> is cross-turn and derived in code by <code>DeriveCondKey</code>. The model never gets to name a condition across turns.</p>
+  <p>Provenance is recorded, never inferred. Normalization merges an auto-added bound into the user's own condition object, so <code>SystemAddedKeys</code> exists to say which keys the system put there. The type's own comment is blunt about it: do not infer provenance from the value — a <code>minValue</code> of zero does not mean system-added, because a user can legitimately state a zero floor.</p>
+  <p>A <code>next_batch</code> turn is usually not a query at all. A lineage row-set cache with a short TTL (<code>STOCK_PICKER_RESULT_CACHE_TTL</code>, default five minutes) makes the next page a local slice rather than a re-query, and sessions live 24 hours.</p>
+  <hr>
+  <p><strong>Benefits:</strong></p>
+  <ul>
+      <li>One enum carries the whole multi-turn contract; everything else is computed.</li>
+      <li>Paging is cheap, because the next page is a slice of a result already held.</li>
+      <li>Cross-turn identity is code-owned, so a model-renamed condition cannot orphan its history.</li>
+      <li>Provenance survives the merge that would otherwise erase it.</li>
+  </ul>

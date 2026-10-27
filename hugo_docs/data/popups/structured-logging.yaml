@@ -1,0 +1,37 @@
+# Generated once by hugo_docs/scripts/popups_emit.py; this file is now the source of truth.
+# Edit the prose here. `popups_emit.py check` re-asserts it against popups_baseline.json.
+card:  system-observability
+order: 10
+label: "Structured JSON Logging"
+body: |2
+                  <h2>Structured JSON Logging</h2>
+                  <p>Logging is <code>zerolog</code> throughout: 218 non-test Go files import it. <code>logging.Init()</code> runs first in <code>main()</code>, reads <code>LOG_LEVEL</code> (default <code>INFO</code>), and picks a writer from <code>GIN_MODE</code> — JSON to stdout under <code>release</code>, a pretty console writer otherwise. It also redirects the standard library <code>log</code> package into zerolog, so third-party <code>log.Printf</code> output is captured rather than lost.</p>
+
+                  <p>One line is emitted per HTTP request by <code>AccessLog()</code>, registered as the outermost middleware so it records the final status even when an earlier middleware aborts. Successful requests log at Debug, 4xx at Warn, 5xx at Error — at the staging default of <code>INFO</code> only failures surface, which keeps the frontend's sub-second status polling from flooding Loki.</p>
+
+                  <pre><code>{
+    "level": "warn",
+    "time": "2026-07-25T09:14:02+07:00",
+    "event": "http_request",
+    "method": "GET",
+    "path": "/chat/status/:request_id",
+    "http_status": 404,
+    "client_ip": "10.194.2.20",
+    "user_id": "u_88213",
+    "request_id": "req_1753412042_0731",
+    "latency_ms": 3.412,
+    "message": "http request completed"
+  }</code></pre>
+
+                  <p>The <code>path</code> field is the route pattern from <code>c.FullPath()</code>, not the raw URL, so requests aggregate cleanly by endpoint. Stable <code>event</code> markers exist specifically to be queried: <code>http_request</code>, <code>submit_request_failed</code>, <code>auth_unavailable</code> (with a <code>phase</code> of <code>consul_resolve</code>, <code>be_request_build</code>, <code>be_call</code> or <code>be_5xx</code>), <code>consul_resolve_cache_hit</code>, <code>consul_resolved_live</code>, <code>consul_resolution_failed</code>.</p>
+
+                  <p>Beyond the request line, each turn persists a detailed record to ArangoDB. <code>LogDataForDB</code> carries a time-to-first-token decomposition — <code>queue_wait_duration_sec</code>, <code>semaphore_wait_duration_sec</code>, <code>cache_key_generation_duration_sec</code>, <code>language_detection_duration_sec</code>, <code>db_status_check_duration_sec</code>, <code>pre_pipeline_plan_generation_duration_sec</code>, <code>time_to_first_token_llm_service_only</code>, plus an ordered <code>time_to_first_token_breakdown</code> array. Per-tool telemetry lands in <code>pipeline_metrics</code> as <code>ToolExecutionDetail</code>: input args, output token count, <code>duration_sec</code>, retry attempts, cache-hit flag, and the raw external API request and response bodies via <code>api_address</code>/<code>api_input</code>/<code>api_output</code> or an <code>external_apis</code> list for multi-call tools.</p>
+
+                  <p>Provider errors are captured rather than swallowed. langchaingo discards error bodies whose shape it does not recognise — notably Gemini's OpenAI-compatible 429 — so the raw body is intercepted below the client and stored as <code>llm_error_detail</code>. Failures during streaming are persisted too, through a read-merge-write upsert that records the error and completion status without clobbering fields already written.</p>
+                  <hr>
+                  <p><strong>Benefits:</strong></p>
+                  <ul>
+                      <li>A single request is traceable end to end by <code>request_id</code>, across the access line, the pipeline logs and the stored turn record.</li>
+                      <li>Latency regressions can be attributed to a specific stage rather than guessed at.</li>
+                      <li>Rate limits and upstream 5xx keep their original provider text, so triage does not depend on reproducing the failure.</li>
+                  </ul>
