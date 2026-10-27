@@ -6,19 +6,19 @@
   "phases": [
     {
       "card": null,
-      "commit": null,
+      "commit": "5c1d9e0",
       "depends_on": [],
       "difficulty": "NORMAL",
       "n": 1,
-      "note": null,
+      "note": "3 scripts + baseline landed; all 7 exit criteria verified; decided: scripts 0644 (convention), Step-3 bookkeeping for all 3 phases committed with p1",
       "package": "hugo_docs/scripts",
       "plan": ".workflows/plan/popup-data-refactor/phase-1.md",
-      "reported_at": null,
+      "reported_at": "2026-10-27T05:55:18+00:00",
       "satisfies": [
         "R1"
       ],
-      "status": "pending",
-      "task_id": null,
+      "status": "done",
+      "task_id": "P2-HS-A001",
       "title": "Extraction & verification tooling"
     },
     {
@@ -66,6 +66,6 @@
   "plan": "/home/miftah/agentic/.workflows/orchestration/popup-data-refactor/PLAN.md",
   "repo": "/home/miftah/agentic",
   "slug": "popup-data-refactor",
-  "updated": "2026-10-27T05:49:47+00:00",
+  "updated": "2026-10-27T05:55:18+00:00",
   "worktree": "/home/miftah/.worktrees/agentic/popup-data-refactor"
 }

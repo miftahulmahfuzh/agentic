@@ -6,7 +6,7 @@
 **Worktree:** `/home/miftah/.worktrees/agentic/popup-data-refactor`
 **Branch:** `feature/popup-data-refactor` (base: `origin/main` @ `d963643`)
 **Phases:** 3
-**Status:** planned
+**Status:** phase 1/3 complete
 **Coordinator:** —
 
 > Artifacts sit at the worktree root, not under `docs/`. `/docs/` is gitignored in this repo, so a
@@ -229,9 +229,9 @@ decision is D1.
 
 | # | Title | Satisfies | Package | Files | Depends on | Difficulty | Plan | TaskID | Card |
 |---|-------|-----------|---------|-------|-----------|------------|------|--------|------|
-| 1 | Extraction & verification tooling | R1 | `hugo_docs/scripts` | 3 | — | NORMAL | `.workflows/plan/popup-data-refactor/phase-1.md` | — | — |
-| 2 | Generate the popup data tree | R1, R2, R3 | `hugo_docs/data` | 62 | 1 | NORMAL | `.workflows/plan/popup-data-refactor/phase-2.md` | — | — |
-| 3 | Rewire the template, delete the switch | R1, R3 | `hugo_docs/layouts` | 1 | 2 | HARD | `.workflows/plan/popup-data-refactor/phase-3.md` | — | — |
+| 1 | [x] Extraction & verification tooling | R1 | `hugo_docs/scripts` | 3 | — | NORMAL | `.workflows/plan/popup-data-refactor/phase-1.md` | P2-HS-A001 | — |
+| 2 | Generate the popup data tree | R1, R2, R3 | `hugo_docs/data` | 62 | 1 | NORMAL | `.workflows/plan/popup-data-refactor/phase-2.md` | P2-HD-A001 | — |
+| 3 | Rewire the template, delete the switch | R1, R3 | `hugo_docs/layouts` | 1 | 2 | HARD | `.workflows/plan/popup-data-refactor/phase-3.md` | P2-HL-A002 | — |
 
 **File counts, spelled out.** Phase 1: 3 new files, all under `hugo_docs/scripts/`. Phase 2: **62**
 = 61 data files (51 `popups/*.yaml` + 10 `popup_cards/*.yaml`) **plus one new script**,
