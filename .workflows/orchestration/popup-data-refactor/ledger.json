@@ -3,6 +3,12 @@
   "coordinator": "orch-popup-data-refactor",
   "coordinator_session_id": "939b156c-de42-46fd-bf93-f22a03bf69a2",
   "created": "2026-10-27T05:49:47+00:00",
+  "landed": {
+    "at": "2026-10-27T06:09:45+00:00",
+    "base": "main",
+    "commit": "2b7ac153cbf0f5f5d880c3ddd37195f67b3f6fea",
+    "machine": "pc"
+  },
   "phases": [
     {
       "card": null,
@@ -44,28 +50,28 @@
     },
     {
       "card": null,
-      "commit": null,
+      "commit": "f04f837",
       "depends_on": [
         2
       ],
       "difficulty": "HARD",
       "n": 3,
-      "note": null,
+      "note": "showPopup switch deleted; grids+51 carriers from hugo.Data; verify PASS 51/10 cards; G1-G4+8 content asserts fail build; prop (c) headless 153 opens ok; guards demoed on scratch copies",
       "package": "hugo_docs/layouts",
       "plan": ".workflows/plan/popup-data-refactor/phase-3.md",
-      "reported_at": null,
+      "reported_at": "2026-10-27T06:08:54+00:00",
       "satisfies": [
         "R1",
         "R3"
       ],
-      "status": "spawned",
-      "task_id": null,
+      "status": "done",
+      "task_id": "P2-HL-A002",
       "title": "Rewire the template, delete the switch"
     }
   ],
   "plan": "/home/miftah/agentic/.workflows/orchestration/popup-data-refactor/PLAN.md",
   "repo": "/home/miftah/agentic",
   "slug": "popup-data-refactor",
-  "updated": "2026-10-27T06:00:45+00:00",
+  "updated": "2026-10-27T06:09:45+00:00",
   "worktree": "/home/miftah/.worktrees/agentic/popup-data-refactor"
 }
