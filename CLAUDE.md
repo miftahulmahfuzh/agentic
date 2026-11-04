@@ -50,6 +50,8 @@ The site lives entirely under `hugo_docs/`:
 
 To preview or rebuild, run Hugo from the `hugo_docs/` directory (`hugo server` for live preview, `hugo` to build into `public/`).
 
+To prove a change in a real browser and a production build, use `.claude/skills/verify-agentic-docs/` (`scripts/verify.sh up|doctor|sync|page|ui|build|down`; feature map in `features/README.md`). Its runs serve a per-run snapshot on their own port (20000-29999) and never use, stop or reuse the owner's `hugo server` on :1313.
+
 > [!IMPORTANT]
 
 > when user type in "p" : you must git add . commit push in a new subagent. USE haiku model for this task.
