@@ -175,9 +175,9 @@ same change.
   copy through its title.
 - **Smooth scrolling.** `style.css` sets `scroll-behavior: smooth`, so after a masthead click,
   wait for the section's position to settle, not for `location.hash`.
-- **Known on the base (e2efe79):** `build` exits 1 on 16 broken links in
-  `docs/architectures/circuit_breaker/`, and `offline.mjs` fails (see the feature files). Compare
-  counts against that base before calling a failure yours.
+- **Known on the base:** `build` exits 1 on 16 broken links in
+  `docs/architectures/circuit_breaker/` (see production-build.md). Compare counts against that
+  before calling a failure yours.
 - **Name clash.** `~/agentic_golang` has its own `verify-agentic` skill and owns
   `~/.local/state/agentic-verify`. This one is `verify-agentic-docs`, state in
   `~/.local/state/agentic-docs-verify`. Do not mix their scripts.

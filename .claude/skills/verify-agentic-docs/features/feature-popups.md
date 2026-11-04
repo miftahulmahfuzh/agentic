@@ -63,4 +63,5 @@ be green.
   the check is not a byte comparison.
 - `popups_emit.py check` prints one `note:` (label != `<h2>` for screener-content-is-routing).
   It is informational, and it is on the base.
-- Every popup is dead when the mermaid CDN fails to load. See [offline-cdn.md](offline-cdn.md).
+- Without the mermaid CDN, popups still open and close (see [offline-cdn.md](offline-cdn.md)),
+  but their diagrams stay as source text, so drive this journey on a `cdn-cache` run.

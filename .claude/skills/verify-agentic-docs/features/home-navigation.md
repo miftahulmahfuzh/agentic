@@ -52,5 +52,5 @@ $V page RUN '' 80        # visible text: masthead, hero, stats, rail labels, sec
   hash. Removing that wait makes the first anchor read `inView: false`.
 - On a fresh load every disclosure must start collapsed. The steps reload before toggling, because
   the masthead pass leaves Tools and API open.
-- None of this works when the mermaid CDN is unreachable, except the disclosures. See
-  [offline-cdn.md](offline-cdn.md).
+- With the mermaid CDN unreachable, all of this must still work. That is proven by
+  [offline-cdn.md](offline-cdn.md); before that fix only the disclosures survived.

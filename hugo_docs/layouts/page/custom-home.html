@@ -1456,8 +1456,13 @@ agentic_golang/
 {{ end }}
 
     <script>
-      // Initialize Mermaid — restrained 3-role palette
-      mermaid.initialize({
+      // Initialize Mermaid — restrained 3-role palette.
+      // Mermaid comes from a CDN. When it fails to load (a blocked network, an
+      // outage), an unguarded call here throws and nothing below it runs:
+      // `lastTrigger` stays uninitialised, so every popup click throws, and
+      // the rail, Escape and backdrop handlers are never registered. Only the
+      // diagrams may degrade.
+      if (window.mermaid) mermaid.initialize({
         startOnLoad: true,
         theme: "base",
         themeVariables: {
@@ -1509,8 +1514,9 @@ agentic_golang/
         content.innerHTML = carrier.textContent;
         modal.style.display = "block";
 
-        // Re-initialize Mermaid for new content
-        if (content.querySelector(".mermaid")) {
+        // Re-initialize Mermaid for new content (without it, the diagram's
+        // source text stays visible instead)
+        if (window.mermaid && content.querySelector(".mermaid")) {
           setTimeout(() => {
             mermaid.init();
           }, 100);
